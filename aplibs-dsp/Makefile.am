@@ -8,9 +8,11 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LDFLAGS = \
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS = $(APLIBS_DSP_CFLAGS)
 
-libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES = 
+libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES = \
+	Crossfader.cpp
 
-pkginclude_HEADERS = 
+pkginclude_HEADERS = \
+	Crossfader.hpp
 
 noinst_HEADERS =
 
