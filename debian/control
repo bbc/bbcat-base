@@ -1,0 +1,10 @@
+Source: aplibs-dsp
+Priority: optional
+Maintainer: Andrew Bonney <andrew.bonney@bbc.co.uk>
+Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 9), pkg-config
+
+Package: aplibs-dsp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: General purpose audio DSP library

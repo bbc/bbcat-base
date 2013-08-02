@@ -1,0 +1,10 @@
+prefix=
+exec_prefix=
+libdir=${pcfiledir}/aplibs-dsp/
+includedir=${pcfiledir}/
+
+Name: APLIBS-DSP-@APLIBS_DSP_MAJORMINOR@ uninstalled
+Description: General purpose audio DSP library
+Version: @VERSION@
+Libs: -L${libdir} -lap-dsp-@APLIBS_DSP_MAJORMINOR@
+Cflags: -I${includedir} -I@srcdir@
