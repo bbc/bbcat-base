@@ -24,7 +24,7 @@ Crossfader::~Crossfader()
 
 void Crossfader::Crossfade(float* pInputFrom, float* pInputTo, float* pOutput)
 {
-	for (int i=0; i<mWindowSize; i++)
+	for (uint32_t i=0; i<mWindowSize; i++)
 	{
 		pOutput[i] = (pInputTo[i] * mpCurrentPattern[i]) + (pInputFrom[i] * mpCurrentPattern[mWindowSize - (i + 1)]);
 	}
