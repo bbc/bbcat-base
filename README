@@ -1,0 +1,6 @@
+Some of the code in this distribution is either copied from or a modified version of code from the SoundScapeRenderer project.
+That project was written by staff at the Technical University of Berlin and released under GPLv3. It is currently hosted here: <http://soundscaperenderer.github.io/>
+
+This library includes the configuration option: --enable-gpl [default: yes] which allows this code to be removed if necessary.
+
+The FractionalDelay class uses libsamplerate. If you want to distribute this with libsamplerate, see <http://www.mega-nerd.com/SRC/license.html>.

@@ -37,6 +37,12 @@ DX_DOXYGEN_FEATURE(ON)
 DX_INIT_DOXYGEN(aplibs-dsp, doxygen.cfg)
 
 # Check if we should enable debug support  (./configure --enable-debug)
+AC_MSG_CHECKING(whether to include code under gpl)
+gpl_default="yes"
+AC_ARG_ENABLE(gpl, [  --enable-gpl=[no/yes] include code under gpl [default=$gpl_default]],, ENABLE_GPL=$gpl_default)
+AM_CONDITIONAL(ENABLE_GPL, test "x$ENABLE_GPL" = "xyes")
+
+# Check if we should enable debug support  (./configure --enable-debug)
 AC_MSG_CHECKING(whether to enable debugging)
 debug_default="no"
 AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging
@@ -48,6 +54,22 @@ if test "x$enable_debug" = "xyes"; then
 AC_MSG_RESULT(yes)
 else
 AC_MSG_RESULT(no)
+fi
+
+# Checking for libsamplerate
+SAMPLERATE_VER="0.1.8"
+PKG_CHECK_MODULES([SAMPLERATE], [samplerate >= SAMPLERATE_VER], HAVE_SAMPLERATE=yes, HAVE_SAMPLERATE=no)
+if test "x${HAVE_SAMPLERATE}" != xyes ; then
+  AC_MSG_ERROR([samplerate >= $SAMPLERATE_VER is required])
+fi
+
+if test "x$ENABLE_GPL" = "xyes"; then
+  # Checking for FFTW3 (single-precision)
+  FFTW_VER="3.0.0"
+  PKG_CHECK_MODULES([FFTW], [fftw3f >= FFTW_VER], HAVE_FFTW=yes, HAVE_FFTW=no)
+  if test "x${HAVE_FFTW}" != xyes ; then
+    AC_MSG_ERROR([fftw3f >= $FFTW_VER is required])
+  fi
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.

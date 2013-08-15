@@ -5,7 +5,7 @@ include doxygen.am
 
 SUBDIRS = aplibs-dsp
 
-EXTRA_DIST = COPYING autogen.sh
+EXTRA_DIST = README COPYING autogen.sh
 
 pkgconfig_DATA = aplibs-dsp-$(APLIBS_DSP_MAJORMINOR).pc
 
