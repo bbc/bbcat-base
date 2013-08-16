@@ -15,11 +15,11 @@ FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size, bool 
 , _output_buffer(buffer_size,0.0f)
 {
 	int src_error;
-	_src = src_new(SRC_SINC_BEST_QUALITY, _smoothing, &src_error);
+	_src = src_new(SRC_SINC_BEST_QUALITY, 1, &src_error); // 1 channel
 
 	if (_src == NULL)
 	{
-		APLIBS_DSP_WARNING("Initialization of sample rate converter failed!" + std::string(src_strerror(src_error)));
+		APLIBS_DSP_WARNING("Initialization of sample rate converter failed! " + std::string(src_strerror(src_error)));
 		return;
 	}
 
@@ -27,25 +27,22 @@ FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size, bool 
 	std::vector<float> silence_in(_buffer_size,0.0f);
 
 	// setup src conversion
-	src_data.input_frames = _buffer_size;
-	src_data.output_frames = _buffer_size;
-	src_data.data_in = &silence_in[0];
-	src_data.data_out = &_output_buffer[0];
-	src_data.end_of_input = 0; // indicates that more audio will come (in next buffer)
+	_src_data.input_frames = _buffer_size;
+	_src_data.output_frames = _buffer_size;
+	_src_data.data_in = &silence_in[0];
+	_src_data.data_out = &_output_buffer[0];
+	_src_data.end_of_input = 0; // indicates that more audio will come (in next buffer)
 
 	// do conversion and calculate transport delay
-	src_data.src_ratio = 1.0f;
-	set_ratio();
-	src_error = src_process(_src, &src_data);
+	_src_data.src_ratio = 1.0f;
+	_set_ratio();
+	_do_src();
 
-	APLIBS_DSP_INFO("\tOutput frames gen: " << src_data.output_frames_gen);
-	APLIBS_DSP_INFO("\tInput frames used: " << src_data.input_frames_used);
+	APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
+	APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
 
-	if (src_error) {
-		APLIBS_DSP_WARNING("Sample rate conversion error: " + std::string(src_strerror (src_error)));
-	}
 
-	_transport_delay = src_data.input_frames - src_data.output_frames_gen;
+	_transport_delay = _src_data.input_frames - _src_data.output_frames_gen;
 }
 
 FractionalDelay::~FractionalDelay() {
@@ -53,13 +50,6 @@ FractionalDelay::~FractionalDelay() {
 	if (src_return != NULL)
 	{
 		APLIBS_DSP_ERROR("Problem deleting SRC instance.");
-	}
-}
-
-void FractionalDelay::set_ratio() {
-	int src_error = src_set_ratio(_src, src_data.src_ratio);
-	if (src_error) {
-		APLIBS_DSP_WARNING("Sample rate conversion error: " + std::string(src_strerror (src_error)));
 	}
 }
 
@@ -84,23 +74,23 @@ float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes
 	}
 
 	// setup src conversion
-	src_data.input_frames = nframes_in;
-	src_data.data_in = input_buffer;
-	src_data.src_ratio = _buffer_size / (_buffer_size - (target_delay - _current_delay)*_sample_rate);
+	_src_data.input_frames = nframes_in;
+	_src_data.data_in = input_buffer;
+	_src_data.src_ratio = _buffer_size / (_buffer_size - (target_delay - _current_delay)*_sample_rate);
 
-	src_error = src_process(_src, &src_data);
-	if (src_error) {
-		APLIBS_DSP_WARNING("Sample rate conversion error: " + std::string(src_strerror (src_error)));
-	}
+	if (!_smoothing)
+		_set_ratio();
 
-	APLIBS_DSP_INFO("\tOutput frames gen: " << src_data.output_frames_gen);
-	APLIBS_DSP_INFO("\tInput frames used: " << src_data.input_frames_used);
+	_do_src();
+
+	APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
+	APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
 
 	_current_delay = target_delay;
 
-	nframes_generated = src_data.output_frames_gen;
+	nframes_generated = _src_data.output_frames_gen;
 
-	if (src_data.input_frames_used < _buffer_size)
+	if (_src_data.input_frames_used < _buffer_size)
 	{
 		APLIBS_DSP_WARNING("Fewer frames used than provided. (This doesn't seem to happen ever - if it does this class won't work)");
 	}
@@ -112,3 +102,17 @@ const FractionalDelay::nframes_t FractionalDelay::get_transport_delay() {
 	return _transport_delay;
 }
 
+void FractionalDelay::_set_ratio() {
+	int src_error = src_set_ratio(_src, _src_data.src_ratio);
+	if (src_error) {
+		APLIBS_DSP_WARNING("Sample rate conversion error: " + std::string(src_strerror (src_error)));
+	}
+}
+
+void FractionalDelay::_do_src()
+{
+	int src_error = src_process(_src, &_src_data);
+	if (src_error) {
+		APLIBS_DSP_WARNING("Sample rate conversion error: " + std::string(src_strerror (src_error)));
+	}
+}

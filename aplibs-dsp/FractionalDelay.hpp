@@ -39,11 +39,32 @@ public:
 	/// perform a resampling to get towards target delay
 	float* apply_delay(float* input_buffer, const nframes_t nframes_in, float target_delay, nframes_t& nframes_generated);
 
-	void set_ratio(); ///< used to explicitly set ratio (when not smoothing)
-
 	const nframes_t get_transport_delay();
 
+	nframes_t get_buffer_size() const
+	{
+		return _buffer_size;
+	}
+
+	float get_current_delay() const
+	{
+		return _current_delay;
+	}
+
+	bool is_smoothing() const
+	{
+		return _smoothing;
+	}
+
+	void set_smoothing(bool smoothing)
+	{
+		_smoothing = smoothing;
+	}
+
 private:
+	void _set_ratio(); ///< used to explicitly set ratio (when not smoothing)
+	void _do_src();
+
 	float _sample_rate;
 	nframes_t _transport_delay;
 	nframes_t _buffer_size;
@@ -51,7 +72,7 @@ private:
     bool _smoothing;
 
     SRC_STATE* _src;
-	SRC_DATA src_data;
+	SRC_DATA _src_data;
 
 	std::vector<float> _output_buffer;
 };
