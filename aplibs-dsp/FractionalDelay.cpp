@@ -56,8 +56,6 @@ FractionalDelay::~FractionalDelay() {
 float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes_in,
 		float target_delay, nframes_t& nframes_generated)
 {
-//	int src_error;
-
 	if (nframes_in > _buffer_size)
 	{
 		APLIBS_DSP_ERROR("Incorrect number of input frames. Could cause a segmentation fault.");
