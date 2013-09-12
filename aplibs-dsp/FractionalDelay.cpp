@@ -56,7 +56,7 @@ FractionalDelay::~FractionalDelay() {
 float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes_in,
 		float target_delay, nframes_t& nframes_generated)
 {
-	int src_error;
+//	int src_error;
 
 	if (nframes_in > _buffer_size)
 	{
@@ -83,6 +83,10 @@ float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes
 
 	_do_src();
 
+	// TODO: it seems that when the delay change is too large, this method falls over.
+	// Introduce a warning or even some extra processing to smooth the transition.
+
+	APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
 	APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
 	APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
 
