@@ -23,6 +23,9 @@ FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size, bool 
 		return;
 	}
 
+	if (smooth_delay_adjustment)
+		APLIBS_DSP_WARNING("With smoothing on, the delay achieved cannot be guaranteed (especially when large), but it might sound better if delays are changing alot.");
+
 	// do an initial conversion to get transport delay
 	std::vector<float> silence_in(_buffer_size,0.0f);
 
@@ -38,8 +41,8 @@ FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size, bool 
 	_set_ratio();
 	_do_src();
 
-	APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
-	APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
+	APLIBS_DSP_INFO("\tInput frames used (set-up): " << _src_data.input_frames_used);
+	APLIBS_DSP_INFO("\tOutput frames gen (set-up): " << _src_data.output_frames_gen);
 
 
 	_transport_delay = _src_data.input_frames - _src_data.output_frames_gen;
@@ -56,6 +59,7 @@ FractionalDelay::~FractionalDelay() {
 float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes_in,
 		float target_delay, nframes_t& nframes_generated)
 {
+	// TODO: when the delay change is too large and smoothing is on, the correct delay is not reached
 	if (nframes_in > _buffer_size)
 	{
 		APLIBS_DSP_ERROR("Incorrect number of input frames. Could cause a segmentation fault.");
@@ -81,12 +85,9 @@ float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes
 
 	_do_src();
 
-	// TODO: it seems that when the delay change is too large, this method falls over.
-	// Introduce a warning or even some extra processing to smooth the transition.
-
 	APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
-	APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
 	APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
+	APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
 
 	_current_delay = target_delay;
 
