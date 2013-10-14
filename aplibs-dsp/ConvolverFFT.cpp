@@ -10,6 +10,10 @@
 #include <cmath>
 #include <algorithm> // for std::copy, std::transform
 
+#ifdef __SSE__
+#include <xmmintrin.h>  // for SSE instrinsics
+#endif
+
 namespace // anonymous
 {
 const float pi_float = 3.14159265f;
@@ -338,76 +342,41 @@ void ConvolverFFT::_multiply_spectra_cpp(const float* signal, const float* filte
 void ConvolverFFT::_multiply_spectra_simd(const float* signal,
 		const float* filter)
 {
-	f4vector2 sigr, sigi, filtr, filti, out;
-	// f4vector signalr, filterr;
-	// f4vector signali, filteri;
+  // 16 byte alignment is needed for _mm_load_ps()!
+  // This should be the case anyway because fftwf_malloc() is used.
 
-	//  f4vector outputr, outputi;
+  float dc = _ifft_buffer[0] + signal[0] * filter[0];
+  float ny = _ifft_buffer[4] + signal[4] * filter[4];
 
-	float dc = _ifft_buffer[0] + signal[0] * filter[0];
-	float ny = _ifft_buffer[4] + signal[4] * filter[4];
+  for(size_t i = 0; i < _fft_length; i += 8)
+  {
+    // load real and imaginary parts of signal and filter
+    __m128 sigr = _mm_load_ps(signal + i);
+    __m128 sigi = _mm_load_ps(signal + i + 4);
+    __m128 filtr = _mm_load_ps(filter + i);
+    __m128 filti = _mm_load_ps(filter + i + 4);
 
-	for(unsigned int i = 0u; i < _fft_length; i+=8)
-	{
-		// real parts
-		//signalr.f = signal + i;
-		//filterr.f = filter + i;
-		//outputr.f = _ifft_buffer.data() + i;
-		sigr.v  = __builtin_ia32_loadups(signal+i);
-		filtr.v = __builtin_ia32_loadups(filter+i);
+    // multiply and subtract
+    __m128 res1 = _mm_sub_ps(_mm_mul_ps(sigr, filtr), _mm_mul_ps(sigi, filti));
 
-		// imag
-		//signalr.f = signal + i + 4;
-		//filterr.f = filter + i + 4;
-		//outputi.f = _ifft_buffer.data() + i + 4;
-		sigi.v  = __builtin_ia32_loadups(signal+i+4);
-		filti.v = __builtin_ia32_loadups(filter+i+4);
+    // multiply and add
+    __m128 res2 = _mm_add_ps(_mm_mul_ps(sigr, filti), _mm_mul_ps(sigi, filtr));
 
-		//tmp1.v = __builtin_ia32_mulps(*signalr.v, *filterr.v);
-		//tmp2.v = __builtin_ia32_mulps(*signali.v, *filteri.v);
+    // load output data for accumulation
+    __m128 acc1 = _mm_load_ps(&_ifft_buffer[i]);
+    __m128 acc2 = _mm_load_ps(&_ifft_buffer[i + 4]);
 
-		//tmp1.v = __builtin_ia32_mulps(sigr.v, filtr.v);
-		//tmp2.v = __builtin_ia32_mulps(sigi.v, filti.v);
+    // accumulate
+    acc1 = _mm_add_ps(acc1, res1);
+    acc2 = _mm_add_ps(acc2, res2);
 
-		//*(outputr.v) += __builtin_ia32_subps(tmp1.v, tmp2.v);
-		//out.v = __builtin_ia32_subps(tmp1.v, tmp2.v);
-		out.v = __builtin_ia32_subps(__builtin_ia32_mulps(sigr.v, filtr.v),
-				__builtin_ia32_mulps(sigi.v, filti.v));
+    // store output data
+    _mm_store_ps(&_ifft_buffer[i], acc1);
+    _mm_store_ps(&_ifft_buffer[i + 4], acc2);
+  }
 
-
-		_ifft_buffer[0+i] += out.f[0];
-		_ifft_buffer[1+i] += out.f[1];
-		_ifft_buffer[2+i] += out.f[2];
-		_ifft_buffer[3+i] += out.f[3];
-
-		//tmp3.v = __builtin_ia32_subps(tmp1.v, tmp2.v);
-		//__builtin_ia32_storeups(outputr.f, tmp3.v);
-
-		//tmp1.v = __builtin_ia32_mulps(*signalr.v, *filteri.v);
-		//tmp2.v = __builtin_ia32_mulps(*signali.v, *filterr.v);
-
-		//tmp1.v = __builtin_ia32_mulps(sigr.v, filti.v);
-		//tmp2.v = __builtin_ia32_mulps(sigi.v, filtr.v);
-
-		//*(outputi.v) += __builtin_ia32_addps(tmp1.v, tmp2.v);
-		//out.v = __builtin_ia32_addps(tmp1.v, tmp2.v);
-		out.v = __builtin_ia32_addps(__builtin_ia32_mulps(sigr.v, filti.v),
-				__builtin_ia32_mulps(sigi.v, filtr.v));
-
-
-		//tmp3.v = __builtin_ia32_addps(tmp1.v, tmp2.v);
-		//__builtin_ia32_storeups(outputi.f, tmp3.v);
-
-		_ifft_buffer[4+i] += out.f[0];
-		_ifft_buffer[5+i] += out.f[1];
-		_ifft_buffer[6+i] += out.f[2];
-		_ifft_buffer[7+i] += out.f[3];
-
-	}
-
-	_ifft_buffer[0] = dc;
-	_ifft_buffer[4] = ny;
-
+  _ifft_buffer[0] = dc;
+  _ifft_buffer[4] = ny;
 }
 #endif
 

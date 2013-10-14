@@ -57,7 +57,7 @@ FractionalDelay::~FractionalDelay() {
 }
 
 float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes_in,
-		float target_delay, nframes_t& nframes_generated)
+		float target_delay)
 {
 	// TODO: when the delay change is too large and smoothing is on, the correct delay is not reached
 	if (nframes_in > _buffer_size)
@@ -85,17 +85,23 @@ float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes
 
 	_do_src();
 
-	APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
-	APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
-	APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
+	if (_src_data.src_ratio != 1.)
+	{
+		APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
+		APLIBS_DSP_INFO("\tTarget delay: " << target_delay);
+		APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
+		APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
+	}
 
 	_current_delay = target_delay;
-
-	nframes_generated = _src_data.output_frames_gen;
 
 	if (_src_data.input_frames_used < _buffer_size)
 	{
 		APLIBS_DSP_WARNING("Fewer frames used than provided. (This doesn't seem to happen ever - if it does this class won't work)");
+		APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
+		APLIBS_DSP_INFO("\tTarget delay: " << target_delay);
+		APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
+		APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
 	}
 
 	return &_output_buffer[0];
