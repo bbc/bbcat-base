@@ -33,11 +33,11 @@ public:
 
     typedef uint32_t nframes_t;
 
-	FractionalDelay(float sample_rate, nframes_t buffer_size, bool smooth_delay_adjustment = true);
+	FractionalDelay(float sample_rate, nframes_t buffer_size);//, bool smooth_delay_adjustment = true);
 	virtual ~FractionalDelay();
 
 	/// perform a resampling to get towards target delay
-	float* apply_delay(float* input_buffer, const nframes_t nframes_in, float target_delay);
+	float* apply_delay(float* input_buffer, const nframes_t nframes_in, float target_delay, nframes_t& nframes_used);
 
 	const nframes_t get_transport_delay();
 

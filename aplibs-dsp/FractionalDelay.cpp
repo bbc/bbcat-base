@@ -8,10 +8,10 @@
 #include "FractionalDelay.hpp"
 #include "Logging.hpp"
 
-FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size, bool smooth_delay_adjustment)
+FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size)//, bool smooth_delay_adjustment)
 : _sample_rate(sample_rate)
 , _buffer_size(buffer_size)
-, _smoothing(smooth_delay_adjustment)
+//, _smoothing(smooth_delay_adjustment)
 , _output_buffer(buffer_size,0.0f)
 {
 	int src_error;
@@ -23,8 +23,8 @@ FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size, bool 
 		return;
 	}
 
-	if (smooth_delay_adjustment)
-		APLIBS_DSP_WARNING("With smoothing on, the delay achieved cannot be guaranteed (especially when large), but it might sound better if delays are changing alot.");
+//	if (smooth_delay_adjustment)
+//		APLIBS_DSP_WARNING("With smoothing on, the delay achieved cannot be guaranteed (especially when large), but it might sound better if delays are changing alot.");
 
 	// do an initial conversion to get transport delay
 	std::vector<float> silence_in(_buffer_size,0.0f);
@@ -57,7 +57,7 @@ FractionalDelay::~FractionalDelay() {
 }
 
 float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes_in,
-		float target_delay)
+		float target_delay, nframes_t& nframes_used)
 {
 	// TODO: when the delay change is too large and smoothing is on, the correct delay is not reached
 	if (nframes_in > _buffer_size)
@@ -80,7 +80,7 @@ float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes
 	_src_data.data_in = input_buffer;
 	_src_data.src_ratio = _buffer_size / (_buffer_size - (target_delay - _current_delay)*_sample_rate);
 
-	if (!_smoothing)
+//	if (!_smoothing)
 		_set_ratio();
 
 	_do_src();
@@ -103,7 +103,7 @@ float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes
 		APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
 		APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
 	}
-
+	nframes_used = _src_data.output_frames_gen;
 	return &_output_buffer[0];
 }
 
