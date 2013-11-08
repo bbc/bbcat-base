@@ -25,19 +25,20 @@
 #define FRACTIONALDELAY_H_
 
 #include <samplerate.h>
-#include <vector>
+#include <apf-0.2/apf/container.h>// fixed_vector
 #include <inttypes.h> // for uint32_t
+#include <boost/circular_buffer.hpp>
 
 class FractionalDelay {
 public:
 
     typedef uint32_t nframes_t;
 
-	FractionalDelay(float sample_rate, nframes_t buffer_size);//, bool smooth_delay_adjustment = true);
+	FractionalDelay(float sample_rate, nframes_t buffer_size);
 	virtual ~FractionalDelay();
 
 	/// perform a resampling to get towards target delay
-	float* apply_delay(float* input_buffer, const nframes_t nframes_in, float target_delay, nframes_t& nframes_used);
+	float* apply_delay(float* input_buffer, const nframes_t nframes_in, float target_delay);
 
 	const nframes_t get_transport_delay();
 
@@ -74,7 +75,8 @@ private:
     SRC_STATE* _src;
 	SRC_DATA _src_data;
 
-	std::vector<float> _output_buffer;
+	apf::fixed_vector<float> _output_buffer;
+	boost::circular_buffer<float> _circular_buffer;
 };
 
 #endif /* FRACTIONALDELAY_H_ */

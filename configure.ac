@@ -56,12 +56,7 @@ else
 AC_MSG_RESULT(no)
 fi
 
-# Checking for libsamplerate
-SAMPLERATE_VER="0.1.8"
-PKG_CHECK_MODULES([SAMPLERATE], [samplerate >= SAMPLERATE_VER], HAVE_SAMPLERATE=yes, HAVE_SAMPLERATE=no)
-if test "x${HAVE_SAMPLERATE}" != xyes ; then
-  AC_MSG_ERROR([samplerate >= $SAMPLERATE_VER is required])
-fi
+#AC_CHECK_HEADERS([boost/circular_buffer.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)]);
 
 if test "x$ENABLE_GPL" = "xyes"; then
   # Checking for FFTW3 (single-precision)
@@ -69,6 +64,20 @@ if test "x$ENABLE_GPL" = "xyes"; then
   PKG_CHECK_MODULES([FFTW], [fftw3f >= FFTW_VER], HAVE_FFTW=yes, HAVE_FFTW=no)
   if test "x${HAVE_FFTW}" != xyes ; then
     AC_MSG_ERROR([fftw3f >= $FFTW_VER is required])
+  fi
+  
+  dnl Check for apf
+  APF_VER="0.2.0"
+  PKG_CHECK_MODULES([APF], [apf-0.2 >= 0.2.0], HAVE_APF=yes, HAVE_APF=no)
+  if test "x${HAVE_APF}" != xyes ; then
+    AC_MSG_ERROR([apf >= $APF_VER is required])
+  fi
+
+  # Checking for libsamplerate
+  SAMPLERATE_VER="0.1.8"
+  PKG_CHECK_MODULES([SAMPLERATE], [samplerate >= SAMPLERATE_VER], HAVE_SAMPLERATE=yes, HAVE_SAMPLERATE=no)
+  if test "x${HAVE_SAMPLERATE}" != xyes ; then
+    AC_MSG_ERROR([samplerate >= $SAMPLERATE_VER is required])
   fi
 fi
 

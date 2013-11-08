@@ -7,11 +7,12 @@
 
 #include "FractionalDelay.hpp"
 #include "Logging.hpp"
+#include <iostream>
+#include <string>
 
-FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size)//, bool smooth_delay_adjustment)
+FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size)
 : _sample_rate(sample_rate)
 , _buffer_size(buffer_size)
-//, _smoothing(smooth_delay_adjustment)
 , _output_buffer(buffer_size,0.0f)
 {
 	int src_error;
@@ -23,11 +24,9 @@ FractionalDelay::FractionalDelay(float sample_rate, nframes_t buffer_size)//, bo
 		return;
 	}
 
-//	if (smooth_delay_adjustment)
-//		APLIBS_DSP_WARNING("With smoothing on, the delay achieved cannot be guaranteed (especially when large), but it might sound better if delays are changing alot.");
-
 	// do an initial conversion to get transport delay
-	std::vector<float> silence_in(_buffer_size,0.0f);
+	apf::fixed_vector<float> silence_in(_buffer_size,0.0f);
+	_circular_buffer = boost::circular_buffer<float>(_buffer_size*2);
 
 	// setup src conversion
 	_src_data.input_frames = _buffer_size;
@@ -57,7 +56,7 @@ FractionalDelay::~FractionalDelay() {
 }
 
 float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes_in,
-		float target_delay, nframes_t& nframes_used)
+		float target_delay)
 {
 	// TODO: when the delay change is too large and smoothing is on, the correct delay is not reached
 	if (nframes_in > _buffer_size)
@@ -74,36 +73,59 @@ float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes
 		APLIBS_DSP_WARNING("It isn't possible to create a negative delay. "
 				<< "Fewer samples will be generated than have been supplied however.");
 	}
+	// stick the samples in the ring buffer and then get the first 512 out
+	for (unsigned int i = 0; i < _buffer_size; i++)
+	{
+		_circular_buffer.push_back(input_buffer[i]);
+	}
+	if (_circular_buffer.size() == _buffer_size*2)
+	{
+		APLIBS_DSP_WARNING("Circular buffer is full.");
+	}
+	for (unsigned int i = 0; i < _buffer_size; i++)
+	{
+		input_buffer[i] = _circular_buffer.front();
+		_circular_buffer.pop_front();
+	}
 
 	// setup src conversion
 	_src_data.input_frames = nframes_in;
 	_src_data.data_in = input_buffer;
 	_src_data.src_ratio = _buffer_size / (_buffer_size - (target_delay - _current_delay)*_sample_rate);
 
-//	if (!_smoothing)
-		_set_ratio();
+	_set_ratio();
 
 	_do_src();
 
 	if (_src_data.src_ratio != 1.)
 	{
-		APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
-		APLIBS_DSP_INFO("\tTarget delay: " << target_delay);
-		APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
-		APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
+//		APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
+//		APLIBS_DSP_INFO("\tTarget delay: " << target_delay);
+//		APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
+//		APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
 	}
 
 	_current_delay = target_delay;
-
-	if (_src_data.input_frames_used < _buffer_size)
+	if (_src_data.input_frames_used == 0)
 	{
-		APLIBS_DSP_WARNING("Fewer frames used than provided. (This doesn't seem to happen ever - if it does this class won't work)");
-		APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
-		APLIBS_DSP_INFO("\tTarget delay: " << target_delay);
+		APLIBS_DSP_WARNING("No frames used. Discarding");
+	}
+	else if (_src_data.input_frames_used < _buffer_size)
+	{
+		APLIBS_DSP_WARNING("Fewer frames used than provided. Adding them to the circular buffer.");
+//		APLIBS_DSP_INFO("\tSRC ratio: " << _src_data.src_ratio);
+//		APLIBS_DSP_INFO("\tTarget delay: " << target_delay);
 		APLIBS_DSP_INFO("\tInput frames used: " << _src_data.input_frames_used);
 		APLIBS_DSP_INFO("\tOutput frames gen: " << _src_data.output_frames_gen);
+		for (unsigned int i = _src_data.input_frames_used; i < _buffer_size; i++)
+		{
+			_circular_buffer.push_back(input_buffer[i]);
+		}
+		if (_circular_buffer.size() == _buffer_size*2)
+		{
+			APLIBS_DSP_WARNING("Circular buffer is full.");
+		}
 	}
-	nframes_used = _src_data.output_frames_gen;
 	return &_output_buffer[0];
 }
 
