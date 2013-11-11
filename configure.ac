@@ -56,7 +56,11 @@ else
 AC_MSG_RESULT(no)
 fi
 
-#AC_CHECK_HEADERS([boost/circular_buffer.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)]);
+LIBBOOST_VER="1.49.0"
+AX_BOOST_BASE($LIBBOOST_VER, HAVE_BOOST=yes, HAVE_BOOST=no)
+if test "x${HAVE_BOOST}" != xyes ; then
+  AC_MSG_ERROR([Boost library is required])
+fi
 
 if test "x$ENABLE_GPL" = "xyes"; then
   # Checking for FFTW3 (single-precision)
