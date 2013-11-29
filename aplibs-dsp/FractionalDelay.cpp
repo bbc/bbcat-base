@@ -129,7 +129,7 @@ float* FractionalDelay::apply_delay(float* input_buffer, const nframes_t nframes
 	return &_output_buffer[0];
 }
 
-const FractionalDelay::nframes_t FractionalDelay::get_transport_delay() {
+FractionalDelay::nframes_t FractionalDelay::get_transport_delay() {
 	return _transport_delay;
 }
 

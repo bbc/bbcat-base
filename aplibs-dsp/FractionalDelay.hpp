@@ -40,7 +40,7 @@ public:
 	/// perform a resampling to get towards target delay
 	float* apply_delay(float* input_buffer, const nframes_t nframes_in, float target_delay);
 
-	const nframes_t get_transport_delay();
+	nframes_t get_transport_delay();
 
 	nframes_t get_buffer_size() const
 	{
