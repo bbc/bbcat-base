@@ -4,7 +4,8 @@ lib_LTLIBRARIES = libap-dsp-@APLIBS_DSP_MAJORMINOR@.la
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LDFLAGS = \
 	-no-undefined \
-	-version-info $(APLIBS_DSP_LIBVERSION)
+	-version-info $(APLIBS_DSP_LIBVERSION) \
+        $(APLIBS_DSP_LDFLAGS)
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD = \
 	$(SAMPLERATE_LIBS) \
