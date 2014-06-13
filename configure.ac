@@ -76,13 +76,6 @@ if test "x$ENABLE_GPL" = "xyes"; then
   if test "x${HAVE_APF}" != xyes ; then
     AC_MSG_ERROR([apf >= $APF_VER is required])
   fi
-
-  # Checking for libsamplerate
-  SAMPLERATE_VER="0.1.8"
-  PKG_CHECK_MODULES([SAMPLERATE], [samplerate >= SAMPLERATE_VER], HAVE_SAMPLERATE=yes, HAVE_SAMPLERATE=no)
-  if test "x${HAVE_SAMPLERATE}" != xyes ; then
-    AC_MSG_ERROR([samplerate >= $SAMPLERATE_VER is required])
-  fi
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.
