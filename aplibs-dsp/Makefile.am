@@ -20,7 +20,7 @@ if ENABLE_GPL
 	ConvolverFFT.cpp \
 	Convolver.cpp
   GPL_HDR = \
-  	ConvolverFFT.hpp \
+	ConvolverFFT.hpp \
 	Convolver.hpp
 else
   GPL_SRC = 
@@ -30,14 +30,12 @@ endif
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES = \
 	Crossfader.cpp \
-	FractionalDelay.cpp \
 	$(GPL_SRC)
 
 
 
 pkginclude_HEADERS = \
 	Crossfader.hpp \
-	FractionalDelay.hpp \
 	Logging.hpp \
 	$(GPL_HDR)
 
