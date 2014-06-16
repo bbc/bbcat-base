@@ -62,6 +62,51 @@ if test "x${HAVE_BOOST}" != xyes ; then
   AC_MSG_ERROR([Boost library is required])
 fi
 
+LIBSNDFILE_VER="1.0.25"
+PKG_CHECK_MODULES([SNDFILE], [sndfile >= LIBSNDFILE_VER], HAVE_SNDFILE=yes, HAVE_SNDFILE=no)
+if test "x${HAVE_SNDFILE}" != xyes ; then
+  AC_MSG_ERROR([sndfile library is required])
+fi
+
+AC_ARG_WITH([thread],
+    AS_HELP_STRING([--with-thread=IMPL],[use threading library {auto,pthread,gthread,win32,none} [[default=auto]]]),
+    [],
+    [with_thread=auto])
+
+AC_MSG_CHECKING([threading implementation to use])
+if test "x${with_thread}" = "xauto" ; then
+  case $host_os in
+    mingw* | pw32*)
+      with_thread=win32
+      ;;
+    *)
+      with_thread=pthread
+      ;;
+  esac
+fi
+AC_MSG_RESULT([$with_thread])
+
+THREAD_IMPL=${with_thread}
+AC_SUBST(THREAD_IMPL)
+
+if test "x${with_thread}" = "xpthread" ; then
+  case "$host_os" in
+    *)
+      PTHREAD_CFLAGS=
+      PTHREAD_LIBS=-lpthread
+      ;;
+  esac
+  AC_SUBST(PTHREAD_CFLAGS)
+  AC_SUBST(PTHREAD_LIBS)
+fi
+
+if test "x${with_thread}" = "xgthread" ; then
+  PKG_CHECK_MODULES(GTHREAD, gthread-2.0, HAVE_GTHREAD=yes, HAVE_GTHREAD=no)
+  AC_SUBST(GTHREAD_LIBS)
+  AC_SUBST(GTHREAD_CFLAGS)
+  COG_PKG_DEPS="$COG_PKG_DEPS gthread-2.0"
+fi
+
 if test "x$ENABLE_GPL" = "xyes"; then
   # Checking for FFTW3 (single-precision)
   FFTW_VER="3.0.0"
@@ -85,6 +130,10 @@ AX_CREATE_STDINT_H([aplibs-dsp/aplibs-dsp-stdint.h])
 AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Wall])
 AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Werror])
 AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Wextra])
+
+AC_LANG_PUSH([C++])
+AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-std=c++11])
+AC_LANG_POP([C++])
 
 APLIBS_DSP_CFLAGS="$APLIBS_DSP_CFLAGS -I\$(top_srcdir)"
 AC_SUBST(APLIBS_DSP_CFLAGS)
