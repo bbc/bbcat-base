@@ -123,6 +123,13 @@ if test "x$ENABLE_GPL" = "xyes"; then
   fi
 fi
 
+if test ! x$osx = xtrue ; then
+  dnl librt is required
+  RT_LIBS=""
+  AC_CHECK_LIB(rt, clock_gettime, [RT_LIBS="-lrt"])
+  AC_SUBST(RT_LIBS)
+fi
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 AX_CREATE_STDINT_H([aplibs-dsp/aplibs-dsp-stdint.h])

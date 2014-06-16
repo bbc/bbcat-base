@@ -8,7 +8,8 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LDFLAGS =	\
     $(APLIBS_DSP_LDFLAGS)
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD =	\
-	$(PTHREAD_LIBS)
+	$(PTHREAD_LIBS)								\
+	$(RT_LIBS)
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS =	\
 	$(APLIBS_DSP_CFLAGS)						\
