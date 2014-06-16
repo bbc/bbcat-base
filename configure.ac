@@ -1,5 +1,5 @@
 AC_PREREQ([2.68])
-AC_INIT([APLIBS_DSP],[0.1.0.0])
+AC_INIT([APLIBS_DSP],[0.1.1.0])
 
 AS_NANO(APLIBS_DSP_CVS=no,APLIBS_DSP_CVS=yes)
 
@@ -18,7 +18,7 @@ AC_CONFIG_HEADERS([config.h])
 # - interfaces added -> increment AGE also
 # - interfaces removed -> set AGE = 0
 #    (AGE is the number of previous values of CURRENT that are compatible)
-APLIBS_DSP_LIBVERSION="1:0:0"
+APLIBS_DSP_LIBVERSION="1:1:0"
 AC_SUBST(APLIBS_DSP_LIBVERSION)
 
 LT_PREREQ([2.2.6])
