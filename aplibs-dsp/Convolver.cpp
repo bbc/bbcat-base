@@ -68,54 +68,57 @@ ConvolverManager::APFConvolver *ConvolverManager::CreateConvolver() const
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::LoadIRs(const char *filename)
 {
-	SndfileHandle file(filename);
-
 	filters.clear();
-	if (file) {
-		APFConvolver *convolver;
-		ulong_t len = file.frames();
-		uint_t i, n = file.channels();
 
-		DEBUG3(("Opened '%s' okay, %u channels at %luHz", filename, n, (ulong_t)file.samplerate()));
+	if (filename) {
+		SndfileHandle file(filename);
 
-		partitions = (uint_t)((len + blocksize - 1) / blocksize);
+		if (file) {
+			APFConvolver *convolver;
+			ulong_t len = file.frames();
+			uint_t i, n = file.channels();
 
-		DEBUG2(("File '%s' is %lu samples long, therefore %u partitions are needed", filename, len, partitions));
+			DEBUG3(("Opened '%s' okay, %u channels at %luHz", filename, n, (ulong_t)file.samplerate()));
 
-		audioscale = .125f;
+			partitions = (uint_t)((len + blocksize - 1) / blocksize);
 
-		if ((convolver = CreateConvolver()) != NULL) {
-			float *sampledata = new float[blocksize * partitions * n]; 
-			float *response   = new float[blocksize * partitions];
-			slong_t res;
+			DEBUG2(("File '%s' is %lu samples long, therefore %u partitions are needed", filename, len, partitions));
 
-			memset(sampledata, 0, blocksize * partitions * n * sizeof(*sampledata));
+			audioscale = .125f;
 
-			DEBUG2(("Reading sample data..."));
+			if ((convolver = CreateConvolver()) != NULL) {
+				float *sampledata = new float[blocksize * partitions * n]; 
+				float *response   = new float[blocksize * partitions];
+				slong_t res;
 
-			if ((res = file.read(sampledata, blocksize * partitions * n)) < 0) {
-				ERROR("Read of %u frames result: %ld", blocksize * partitions, res);
+				memset(sampledata, 0, blocksize * partitions * n * sizeof(*sampledata));
+
+				DEBUG2(("Reading sample data..."));
+
+				if ((res = file.read(sampledata, blocksize * partitions * n)) < 0) {
+					ERROR("Read of %u frames result: %ld", blocksize * partitions, res);
+				}
+
+				DEBUG2(("Creating %u filters...", n));
+				uint32_t tick = GetTickCount();
+				for (i = 0; i < n; i++) {
+					DEBUG5(("Creating filter for IR %u", i));
+
+					filters.push_back(APFFilter(blocksize, partitions));
+
+					TransferSamples(sampledata, i, n, response, 0, 1, 1, blocksize * partitions);
+
+					convolver->prepare_filter(response, response + blocksize * partitions, filters[i]);
+				}
+				DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+
+				delete[] sampledata;
+				delete[] response;
+				delete   convolver;
 			}
-
-			DEBUG2(("Creating %u filters...", n));
-			uint32_t tick = GetTickCount();
-			for (i = 0; i < n; i++) {
-				DEBUG5(("Creating filter for IR %u", i));
-
-				filters.push_back(APFFilter(blocksize, partitions));
-
-				TransferSamples(sampledata, i, n, response, 0, 1, 1, blocksize * partitions);
-
-				convolver->prepare_filter(response, response + blocksize * partitions, filters[i]);
-			}
-			DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
-
-			delete[] sampledata;
-			delete[] response;
-			delete   convolver;
 		}
+		else ERROR("Failed to open IR file ('%s') for reading", filename);
 	}
-	else ERROR("Failed to open IR file ('%s') for reading", filename);
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -124,27 +127,29 @@ void ConvolverManager::LoadIRs(const char *filename)
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::LoadIRDelays(const char *filename)
 {
-	FILE *fp;
-
 	irdelays.clear();
 	mindelay = 0.0;	// used to reduce delays to minimum
 
-	if ((fp = fopen(filename, "r")) != NULL) {
-		double delay = 0.0;
-		bool   initialreading = true;
+	if (filename) {
+		FILE *fp;
 
-		while (fscanf(fp, "%lf", &delay) > 0) {
-			irdelays.push_back(delay);
+		if ((fp = fopen(filename, "r")) != NULL) {
+			double delay = 0.0;
+			bool   initialreading = true;
 
-			// update minimum delay if necessary
-			if (initialreading || (delay < mindelay)) mindelay = delay;
+			while (fscanf(fp, "%lf", &delay) > 0) {
+				irdelays.push_back(delay);
 
-			initialreading = false;
+				// update minimum delay if necessary
+				if (initialreading || (delay < mindelay)) mindelay = delay;
+
+				initialreading = false;
+			}
+
+			fclose(fp);
 		}
-
-		fclose(fp);
+		else DEBUG1(("Failed to open IR delays file ('%s') for reading, zeroing delays", filename));
 	}
-	else DEBUG1(("Failed to open IR delays file ('%s') for reading, zeroing delays", filename));
 }
 
 /*--------------------------------------------------------------------------------*/
