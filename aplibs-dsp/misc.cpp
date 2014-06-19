@@ -26,37 +26,89 @@ static vector<char *> AllocatedStrings;
 
 static ThreadLockObject debuglock;
 
+static DEBUGHANDLER debughandler = NULL;
+static void         *debughandler_context = NULL;
+
+static DEBUGHANDLER errorhandler = NULL;
+static void         *errorhandler_context = NULL;
+
+/*--------------------------------------------------------------------------------*/
+/** Set debug handler (replacing printf())
+ *
+ * @param handler debug handler
+ * @param context optional parameter to pass to handler
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void SetDebugHandler(DEBUGHANDLER handler, void *context)
+{
+	ThreadLock lock(debuglock);
+
+	debughandler = handler;
+	debughandler_context = context;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Set error handler (replacing printf())
+ *
+ * @param handler error handler
+ * @param context optional parameter to pass to handler
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void SetErrorHandler(DEBUGHANDLER handler, void *context)
+{
+	ThreadLock lock(debuglock);
+
+	errorhandler = handler;
+	errorhandler_context = context;
+}
+
 void debug_msg(const char *fmt, ...)
 {
 	va_list ap;
+	string  str;
 
 	va_start(ap, fmt);
-	{
-		ThreadLock lock(debuglock);
-		vprintf(fmt, ap);
-		printf("\n");
-		fflush(stdout);
-	}
+	VPrintf(str, fmt, ap);
 	va_end(ap);
 
-	FreeStrings();
+	{
+		ThreadLock lock(debuglock);
+		if (debughandler) {
+			(*debughandler)(str.c_str(), debughandler_context);
+		}
+		else {
+			printf("%s\n", str.c_str());
+			fflush(stdout);
+		}
+
+		FreeStrings();
+	}
 }
 
 void debug_err(const char *fmt, ...)
 {
 	FILE *errstr = stdout;
 	va_list ap;
+	string  str;
 
 	va_start(ap, fmt);
-	{
-		ThreadLock lock(debuglock);
-		vfprintf(errstr, fmt, ap);
-		fprintf(errstr, "\n");
-		fflush(errstr);
-	}
+	VPrintf(str, fmt, ap);
 	va_end(ap);
 
-	FreeStrings();
+	{
+		ThreadLock lock(debuglock);
+		if (errorhandler) {
+			(*errorhandler)(str.c_str(), errorhandler_context);
+		}
+		else {
+			fprintf(errstr, "%s\n", str.c_str());
+			fflush(errstr);
+		}
+
+		FreeStrings();
+	}
 }
 
 const char *CreateString(const char *data, uint_t len)
@@ -222,6 +274,24 @@ void Printf(string& str, const char *fmt, ...)
 	}
 
 	va_end(ap);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** vprintf for std::string
+ *
+ * @param str string to be added to
+ * @param fmt printf-style format information
+ * @param ap ap_list of arguments
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void VPrintf(std::string& str, const char *fmt, va_list ap)
+{
+	char *buf = NULL;
+	if (vasprintf(&buf, fmt, ap) > 0) {
+		str += buf;
+		free(buf);
+	}
 }
 
 /*--------------------------------------------------------------------------------*/

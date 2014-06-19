@@ -2,6 +2,7 @@
 #define __MISC__
 
 #include <stdint.h>
+#include <stdarg.h>
 
 #include <vector>
 #include <string>
@@ -60,6 +61,8 @@ typedef unsigned long long ullong_t;
 #define PACKEDSTRUCT struct __attribute__ ((packed))
 
 BBC_AUDIOTOOLBOX_START
+
+typedef void (*DEBUGHANDLER)(const char *str, void *context);
 
 extern void debug_msg(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 extern void debug_err(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
@@ -138,6 +141,26 @@ extern uint32_t IEEEExtendedToINT32u(const IEEEEXTENDED *num);
 extern void     INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num);
 
 /*--------------------------------------------------------------------------------*/
+/** Set debug handler (replacing printf())
+ *
+ * @param handler debug handler
+ * @param context optional parameter to pass to handler
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+extern void SetDebugHandler(DEBUGHANDLER handler, void *context = NULL);
+
+/*--------------------------------------------------------------------------------*/
+/** Set error handler (replacing printf())
+ *
+ * @param handler error handler
+ * @param context optional parameter to pass to handler
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+extern void SetErrorHandler(DEBUGHANDLER handler, void *context = NULL);
+
+/*--------------------------------------------------------------------------------*/
 /** Create indentation string
  *
  * @param indent a string representing one level of indentation (e.g. a tab or spaces)
@@ -149,7 +172,7 @@ extern void     INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num);
 extern std::string CreateIndent(const std::string& indent, uint_t count);
 
 /*--------------------------------------------------------------------------------*/
-/** Printf for std::string
+/** printf for std::string
  *
  * @param str string to be added to
  * @param fmt printf-style format information
@@ -157,6 +180,17 @@ extern std::string CreateIndent(const std::string& indent, uint_t count);
  */
 /*--------------------------------------------------------------------------------*/
 extern void Printf(std::string& str, const char *fmt, ...) __attribute__ ((format (printf,2,3)));
+
+/*--------------------------------------------------------------------------------*/
+/** vprintf for std::string
+ *
+ * @param str string to be added to
+ * @param fmt printf-style format information
+ * @param ap ap_list of arguments
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+extern void VPrintf(std::string& str, const char *fmt, va_list ap);
 
 /*--------------------------------------------------------------------------------*/
 /** Read a line of text from an open file
