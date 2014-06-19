@@ -23,6 +23,8 @@
 
 using namespace std;
 
+BBC_AUDIOTOOLBOX_START
+
 /*--------------------------------------------------------------------------------*/
 /** Constructor for convolver manager
  *
@@ -133,6 +135,8 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 	if (filename) {
 		FILE *fp;
 
+		DEBUG2(("Reading IR delays from '%s'", filename));
+
 		if ((fp = fopen(filename, "r")) != NULL) {
 			double delay = 0.0;
 			bool   initialreading = true;
@@ -237,13 +241,17 @@ void ConvolverManager::Convolve(const float *input, float *output, uint_t inputc
 	// start parallel convolving on all channels
 	for (i = 0; i < convolvers.size(); i++)
 	{
+		DEBUG5(("Starting convolver %u/%u...", i + 1, (uint_t)convolvers.size()));
 		convolvers[i]->StartConvolution(input + i / outputchannels, inputchannels, hqproc);
+		DEBUG5(("Convolver %u/%u started", i + 1, (uint_t)convolvers.size()));
 	}
 
 	// now process outputs
 	for (i = 0; i < convolvers.size(); i++)
 	{
+		DEBUG5(("Waiting on convolver %u/%u to complete...", i + 1, (uint_t)convolvers.size()));
 		convolvers[i]->EndConvolution(output + (i % outputchannels), outputchannels);
+		DEBUG5(("Convolver %u/%u completed", i + 1, (uint_t)convolvers.size()));
 	}
 }
 
@@ -484,3 +492,5 @@ void Convolver::SetResponse(const APFFilter& newfilter, double delay)
 	// set delay
 	outputdelay = delay;
 }
+
+BBC_AUDIOTOOLBOX_END

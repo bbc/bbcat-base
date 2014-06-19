@@ -72,6 +72,9 @@ if ($fp = fopen("SoundFormatRawConversions.cpp", "w")) {
 
 	fprintf($fp, "\n");
 
+	fprintf($fp, "BBC_AUDIOTOOLBOX_START\n");
+	fprintf($fp, "\n");
+
 	fprintf($fp, "// macro to reduce the ugliness of using static_cast\n");
 	fprintf($fp, "#define cast(type,val) static_cast<type>(val)\n");
 	fprintf($fp, "\n");
@@ -95,6 +98,8 @@ if ($fp = fopen("SoundFormatRawConversions.cpp", "w")) {
 			fprintf($fp, "static void __CopyMemory_" . $size . $args . "\n");
 			fprintf($fp, "{\n");
 			fprintf($fp, "\tuint_t i;\n");
+			fprintf($fp, "\n");
+			fprintf($fp, "\t(void)ditherer;");
 			fprintf($fp, "\n");
 			fprintf($fp, "\tfor (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {\n");
 			fprintf($fp, "\t\tif (dst != src) memcpy(dst, src, nchannels * $size);\n");
@@ -143,6 +148,8 @@ if ($fp = fopen("SoundFormatRawConversions.cpp", "w")) {
 
 						fprintf($fp, "\t(void)svp;\n");
 						fprintf($fp, "\t(void)dvp;\n");
+						fprintf($fp, "\n");
+						fprintf($fp, "\t(void)ditherer;");
 						fprintf($fp, "\n");
 
 						if ($src_fmt < $dst_fmt) {
@@ -332,6 +339,9 @@ if ($fp = fopen("SoundFormatRawConversions.cpp", "w")) {
 		fprintf($fp, "\t},\n");
 	}
 	fprintf($fp, "};\n");
+
+	fprintf($fp, "\n");
+	fprintf($fp, "BBC_AUDIOTOOLBOX_END\n");
 
 	fclose($fp);
 }

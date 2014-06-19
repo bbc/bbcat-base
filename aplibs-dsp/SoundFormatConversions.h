@@ -15,6 +15,8 @@
 /*--------------------------------------------------------------------------------*/
 #include "misc.h"
 
+BBC_AUDIOTOOLBOX_START
+
 typedef enum {
 	SampleFormat_Unknown = 0,
 
@@ -161,5 +163,7 @@ extern void TransferSamples(const double *src, uint_t src_channel, uint_t src_ch
 extern void TransferSamples(const double *src, uint_t src_channel, uint_t src_channels, sint32_t *dst, uint_t dst_channel, uint_t dst_channels, uint_t nchannels = ~0, uint_t nframes = 1, Ditherer *ditherer = NULL);
 extern void TransferSamples(const double *src, uint_t src_channel, uint_t src_channels, float *dst, uint_t dst_channel, uint_t dst_channels, uint_t nchannels = ~0, uint_t nframes = 1, Ditherer *ditherer = NULL);
 extern void TransferSamples(const double *src, uint_t src_channel, uint_t src_channels, double *dst, uint_t dst_channel, uint_t dst_channels, uint_t nchannels = ~0, uint_t nframes = 1, Ditherer *ditherer = NULL);
+
+BBC_AUDIOTOOLBOX_END
 
 #endif

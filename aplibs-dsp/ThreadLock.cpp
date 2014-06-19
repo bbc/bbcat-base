@@ -7,6 +7,8 @@
 #include "misc.h"
 #include "ThreadLock.h"
 
+BBC_AUDIOTOOLBOX_START
+
 ThreadLockObject::ThreadLockObject()
 {
 	pthread_mutexattr_t mta;
@@ -122,3 +124,4 @@ bool ThreadBoolSignalObject::Broadcast()
 	return ThreadSignalObject::Broadcast();
 }
 
+BBC_AUDIOTOOLBOX_END

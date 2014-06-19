@@ -18,6 +18,8 @@
 
 using namespace std;
 
+BBC_AUDIOTOOLBOX_START
+
 /*--------------------------------------------------------------------------------*/
 /** Set decay power due to distance (==2 for inverse square law)
  */
@@ -839,3 +841,5 @@ void VBAPannerPulkki::FindSpeakerGroups()
 	if (scriptfp) fclose(scriptfp);
 #endif
 }
+
+BBC_AUDIOTOOLBOX_END

@@ -8,6 +8,8 @@
 
 using namespace std;
 
+BBC_AUDIOTOOLBOX_START
+
 PositionTransform::PositionTransform() : xrotation(0.0),
 										 yrotation(0.0),
 										 zrotation(0.0)
@@ -443,4 +445,4 @@ string Position::ToString() const
 	return str;
 }
 
-/*----------------------------------------------------------------------------------------------------*/
+BBC_AUDIOTOOLBOX_END

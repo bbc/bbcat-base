@@ -3,6 +3,8 @@
 
 #include "SoundFormatConversions.h"
 
+BBC_AUDIOTOOLBOX_START
+
 class SoundDelayBuffer {
 public:
 	SoundDelayBuffer();
@@ -158,6 +160,8 @@ public:
 protected:
 	uint_t readpos;
 };
+
+BBC_AUDIOTOOLBOX_END
 
 #endif
 

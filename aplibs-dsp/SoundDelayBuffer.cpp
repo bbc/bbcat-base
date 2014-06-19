@@ -8,6 +8,8 @@
 #include "FractionalSample.h"
 #include "SoundDelayBuffer.h"
 
+BBC_AUDIOTOOLBOX_START
+
 SoundDelayBuffer::SoundDelayBuffer() : buf(NULL),
 									   format(SampleFormat_Double),
 									   channels(0),
@@ -276,3 +278,5 @@ uint_t SoundRingBuffer::ReadSamples(uint8_t  *dst, SampleFormat_t dstformat, uin
 
 	return SoundDelayBuffer::ReadSamples(dst, dstformat, delay, channel, nchannels, MIN(nframes, maxframes));
 }
+
+BBC_AUDIOTOOLBOX_END

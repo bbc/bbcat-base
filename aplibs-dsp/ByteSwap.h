@@ -3,6 +3,8 @@
 
 #include "misc.h"
 
+BBC_AUDIOTOOLBOX_START
+
 enum {
 	SWAP_NEVER = 0,
 	SWAP_ALWAYS,
@@ -23,5 +25,7 @@ extern void ByteSwap(int16_t&  val, uint8_t type = SWAP_ALWAYS);
 
 #define BYTESWAP_ARRAY(x) ByteSwap(x, sizeof((x)[0]), sizeof(x) / sizeof((x)[0]))
 #define BYTESWAP_VAR(x) ByteSwap(&x, sizeof(x), 1)
+
+BBC_AUDIOTOOLBOX_END
 
 #endif

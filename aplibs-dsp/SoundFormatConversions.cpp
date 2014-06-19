@@ -8,6 +8,8 @@
 #include "SoundFormatConversions.h"
 #include "SoundFormatRawConversions.h"
 
+BBC_AUDIOTOOLBOX_START
+
 /*--------------------------------------------------------------------------------*/
 /** Array of number of bytes for each format
  */
@@ -226,3 +228,5 @@ void TransferSamples(const double *src, uint_t src_channel, uint_t src_channels,
 {
 	TransferSamples(src, SampleFormat_Double, MACHINE_IS_BIG_ENDIAN, src_channel, src_channels, dst, SampleFormat_Double, MACHINE_IS_BIG_ENDIAN, dst_channel, dst_channels, nchannels, nframes, ditherer);
 }
+
+BBC_AUDIOTOOLBOX_END

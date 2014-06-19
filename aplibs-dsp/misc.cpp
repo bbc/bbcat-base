@@ -20,6 +20,8 @@
 
 using namespace std;
 
+BBC_AUDIOTOOLBOX_START
+
 static vector<char *> AllocatedStrings;
 
 static ThreadLockObject debuglock;
@@ -263,3 +265,5 @@ void Interpolate(double& current, double target, double coeff, double limit)
 	current += (target - current) * coeff;
 	if (fabs(target - current) < limit) current = target;
 }
+
+BBC_AUDIOTOOLBOX_END

@@ -3,6 +3,8 @@
 
 #include "3DPosition.h"
 
+BBC_AUDIOTOOLBOX_START
+
 /*--------------------------------------------------------------------------------*/
 /** Base class for the tracking of position as it changes over time
  *
@@ -32,5 +34,7 @@ public:
 	/*--------------------------------------------------------------------------------*/
 	virtual const ParameterSet *GetPositionSupplement() const {return NULL;}
 };
+
+BBC_AUDIOTOOLBOX_END
 
 #endif

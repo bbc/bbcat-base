@@ -5,6 +5,8 @@
 
 #include "ByteSwap.h"
 
+BBC_AUDIOTOOLBOX_START
+
 #ifndef MACHINE_IS_BIG_ENDIAN
 // endianness cannot be determined at compile time, determine at run-time
 bool __MachineIsBigEndian()
@@ -78,3 +80,5 @@ void ByteSwap(int16_t& val, uint8_t type)
 {
 	return ByteSwap(&val, sizeof(val), 1, type);
 }
+
+BBC_AUDIOTOOLBOX_END

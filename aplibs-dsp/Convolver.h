@@ -26,6 +26,8 @@ namespace apf {
 	}
 }
 
+BBC_AUDIOTOOLBOX_START
+
 /*--------------------------------------------------------------------------------*/
 /** ConvolverManager acts as manager for thr individual convolvers, it holds all the
  * impulse responses (as frequency filters) and creates and destroys convolver objects
@@ -87,7 +89,7 @@ public:
 	 */
 	/*--------------------------------------------------------------------------------*/
 	bool SelectIR(uint_t convolver, uint_t ir);
-	
+
 	/*--------------------------------------------------------------------------------*/
 	/** Perform convolution on all convolvers
 	 *
@@ -183,7 +185,7 @@ protected:
 		Convolver& convolver = *(Convolver *)arg;
 		return convolver.Process();
 	}
-	
+
 	virtual void *Process();
 
 	std::string DebugHeader() const;
@@ -204,5 +206,7 @@ protected:
 	volatile bool    	 	 hqproc;
 	volatile bool    	 	 quitthread;
 };
+
+BBC_AUDIOTOOLBOX_END
 
 #endif /* CONVOLVER_H_ */

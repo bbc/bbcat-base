@@ -7,6 +7,8 @@
 #include "misc.h"
 #include "ParameterSet.h"
 
+BBC_AUDIOTOOLBOX_START
+
 class PositionTransform;
 
 /*--------------------------------------------------------------------------------*/
@@ -251,5 +253,7 @@ protected:
 	/*--------------------------------------------------------------------------------*/
 	void Rotate(double& x, double& y, double angle) const;
 };
+
+BBC_AUDIOTOOLBOX_END
 
 #endif

@@ -26,6 +26,10 @@
 
 #define UNUSED_PARAMETER(name) ((void)(name))
 
+#define USE_BBC_AUDIOTOOLBOX using namespace bbcat;
+#define BBC_AUDIOTOOLBOX_START namespace bbcat {
+#define BBC_AUDIOTOOLBOX_END }
+
 #ifdef __BYTE_ORDER__
 // endianness can be determined at compile time
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -54,6 +58,8 @@ typedef signed   long long sllong_t;
 typedef unsigned long long ullong_t;
 
 #define PACKEDSTRUCT struct __attribute__ ((packed))
+
+BBC_AUDIOTOOLBOX_START
 
 extern void debug_msg(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 extern void debug_err(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
@@ -176,5 +182,7 @@ bool map_compare (Map const &lhs, Map const &rhs) {
     return ((lhs.size() == rhs.size()) &&
 			std::equal(lhs.begin(), lhs.end(), rhs.begin()));
 }
+
+BBC_AUDIOTOOLBOX_END
 
 #endif

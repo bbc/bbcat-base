@@ -5,6 +5,8 @@
 
 #include "3DPosition.h"
 
+BBC_AUDIOTOOLBOX_START
+
 /*--------------------------------------------------------------------------------*/
 /** VBAP based panner
  *
@@ -209,5 +211,7 @@ protected:
 	/*--------------------------------------------------------------------------------*/
 	static bool LinesIntersect(const Position& l1p1, const Position& l1p2, const Position& l2p1, const Position& l2p2);
 };
+
+BBC_AUDIOTOOLBOX_END
 
 #endif

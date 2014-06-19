@@ -8,6 +8,8 @@
 
 using namespace std;
 
+BBC_AUDIOTOOLBOX_START
+
 ParameterSet::ParameterSet(const ParameterSet& obj)
 {
 	operator = (obj);
@@ -136,3 +138,5 @@ bool ParameterSet::Get(const string& name, double& val) const
 	const map<string,string>::const_iterator it = values.find(name);
 	return ((it != values.end()) && (sscanf(it->second.c_str(), "%lf", &val) > 0));
 }
+
+BBC_AUDIOTOOLBOX_END

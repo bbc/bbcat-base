@@ -3,6 +3,10 @@
 
 #include <pthread.h>
 
+#include "misc.h"
+
+BBC_AUDIOTOOLBOX_START
+
 class ThreadLockObject {
 public:
 	ThreadLockObject();
@@ -52,5 +56,7 @@ public:
 protected:
 	ThreadLockObject& obj;
 };
+
+BBC_AUDIOTOOLBOX_END
 
 #endif

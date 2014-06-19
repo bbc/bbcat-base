@@ -6,6 +6,8 @@
 
 #include "misc.h"
 
+BBC_AUDIOTOOLBOX_START
+
 /*--------------------------------------------------------------------------------*/
 /** Collection of parameters, each with name/value pair with type conversion
  *
@@ -96,5 +98,7 @@ public:
 protected:
 	std::map<std::string,std::string> values;
 };
+
+BBC_AUDIOTOOLBOX_END
 
 #endif

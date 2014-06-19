@@ -10,6 +10,8 @@
 #define DEBUG_LEVEL 1
 #include "SoundFormatRawConversions.h"
 
+BBC_AUDIOTOOLBOX_START
+
 // macro to reduce the ugliness of using static_cast
 #define cast(type,val) static_cast<type>(val)
 
@@ -22,7 +24,6 @@ static void __CopyMemory_2(const uint8_t *src, uint8_t *dst, uint_t nchannels, u
 	uint_t i;
 
 	(void)ditherer;
-
 	for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
 		if (dst != src) memcpy(dst, src, nchannels * 2);
 	}
@@ -33,7 +34,6 @@ static void __CopyMemory_3(const uint8_t *src, uint8_t *dst, uint_t nchannels, u
 	uint_t i;
 
 	(void)ditherer;
-
 	for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
 		if (dst != src) memcpy(dst, src, nchannels * 3);
 	}
@@ -44,7 +44,6 @@ static void __CopyMemory_4(const uint8_t *src, uint8_t *dst, uint_t nchannels, u
 	uint_t i;
 
 	(void)ditherer;
-
 	for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
 		if (dst != src) memcpy(dst, src, nchannels * 4);
 	}
@@ -55,7 +54,6 @@ static void __CopyMemory_8(const uint8_t *src, uint8_t *dst, uint_t nchannels, u
 	uint_t i;
 
 	(void)ditherer;
-
 	for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
 		if (dst != src) memcpy(dst, src, nchannels * 8);
 	}
@@ -77,7 +75,6 @@ static void __Convert_16bitLE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 3 - 3;
@@ -121,7 +118,6 @@ static void __Convert_16bitLE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 4 - 4;
@@ -172,7 +168,6 @@ static void __Convert_16bitLE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 4 - 4;
@@ -225,7 +220,6 @@ static void __Convert_16bitLE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 8 - 8;
@@ -281,7 +275,6 @@ static void __Convert_24bitLE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 3;
 	dstflen -= nchannels * 2;
@@ -322,7 +315,6 @@ static void __Convert_24bitLE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 4 - 4;
@@ -368,7 +360,6 @@ static void __Convert_24bitLE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 4 - 4;
@@ -416,7 +407,6 @@ static void __Convert_24bitLE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 8 - 8;
@@ -467,7 +457,6 @@ static void __Convert_32bitLE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 2;
@@ -513,7 +502,6 @@ static void __Convert_32bitLE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 3;
@@ -556,7 +544,6 @@ static void __Convert_32bitLE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 4 - 4;
@@ -609,7 +596,6 @@ static void __Convert_32bitLE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 8 - 8;
@@ -666,7 +652,6 @@ static void __Convert_FloatLE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 2;
@@ -715,7 +700,6 @@ static void __Convert_FloatLE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 3;
@@ -760,7 +744,6 @@ static void __Convert_FloatLE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 4;
@@ -808,7 +791,6 @@ static void __Convert_FloatLE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 8 - 8;
@@ -865,7 +847,6 @@ static void __Convert_DoubleLE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 2;
@@ -914,7 +895,6 @@ static void __Convert_DoubleLE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 3;
@@ -959,7 +939,6 @@ static void __Convert_DoubleLE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 4;
@@ -1009,7 +988,6 @@ static void __Convert_DoubleLE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 4;
@@ -1057,7 +1035,6 @@ static void __Convert_16bitLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 2;
 	dstflen -= nchannels * 2;
@@ -1101,7 +1078,6 @@ static void __Convert_16bitLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 3 - 3;
@@ -1145,7 +1121,6 @@ static void __Convert_16bitLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 4 - 4;
@@ -1196,7 +1171,6 @@ static void __Convert_16bitLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 4 - 4;
@@ -1249,7 +1223,6 @@ static void __Convert_16bitLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 8 - 8;
@@ -1305,7 +1278,6 @@ static void __Convert_24bitLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 3;
 	dstflen -= nchannels * 2;
@@ -1346,7 +1318,6 @@ static void __Convert_24bitLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 3;
 	dstflen -= nchannels * 3;
@@ -1381,7 +1352,6 @@ static void __Convert_24bitLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 4 - 4;
@@ -1427,7 +1397,6 @@ static void __Convert_24bitLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 4 - 4;
@@ -1475,7 +1444,6 @@ static void __Convert_24bitLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 8 - 8;
@@ -1526,7 +1494,6 @@ static void __Convert_32bitLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 2;
@@ -1572,7 +1539,6 @@ static void __Convert_32bitLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 3;
@@ -1614,7 +1580,6 @@ static void __Convert_32bitLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 4;
@@ -1661,7 +1626,6 @@ static void __Convert_32bitLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 4 - 4;
@@ -1714,7 +1678,6 @@ static void __Convert_32bitLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 8 - 8;
@@ -1771,7 +1734,6 @@ static void __Convert_FloatLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 2;
@@ -1820,7 +1782,6 @@ static void __Convert_FloatLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 3;
@@ -1865,7 +1826,6 @@ static void __Convert_FloatLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 4;
@@ -1913,7 +1873,6 @@ static void __Convert_FloatLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 4;
@@ -1959,7 +1918,6 @@ static void __Convert_FloatLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 8 - 8;
@@ -2016,7 +1974,6 @@ static void __Convert_DoubleLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 2;
@@ -2065,7 +2022,6 @@ static void __Convert_DoubleLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 3;
@@ -2110,7 +2066,6 @@ static void __Convert_DoubleLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 4;
@@ -2160,7 +2115,6 @@ static void __Convert_DoubleLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 4;
@@ -2208,7 +2162,6 @@ static void __Convert_DoubleLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uin
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 8;
@@ -2258,7 +2211,6 @@ static void __Convert_16bitBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 2;
 	dstflen -= nchannels * 2;
@@ -2302,7 +2254,6 @@ static void __Convert_16bitBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 3 - 3;
@@ -2346,7 +2297,6 @@ static void __Convert_16bitBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 4 - 4;
@@ -2397,7 +2347,6 @@ static void __Convert_16bitBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 4 - 4;
@@ -2450,7 +2399,6 @@ static void __Convert_16bitBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 8 - 8;
@@ -2506,7 +2454,6 @@ static void __Convert_24bitBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 3;
 	dstflen -= nchannels * 2;
@@ -2547,7 +2494,6 @@ static void __Convert_24bitBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 3;
 	dstflen -= nchannels * 3;
@@ -2582,7 +2528,6 @@ static void __Convert_24bitBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 4 - 4;
@@ -2628,7 +2573,6 @@ static void __Convert_24bitBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 4 - 4;
@@ -2676,7 +2620,6 @@ static void __Convert_24bitBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 8 - 8;
@@ -2727,7 +2670,6 @@ static void __Convert_32bitBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 2;
@@ -2773,7 +2715,6 @@ static void __Convert_32bitBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 3;
@@ -2815,7 +2756,6 @@ static void __Convert_32bitBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 4;
@@ -2862,7 +2802,6 @@ static void __Convert_32bitBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 4 - 4;
@@ -2915,7 +2854,6 @@ static void __Convert_32bitBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 8 - 8;
@@ -2972,7 +2910,6 @@ static void __Convert_FloatBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 2;
@@ -3021,7 +2958,6 @@ static void __Convert_FloatBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 3;
@@ -3066,7 +3002,6 @@ static void __Convert_FloatBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 4;
@@ -3114,7 +3049,6 @@ static void __Convert_FloatBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 4;
@@ -3160,7 +3094,6 @@ static void __Convert_FloatBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 8 - 8;
@@ -3217,7 +3150,6 @@ static void __Convert_DoubleBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 2;
@@ -3266,7 +3198,6 @@ static void __Convert_DoubleBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 3;
@@ -3311,7 +3242,6 @@ static void __Convert_DoubleBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 4;
@@ -3361,7 +3291,6 @@ static void __Convert_DoubleBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 4;
@@ -3409,7 +3338,6 @@ static void __Convert_DoubleBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uin
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 8;
@@ -3459,7 +3387,6 @@ static void __Convert_16bitBE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 3 - 3;
@@ -3503,7 +3430,6 @@ static void __Convert_16bitBE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 4 - 4;
@@ -3554,7 +3480,6 @@ static void __Convert_16bitBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 4 - 4;
@@ -3607,7 +3532,6 @@ static void __Convert_16bitBE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 2 - 2;
 	dst += nchannels * 8 - 8;
@@ -3663,7 +3587,6 @@ static void __Convert_24bitBE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 3;
 	dstflen -= nchannels * 2;
@@ -3704,7 +3627,6 @@ static void __Convert_24bitBE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 4 - 4;
@@ -3750,7 +3672,6 @@ static void __Convert_24bitBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 4 - 4;
@@ -3798,7 +3719,6 @@ static void __Convert_24bitBE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 3 - 3;
 	dst += nchannels * 8 - 8;
@@ -3849,7 +3769,6 @@ static void __Convert_32bitBE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 2;
@@ -3895,7 +3814,6 @@ static void __Convert_32bitBE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 3;
@@ -3938,7 +3856,6 @@ static void __Convert_32bitBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 4 - 4;
@@ -3991,7 +3908,6 @@ static void __Convert_32bitBE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 8 - 8;
@@ -4048,7 +3964,6 @@ static void __Convert_FloatBE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 2;
@@ -4097,7 +4012,6 @@ static void __Convert_FloatBE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 3;
@@ -4142,7 +4056,6 @@ static void __Convert_FloatBE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 4;
 	dstflen -= nchannels * 4;
@@ -4190,7 +4103,6 @@ static void __Convert_FloatBE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// destination samples are bigger -> start from end of frame and work backwards
 	src += nchannels * 4 - 4;
 	dst += nchannels * 8 - 8;
@@ -4247,7 +4159,6 @@ static void __Convert_DoubleBE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 2;
@@ -4296,7 +4207,6 @@ static void __Convert_DoubleBE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 3;
@@ -4341,7 +4251,6 @@ static void __Convert_DoubleBE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 4;
@@ -4391,7 +4300,6 @@ static void __Convert_DoubleBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint
 	(void)dvp;
 
 	(void)ditherer;
-
 	// adjust frame increments for effects of for-loop
 	srcflen -= nchannels * 8;
 	dstflen -= nchannels * 4;
@@ -4777,3 +4685,5 @@ const CONVERTSAMPLES SoundFormatConversions[2][2][SampleFormat_Count][SampleForm
 		},
 	},
 };
+
+BBC_AUDIOTOOLBOX_END

@@ -3,6 +3,8 @@
 
 #include "misc.h"
 
+BBC_AUDIOTOOLBOX_START
+
 /*--------------------------------------------------------------------------------*/
 /** Return the sample given by a floating point position within a buffer, assuming the buffer is circular
  *
@@ -28,6 +30,8 @@
 /*--------------------------------------------------------------------------------*/
 extern double FractionalSample(const double *buffer, uint_t channel, uint_t channels, uint_t length, double pos);
 extern double FractionalSample(const float  *buffer, uint_t channel, uint_t channels, uint_t length, double pos);
+
+BBC_AUDIOTOOLBOX_END
 
 #endif
 

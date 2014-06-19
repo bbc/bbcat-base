@@ -8,6 +8,8 @@
 #include "misc.h"
 #include "FractionalSample.h"
 
+BBC_AUDIOTOOLBOX_START
+
 enum {
 	OversamplingRate = 128,
 	FilterTaps       = 14,
@@ -329,3 +331,4 @@ double FractionalSample(const float *buffer, uint_t channel, uint_t channels, ui
 	return res;
 }
 
+BBC_AUDIOTOOLBOX_END
