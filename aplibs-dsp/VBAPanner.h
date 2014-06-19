@@ -18,11 +18,8 @@ BBC_AUDIOTOOLBOX_START
 /*--------------------------------------------------------------------------------*/
 class VBAPanner {
 public:
-	VBAPanner() : decay_power(1.4),
-				  speed_of_sound(330.0),
-				  max_dist(0.0),
-				  max_delay(0.0) {}
-	virtual ~VBAPanner() {}
+	VBAPanner();
+	virtual ~VBAPanner();
 
 	enum {
 		// to avoid hardcoded 3's everywhere!
@@ -162,8 +159,8 @@ protected:
 
 class VBAPannerPulkki : public VBAPanner {
 public:
-	VBAPannerPulkki() : VBAPanner() {}
-	virtual ~VBAPannerPulkki() {}
+	VBAPannerPulkki();
+	virtual ~VBAPannerPulkki();
 
 	/*--------------------------------------------------------------------------------*/
 	/** Find groups of speakers from existing speakers

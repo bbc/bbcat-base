@@ -7,10 +7,10 @@
 #include <string>
 #include <algorithm>
 
-#define DEBUG_LEVEL 2
+#define DEBUG_LEVEL 1
 #include "VBAPanner.h"
 
-#if DEBUG_LEVEL >= 3
+#if DEBUG_LEVEL >= 5
 #define OUTPUT_GROUPS 1
 #else
 #define OUTPUT_GROUPS 0
@@ -19,6 +19,17 @@
 using namespace std;
 
 BBC_AUDIOTOOLBOX_START
+
+VBAPanner::VBAPanner() : decay_power(1.4),
+						 speed_of_sound(330.0),
+						 max_dist(0.0),
+						 max_delay(0.0)
+{
+}
+
+VBAPanner::~VBAPanner()
+{
+}
 
 /*--------------------------------------------------------------------------------*/
 /** Set decay power due to distance (==2 for inverse square law)
@@ -129,7 +140,7 @@ void VBAPanner::Read(const char *filename)
 			if ((l == 0) || (line[0] == '#')) continue;
 
 			// attempt to interpret data as speaker positions or speaker indices
-			if (readingspeakers && (sscanf(line, "%u %lf,%lf,%lf %lf", &channel, &pos.pos.x, &pos.pos.y, &pos.pos.z, &gain) == 4)) {
+			if (readingspeakers && (sscanf(line, "%u %lf,%lf,%lf %lf", &channel, &pos.pos.x, &pos.pos.y, &pos.pos.z, &gain) >= 4)) {
 				pos.polar   = false;
 		
 				DEBUG3(("Adding %s as speaker (channel %u, gain %0.2lfdB)", pos.ToString().c_str(), channel, gain));
@@ -157,11 +168,10 @@ void VBAPanner::Read(const char *filename)
 			uint_t i;
 
 			for (i = 0; i < speakers.size(); i++) {
-				DEBUG("Speaker group %u/%u: gain %0.2lfdB delay %0.3lfs (full delay %0.3lfs)", i + 1, (uint_t)speakers.size(), 20.0 * log10(speakers[i].gain), speakers[i].delay_compensation, speakers[i].delay);
+				DEBUG("Speaker %u/%u: gain %0.2lfdB delay %0.3lfs (full delay %0.3lfs)", i + 1, (uint_t)speakers.size(), 20.0 * log10(speakers[i].gain), speakers[i].delay_compensation, speakers[i].delay);
 			}
 		}
 #endif
-
 		
 		if (groups.size() == 0) {
 			FindSpeakerGroups();
@@ -386,6 +396,8 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
 			for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < NUMBEROF(group.speakers)); i++) {
 				const Speaker_t& speaker = speakers[group.speakers[i]];
 
+				DEBUG3(("Speaker %u: index %u channel %u gain (%0.3le * %0.3le * %0.3le (=power(%0.3le, (1.0 - %0.3le))) = %0.3le) delay %0.3lfs", i, group.speakers[i], speaker.channel, bestgains[i], speaker.gain, src_gain, decay_power, src_dist, bestgains[i] * speaker.gain * src_gain, speaker.delay_compensation + src_delay));
+
 				speakerset.speakers[i].index   = group.speakers[i];
 				speakerset.speakers[i].channel = speaker.channel;
 				speakerset.speakers[i].gain    = bestgains[i] * speaker.gain * src_gain;	// apply gain due to source position
@@ -511,6 +523,14 @@ bool VBAPanner::Invert(SpeakerGroup_t& group)
 #define DEBUG_INTERSECTIONS 0
 #define DEBUG_REJECTED	    0
 #endif
+
+VBAPannerPulkki::VBAPannerPulkki() : VBAPanner()
+{
+}
+
+VBAPannerPulkki::~VBAPannerPulkki()
+{
+}
 
 /*--------------------------------------------------------------------------------*/
 /** Given two points on an unit sphere and an third point, return true if the third point lines on the line formed between the two points
