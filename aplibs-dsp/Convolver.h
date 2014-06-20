@@ -119,7 +119,7 @@ protected:
 	std::vector<Convolver *> convolvers;
 	std::vector<APFFilter>   filters;
 	std::vector<double>		 irdelays;
-	double					 mindelay;
+	std::vector<uint_t>		 irindexes;
 	double					 delayscale;
 	float					 audioscale;
 	bool					 hqproc;
@@ -148,11 +148,12 @@ protected:
 	 *
 	 * @param _input input buffer (assumed to by blocksize * inputchannels long)
 	 * @param inputchannels number of channels in _input
+	 * @param _delay output delay to interpolate internal delay to
 	 * @param _hqproc true for high quality delay processing (VERY CPU hungry)
 	 *
 	 */
 	/*--------------------------------------------------------------------------------*/
-	virtual void StartConvolution(const float *_input, uint_t inputchannels, bool _hqproc = true);
+	virtual void StartConvolution(const float *_input, uint_t inputchannels, double _delay, bool _hqproc = true);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Wait for end of convolution and mix output
@@ -168,7 +169,7 @@ protected:
 	/** Set filter and delay for convolution
 	 */
 	/*--------------------------------------------------------------------------------*/
-	virtual void SetResponse(const APFFilter& newfilter, double delay);
+	virtual void SetResponse(const APFFilter& newfilter);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Stop processing thread

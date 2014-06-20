@@ -36,7 +36,6 @@ BBC_AUDIOTOOLBOX_START
 /*--------------------------------------------------------------------------------*/
 ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize) : blocksize(partitionsize),
 																										partitions(0),
-																										mindelay(0.0),
 																										delayscale(1.0),
 																										audioscale(1.f),
 																										hqproc(true)
@@ -130,7 +129,6 @@ void ConvolverManager::LoadIRs(const char *filename)
 void ConvolverManager::LoadIRDelays(const char *filename)
 {
 	irdelays.clear();
-	mindelay = 0.0;	// used to reduce delays to minimum
 
 	if (filename) {
 		FILE *fp;
@@ -138,7 +136,9 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 		DEBUG2(("Reading IR delays from '%s'", filename));
 
 		if ((fp = fopen(filename, "r")) != NULL) {
+			double mindelay = 0.0;	// used to reduce delays to minimum
 			double delay = 0.0;
+			uint_t i;
 			bool   initialreading = true;
 
 			while (fscanf(fp, "%lf", &delay) > 0) {
@@ -148,6 +148,11 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 				if (initialreading || (delay < mindelay)) mindelay = delay;
 
 				initialreading = false;
+			}
+
+			// reduce each delay by mindelay to reduce overall delay
+			for (i = 0; i < irdelays.size(); i++) {
+				irdelays[i] -= mindelay;
 			}
 
 			fclose(fp);
@@ -162,6 +167,9 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
 {
+	// update irindexes vector size
+	irindexes.resize(nconvolvers);
+
 	// create convolvers if necessary
 	while (convolvers.size() < nconvolvers) {
 		Convolver *conv;
@@ -169,6 +177,9 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
 		// set up new convolver
 		if ((conv = new Convolver(convolvers.size(), blocksize, CreateConvolver(), audioscale)) != NULL) {
 			convolvers.push_back(conv);
+
+			// set default IR
+			SelectIR(convolvers.size() - 1, 0);
 		}
 		else {
 			ERROR("Failed to create new convolver!");
@@ -199,18 +210,13 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir)
 
 	if (convolver < convolvers.size()) {
 		if (ir < filters.size()) {
-			double delay = 0.0;
-
-			// if a delay is available for this IR, subtract minimum delay and scale it by delayscale
-			// to compensate for ITD
-			if (ir < irdelays.size()) {
-				delay = (irdelays[ir] - mindelay) * delayscale;
-			}
-
-			DEBUG3(("[%010lu]: Selecting IR %03u delay %5.2f for convolver %3u", (ulong_t)GetTickCount(), ir, delay, convolver));
+			DEBUG3(("[%010lu]: Selecting IR %03u for convolver %3u", (ulong_t)GetTickCount(), ir, convolver));
 
 			// set filter and delay in convolver
-			convolvers[convolver]->SetResponse(filters[ir], delay);
+			convolvers[convolver]->SetResponse(filters[ir]);
+
+			// store IR number in index
+			irindexes[convolver] = ir;
 
 			success = true;
 		}
@@ -241,8 +247,13 @@ void ConvolverManager::Convolve(const float *input, float *output, uint_t inputc
 	// start parallel convolving on all channels
 	for (i = 0; i < convolvers.size(); i++)
 	{
+		// if a delay is available for this IR, subtract minimum delay and scale it by delayscale
+		// to compensate for ITD
+		uint_t ir    = irindexes[i];
+		double delay = (ir < irdelays.size()) ? irdelays[ir] * delayscale : 0.0;
+
 		DEBUG5(("Starting convolver %u/%u...", i + 1, (uint_t)convolvers.size()));
-		convolvers[i]->StartConvolution(input + i / outputchannels, inputchannels, hqproc);
+		convolvers[i]->StartConvolution(input + i / outputchannels, inputchannels, delay, hqproc);
 		DEBUG5(("Convolver %u/%u started", i + 1, (uint_t)convolvers.size()));
 	}
 
@@ -330,7 +341,7 @@ void Convolver::StopThread()
  *
  */
 /*--------------------------------------------------------------------------------*/
-void Convolver::StartConvolution(const float *_input, uint_t inputchannels, bool _hqproc)
+void Convolver::StartConvolution(const float *_input, uint_t inputchannels, double _delay, bool _hqproc)
 {
 	uint_t i;
 
@@ -340,6 +351,9 @@ void Convolver::StartConvolution(const float *_input, uint_t inputchannels, bool
 	}
 
 	memcpy((float *)output, (const float *)input, blocksize * sizeof(*input));
+
+	// set delay
+	outputdelay = _delay;
 
 	// set high quality processing option
 	hqproc = _hqproc;
@@ -480,7 +494,7 @@ void *Convolver::Process()
 /** Set filter and delay for convolution
  */
 /*--------------------------------------------------------------------------------*/
-void Convolver::SetResponse(const APFFilter& newfilter, double delay)
+void Convolver::SetResponse(const APFFilter& newfilter)
 {
 	if (&newfilter != filter) {
 		DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
@@ -488,9 +502,6 @@ void Convolver::SetResponse(const APFFilter& newfilter, double delay)
 		// set convolver filter
 		filter = &newfilter;
 	}
-
-	// set delay
-	outputdelay = delay;
 }
 
 BBC_AUDIOTOOLBOX_END
