@@ -65,13 +65,13 @@ public:
 	/** Set delay scaling to compensate for factors such as ITD
 	 */
 	/*--------------------------------------------------------------------------------*/
-	void SetDelayScale(double scale = 1.0) {delayscale = scale;}
+	void SetDelayScale(double scale = 1.0) {delayscale = scale; updateparameters = true;}
 
 	/*--------------------------------------------------------------------------------*/
 	/** Enable/disable high quality delay processing
 	 */
 	/*--------------------------------------------------------------------------------*/
-	void EnableHQProcessing(bool enable = true) {hqproc = enable;}
+	void EnableHQProcessing(bool enable = true) {hqproc = enable; updateparameters = true;}
 
 	/*--------------------------------------------------------------------------------*/
 	/** Set the number of convolvers to run - creates and destroys convolvers as necessary
@@ -101,7 +101,7 @@ public:
 	 * @note this kicks off nconvolvers parallel threads to do the processing - can be VERY CPU hungry!
 	 */
 	/*--------------------------------------------------------------------------------*/
-	void Convolve(const float *input, float *output, uint_t inputchannels, uint_t outputchannels) const;
+	void Convolve(const float *input, float *output, uint_t inputchannels, uint_t outputchannels);
 
 protected:
 	typedef apf::conv::Convolver APFConvolver;
@@ -113,6 +113,16 @@ protected:
 	/*--------------------------------------------------------------------------------*/
 	APFConvolver *CreateConvolver() const;
 
+	/*--------------------------------------------------------------------------------*/
+	/** Update the parameters of an individual convolver
+	 *
+	 * @param convolver convolver number
+	 *
+	 * @note this function updates the filter, delay and HQ processing flag
+	 */
+	/*--------------------------------------------------------------------------------*/
+	virtual void UpdateConvolverParameters(uint_t convolver);
+
 protected:
 	uint_t				 	 blocksize;
 	uint_t				 	 partitions;
@@ -123,6 +133,7 @@ protected:
 	double					 delayscale;
 	float					 audioscale;
 	bool					 hqproc;
+	bool				     updateparameters;
 };
 
 class Convolver {
@@ -148,12 +159,10 @@ protected:
 	 *
 	 * @param _input input buffer (assumed to by blocksize * inputchannels long)
 	 * @param inputchannels number of channels in _input
-	 * @param _delay output delay to interpolate internal delay to
-	 * @param _hqproc true for high quality delay processing (VERY CPU hungry)
 	 *
 	 */
 	/*--------------------------------------------------------------------------------*/
-	virtual void StartConvolution(const float *_input, uint_t inputchannels, double _delay, bool _hqproc = true);
+	virtual void StartConvolution(const float *_input, uint_t inputchannels);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Wait for end of convolution and mix output
@@ -166,10 +175,10 @@ protected:
 	virtual void EndConvolution(float *_output, uint_t outputchannels);
 
 	/*--------------------------------------------------------------------------------*/
-	/** Set filter and delay for convolution
+	/** Set filter, delay and high-quality processing options for convolution
 	 */
 	/*--------------------------------------------------------------------------------*/
-	virtual void SetResponse(const APFFilter& newfilter);
+	virtual void SetParameters(const APFFilter& newfilter, double delay, bool hqproc);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Stop processing thread

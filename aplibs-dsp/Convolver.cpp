@@ -38,7 +38,8 @@ ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, 
 																										partitions(0),
 																										delayscale(1.0),
 																										audioscale(1.f),
-																										hqproc(true)
+																										hqproc(true),
+																										updateparameters(true)
 {
 	LoadIRs(irfile);
 	LoadIRDelays(irdelayfile);
@@ -116,6 +117,9 @@ void ConvolverManager::LoadIRs(const char *filename)
 				delete[] sampledata;
 				delete[] response;
 				delete   convolver;
+
+				// force update of parameters
+				updateparameters = true;
 			}
 		}
 		else ERROR("Failed to open IR file ('%s') for reading", filename);
@@ -156,6 +160,9 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 			}
 
 			fclose(fp);
+
+			// force update of parameters
+			updateparameters = true;
 		}
 		else DEBUG1(("Failed to open IR delays file ('%s') for reading, zeroing delays", filename));
 	}
@@ -180,6 +187,9 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
 
 			// set default IR
 			SelectIR(convolvers.size() - 1, 0);
+
+			// force update of parameters
+			updateparameters = true;
 		}
 		else {
 			ERROR("Failed to create new convolver!");
@@ -208,15 +218,17 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir)
 {
 	bool success = false;
 
-	if (convolver < convolvers.size()) {
-		if (ir < filters.size()) {
+	if (convolver < convolvers.size())
+	{
+		if (ir < filters.size())
+		{
 			DEBUG3(("[%010lu]: Selecting IR %03u for convolver %3u", (ulong_t)GetTickCount(), ir, convolver));
-
-			// set filter and delay in convolver
-			convolvers[convolver]->SetResponse(filters[ir]);
 
 			// store IR number in index
 			irindexes[convolver] = ir;
+
+			// update the parameters of the convolver
+			UpdateConvolverParameters(convolver);
 
 			success = true;
 		}
@@ -225,6 +237,31 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir)
 	else ERROR("Out-of-bounds convolver %u requested", convolver);
 
 	return success;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Update the parameters of an individual convolver
+ *
+ * @param convolver convolver number
+ *
+ * @note this function updates the filter, delay and HQ processing flag
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::UpdateConvolverParameters(uint_t convolver)
+{
+	if (convolver < convolvers.size())
+	{
+		uint_t ir = irindexes[convolver];
+
+		if (ir < filters.size())
+		{
+			// if a delay is available for this IR, subtract minimum delay and scale it by delayscale
+			// to compensate for ITD
+			double delay = (ir < irdelays.size()) ? irdelays[ir] * delayscale : 0.0;
+
+			convolvers[convolver]->SetParameters(filters[ir], delay, hqproc);
+		}
+	}
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -238,7 +275,7 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir)
  * @note this kicks off nconvolvers parallel threads to do the processing - can be VERY CPU hungry!
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::Convolve(const float *input, float *output, uint_t inputchannels, uint_t outputchannels) const
+void ConvolverManager::Convolve(const float *input, float *output, uint_t inputchannels, uint_t outputchannels)
 {
 	uint_t i;
 
@@ -247,15 +284,16 @@ void ConvolverManager::Convolve(const float *input, float *output, uint_t inputc
 	// start parallel convolving on all channels
 	for (i = 0; i < convolvers.size(); i++)
 	{
-		// if a delay is available for this IR, subtract minimum delay and scale it by delayscale
-		// to compensate for ITD
-		uint_t ir    = irindexes[i];
-		double delay = (ir < irdelays.size()) ? irdelays[ir] * delayscale : 0.0;
+		// if requested to, update the parameters of this convolver
+		if (updateparameters) UpdateConvolverParameters(i);
 
 		DEBUG5(("Starting convolver %u/%u...", i + 1, (uint_t)convolvers.size()));
-		convolvers[i]->StartConvolution(input + i / outputchannels, inputchannels, delay, hqproc);
+		convolvers[i]->StartConvolution(input + i / outputchannels, inputchannels);
 		DEBUG5(("Convolver %u/%u started", i + 1, (uint_t)convolvers.size()));
 	}
+
+	// clear flag
+	updateparameters = false;
 
 	// now process outputs
 	for (i = 0; i < convolvers.size(); i++)
@@ -337,11 +375,10 @@ void Convolver::StopThread()
  *
  * @param _input input buffer (assumed to by blocksize * inputchannels long)
  * @param inputchannels number of channels in _input
- * @param _hqproc true for high quality delay processing (VERY CPU hungry)
  *
  */
 /*--------------------------------------------------------------------------------*/
-void Convolver::StartConvolution(const float *_input, uint_t inputchannels, double _delay, bool _hqproc)
+void Convolver::StartConvolution(const float *_input, uint_t inputchannels)
 {
 	uint_t i;
 
@@ -351,12 +388,6 @@ void Convolver::StartConvolution(const float *_input, uint_t inputchannels, doub
 	}
 
 	memcpy((float *)output, (const float *)input, blocksize * sizeof(*input));
-
-	// set delay
-	outputdelay = _delay;
-
-	// set high quality processing option
-	hqproc = _hqproc;
 
 	DEBUG4(("%smain signal", DebugHeader().c_str()));
 
@@ -491,10 +522,10 @@ void *Convolver::Process()
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Set filter and delay for convolution
+/** Set filter, delay and high-quality processing options for convolution
  */
 /*--------------------------------------------------------------------------------*/
-void Convolver::SetResponse(const APFFilter& newfilter)
+void Convolver::SetParameters(const APFFilter& newfilter, double delay, bool hqproc)
 {
 	if (&newfilter != filter) {
 		DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
@@ -502,6 +533,10 @@ void Convolver::SetResponse(const APFFilter& newfilter)
 		// set convolver filter
 		filter = &newfilter;
 	}
+
+	// update processing parameters
+	this->hqproc = hqproc;
+	outputdelay  = delay;
 }
 
 BBC_AUDIOTOOLBOX_END
