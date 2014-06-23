@@ -624,6 +624,19 @@ static bool SpeakerOfIntereset(uint_t sp)
 
 /*--------------------------------------------------------------------------------*/
 /** Find groups of speakers from existing speakers
+ *
+ * Method:
+ * 1. From the list of speaker positions, create a list of unique speaker pairs, i.e.
+ *    every speaker paired with every subsequent speaker
+ * 2. Sort this list by the distance* between them, nearest first
+ * 3. Remove pairs that cross* any nearer pair
+ * 4. Form all possible triangles from pairs of pairs (with a common speaker), ensuring
+ *    the 'other' pair (formed by the two non-common speakers) is also a valid pair
+ * 5. Discard any triangle for which any OTHER speaker lies within it
+ * 
+ * The resultant list of triangles is the best set of speaker groups
+ *
+ * * all distance measurements and tests are done on a unit sphere
  */
 /*--------------------------------------------------------------------------------*/
 void VBAPannerPulkki::FindSpeakerGroups()
@@ -752,7 +765,9 @@ void VBAPannerPulkki::FindSpeakerGroups()
 	FILE   *rejfp = NULL;
 #endif
 
-	// form triplets from pairs of pairs (with common speaker) and test them
+	// form triplets from pairs of pairs (with common speaker) and then
+	// check that no OTHER speakers lie within the triangle, if any do,
+	// discard the triangle
 	for (it1 = pairs.begin(); it1 != pairs.end(); ++it1) {
 		const Pair_t& pair1 = *it1;
 
