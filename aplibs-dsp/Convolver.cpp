@@ -439,7 +439,7 @@ void *Convolver::Process()
 	double delay1   = 0.0;
 
 	// maxdelay can be extended now because of the rounding up of delaylen
-	maxdelay = delaylen - blocksize;
+	maxdelay = delaylen - blocksize - 1 - FractionalSampleAdditionalDelayRequired();
 
 	// clear delay memory
 	memset(delay, 0, delaylen * sizeof(*delay));

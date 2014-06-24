@@ -6,6 +6,12 @@
 BBC_AUDIOTOOLBOX_START
 
 /*--------------------------------------------------------------------------------*/
+/** Return additional items in buffers required for delay to work
+ */
+/*--------------------------------------------------------------------------------*/
+extern uint_t FractionalSampleAdditionalDelayRequired();
+
+/*--------------------------------------------------------------------------------*/
 /** Return the sample given by a floating point position within a buffer, assuming the buffer is circular
  *
  * @param buffer buffer containing channels x length samples

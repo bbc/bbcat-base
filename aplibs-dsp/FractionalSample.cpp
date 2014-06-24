@@ -242,6 +242,15 @@ static const double filter[OversamplingRate * FilterTaps] = {
 	0.000000000000e+000, 0.000000000000e+000, 0.000000000000e+000, 0.000000000000e+000, 0.000000000000e+000, 0.000000000000e+000, 0.000000000000e+000, 0.000000000000e+000, 
 };
 
+/*--------------------------------------------------------------------------------*/
+/** Return additional items in buffers required for delay to work
+ */
+/*--------------------------------------------------------------------------------*/
+uint_t FractionalSampleAdditionalDelayRequired()
+{
+	return FilterTaps;
+}
+
 // one iteration of filter
 #define FILTER_ITERATION \
 	res += filter[fpos] * buffer[bpos]; fpos += OversamplingRate; bpos += channels; if (bpos >= length) bpos -= length;
