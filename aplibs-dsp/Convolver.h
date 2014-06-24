@@ -227,6 +227,7 @@ protected:
 	volatile float   	 	 *output;
 	volatile double  	 	 outputdelay;
 	volatile float			 outputlevel;
+	volatile uint_t			 maxadditionaldelay;
 	volatile bool    	 	 hqproc;
 	volatile bool    	 	 quitthread;
 };

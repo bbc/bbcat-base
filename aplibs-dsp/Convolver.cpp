@@ -324,6 +324,7 @@ Convolver::Convolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convol
 	output(new float[blocksize]),
 	outputdelay(0.0),
 	outputlevel(1.f),
+	maxadditionaldelay(2400),
 	quitthread(false)
 {
 	// create thread
@@ -430,9 +431,15 @@ void Convolver::EndConvolution(float *_output, uint_t outputchannels)
 void *Convolver::Process()
 {
 	const APFFilter *convfilter = NULL;
-	uint_t delaypos = 0, delaylen = blocksize * 2;
-	float  *delay = new float[delaylen];		// delay memory
-	double delay1 = 0.0;
+	uint_t maxdelay = maxadditionaldelay;		// maximum delay in samples
+	uint_t delaypos = 0;
+	// delay length is maxdelay plus blocksize samples then rounded up to a whole number of blocksize's
+	uint_t delaylen = (1 + ((maxdelay + blocksize - 1) / blocksize)) * blocksize;
+	float  *delay   = new float[delaylen];		// delay memory
+	double delay1   = 0.0;
+
+	// maxdelay can be extended now because of the rounding up of delaylen
+	maxdelay = delaylen - blocksize;
 
 	// clear delay memory
 	memset(delay, 0, delaylen * sizeof(*delay));
@@ -487,7 +494,7 @@ void *Convolver::Process()
 
 		// process delay memory using specified delay
 		uint_t pos1   = delaypos + delaylen;
-		double delay2 = outputdelay;
+		double delay2 = MIN(outputdelay, (double)maxdelay);
 		double fpos1  = (double)pos1               - delay1;
 		double fpos2  = (double)(pos1 + blocksize) - delay2;
 
