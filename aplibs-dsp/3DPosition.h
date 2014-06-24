@@ -110,7 +110,7 @@ public:
 	 */
 	/*--------------------------------------------------------------------------------*/
 	friend Position operator + (const Position& obj1, const Position& obj2)    {Position res = obj1; res += obj2; return res;}
-	friend Position operator - (const Position& obj1, const Position& obj2)    {Position res = obj1; res += obj2; return res;}
+	friend Position operator - (const Position& obj1, const Position& obj2)    {Position res = obj1; res -= obj2; return res;}
 	friend Position operator * (const Position& obj1, double val) 			   {Position res = obj1; res *= val;  return res;}
 	friend Position operator / (const Position& obj1, double val) 			   {Position res = obj1; res /= val;  return res;}
 	friend Position operator * (const Position& obj1, const double vals[3])    {Position res = obj1; res *= vals; return res;}
