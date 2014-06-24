@@ -84,11 +84,12 @@ public:
 	 *
 	 * @param convolver convolver number 0 .. nconvolvers as set above
 	 * @param ir IR number 0 .. number of IRs loaded by LoadIRs()
+	 * @param delay additional delay to be applied to the convolver
 	 *
 	 * @return true if IR selected
 	 */
 	/*--------------------------------------------------------------------------------*/
-	bool SelectIR(uint_t convolver, uint_t ir);
+	bool SelectIR(uint_t convolver, uint_t ir, double delay = 0.0);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Perform convolution on all convolvers
@@ -130,6 +131,7 @@ protected:
 	std::vector<APFFilter>   filters;
 	std::vector<double>		 irdelays;
 	std::vector<uint_t>		 irindexes;
+	std::vector<double>		 delays;
 	double					 delayscale;
 	float					 audioscale;
 	bool					 hqproc;

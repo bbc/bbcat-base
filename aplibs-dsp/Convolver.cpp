@@ -177,6 +177,9 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
 	// update irindexes vector size
 	irindexes.resize(nconvolvers);
 
+	// update delays vector size
+	delays.resize(nconvolvers);
+
 	// create convolvers if necessary
 	while (convolvers.size() < nconvolvers) {
 		Convolver *conv;
@@ -187,9 +190,6 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
 
 			// set default IR
 			SelectIR(convolvers.size() - 1, 0);
-
-			// force update of parameters
-			updateparameters = true;
 		}
 		else {
 			ERROR("Failed to create new convolver!");
@@ -210,11 +210,12 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
  *
  * @param convolver convolver number 0 .. nconvolvers as set above
  * @param ir IR number 0 .. number of IRs loaded by LoadIRs()
+ * @param delay additional delay to be applied to the convolver
  *
  * @return true if IR selected
  */
 /*--------------------------------------------------------------------------------*/
-bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir)
+bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir, double delay)
 {
 	bool success = false;
 
@@ -226,6 +227,9 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir)
 
 			// store IR number in index
 			irindexes[convolver] = ir;
+
+			// store IR number in index
+			delays[convolver] = delay;
 
 			// update the parameters of the convolver
 			UpdateConvolverParameters(convolver);
@@ -259,7 +263,8 @@ void ConvolverManager::UpdateConvolverParameters(uint_t convolver)
 			// to compensate for ITD
 			double delay = (ir < irdelays.size()) ? irdelays[ir] * delayscale : 0.0;
 
-			convolvers[convolver]->SetParameters(filters[ir], delay, hqproc);
+			// pass parameters to convolver, add additional delay to scaled delay due to IR's
+			convolvers[convolver]->SetParameters(filters[ir], delay + delays[convolver], hqproc);
 		}
 	}
 }
