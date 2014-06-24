@@ -90,7 +90,7 @@ public:
 	 * @return true if IR selected
 	 */
 	/*--------------------------------------------------------------------------------*/
-	bool SelectIR(uint_t convolver, uint_t ir, float level = 1.f, double delay = 0.0);
+	bool SelectIR(uint_t convolver, uint_t ir, double level = 1.0, double delay = 0.0);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Perform convolution on all convolvers
@@ -128,7 +128,7 @@ protected:
 	typedef struct {
 		uint_t irindex;
 		double delay;
-		float  level;
+		double level;
 	} PARAMETERS;
 
 protected:
@@ -191,7 +191,7 @@ protected:
 	 * @param hqproc true for high-quality and CPU hungry processing
 	 */
 	/*--------------------------------------------------------------------------------*/
-	virtual void SetParameters(const APFFilter& newfilter, float level, double delay, bool hqproc);
+	virtual void SetParameters(const APFFilter& newfilter, double level, double delay, bool hqproc);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Stop processing thread
@@ -226,7 +226,7 @@ protected:
 	volatile float		     *input;
 	volatile float   	 	 *output;
 	volatile double  	 	 outputdelay;
-	volatile float			 outputlevel;
+	volatile double			 outputlevel;
 	volatile uint_t			 maxadditionaldelay;
 	volatile bool    	 	 hqproc;
 	volatile bool    	 	 quitthread;

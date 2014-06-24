@@ -213,7 +213,7 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
  * @return true if IR selected
  */
 /*--------------------------------------------------------------------------------*/
-bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir, float level, double delay)
+bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir, double level, double delay)
 {
 	bool success = false;
 
@@ -323,7 +323,7 @@ Convolver::Convolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convol
 	input(new float[blocksize]),
 	output(new float[blocksize]),
 	outputdelay(0.0),
-	outputlevel(1.f),
+	outputlevel(1.0),
 	maxadditionaldelay(2400),
 	quitthread(false)
 {
@@ -436,6 +436,7 @@ void *Convolver::Process()
 	// delay length is maxdelay plus blocksize samples then rounded up to a whole number of blocksize's
 	uint_t delaylen = (1 + ((maxdelay + blocksize - 1) / blocksize)) * blocksize;
 	float  *delay   = new float[delaylen];		// delay memory
+	double level1   = 1.0;
 	double delay1   = 0.0;
 
 	// maxdelay can be extended now because of the rounding up of delaylen
@@ -463,7 +464,7 @@ void *Convolver::Process()
 		convolver->add_block(input);
 
 		// do convolution
-		const float *result = convolver->convolve(scale * outputlevel);
+		const float *result = convolver->convolve(scale);
 		float       *dest   = delay + delaypos;
 			
 		// copy data into delay memory
@@ -494,6 +495,7 @@ void *Convolver::Process()
 
 		// process delay memory using specified delay
 		uint_t pos1   = delaypos + delaylen;
+		double level2 = outputlevel;
 		double delay2 = MIN(outputdelay, (double)maxdelay);
 		double fpos1  = (double)pos1               - delay1;
 		double fpos2  = (double)(pos1 + blocksize) - delay2;
@@ -501,25 +503,28 @@ void *Convolver::Process()
 		if (hqproc) {
 			// high quality processing - use SRC filter to generate samples with fractional delays
 			for (i = 0; i < blocksize; i++) {
-				double b    = (double)i / (double)blocksize, a = 1.0 - b;
-				double fpos = a * fpos1 + b * fpos2;
+				double b     = (double)i / (double)blocksize, a = 1.0 - b;
+				double fpos  = a * fpos1  + b * fpos2;
+				double level = a * level1 + b * level2;
 
-				output[i] = FractionalSample(delay, 0, 1, delaylen, fpos);
+				output[i] = level * FractionalSample(delay, 0, 1, delaylen, fpos);
 			}
 		}
 		else {
 			// low quality processing - just use integer delays without SRC filter
 			for (i = 0; i < blocksize; i++) {
-				double b    = (double)i / (double)blocksize, a = 1.0 - b;
-				double fpos = a * fpos1 + b * fpos2;
+				double b     = (double)i / (double)blocksize, a = 1.0 - b;
+				double fpos  = a * fpos1  + b * fpos2;
+				double level = a * level1 + b * level2;
 
-				output[i] = delay[(uint_t)fpos % delaylen];
+				output[i] = level * delay[(uint_t)fpos % delaylen];
 			}
 		}
 
 		// advance delay position by a block
 		delaypos = (delaypos + blocksize) % delaylen;
 		delay1   = delay2;
+		level1   = level2;
 
 		DEBUG4(("%sproc done", DebugHeader().c_str()));
 
@@ -541,7 +546,7 @@ void *Convolver::Process()
  * @param hqproc true for high-quality and CPU hungry processing
  */
 /*--------------------------------------------------------------------------------*/
-void Convolver::SetParameters(const APFFilter& newfilter, float level, double delay, bool hqproc)
+void Convolver::SetParameters(const APFFilter& newfilter, double level, double delay, bool hqproc)
 {
 	if (&newfilter != filter) {
 		DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
