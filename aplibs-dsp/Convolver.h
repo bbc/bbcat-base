@@ -84,12 +84,13 @@ public:
 	 *
 	 * @param convolver convolver number 0 .. nconvolvers as set above
 	 * @param ir IR number 0 .. number of IRs loaded by LoadIRs()
+	 * @param level audio output level
 	 * @param delay additional delay to be applied to the convolver
 	 *
 	 * @return true if IR selected
 	 */
 	/*--------------------------------------------------------------------------------*/
-	bool SelectIR(uint_t convolver, uint_t ir, double delay = 0.0);
+	bool SelectIR(uint_t convolver, uint_t ir, float level = 1.f, double delay = 0.0);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Perform convolution on all convolvers
@@ -124,14 +125,19 @@ protected:
 	/*--------------------------------------------------------------------------------*/
 	virtual void UpdateConvolverParameters(uint_t convolver);
 
+	typedef struct {
+		uint_t irindex;
+		double delay;
+		float  level;
+	} PARAMETERS;
+
 protected:
 	uint_t				 	 blocksize;
 	uint_t				 	 partitions;
 	std::vector<Convolver *> convolvers;
 	std::vector<APFFilter>   filters;
 	std::vector<double>		 irdelays;
-	std::vector<uint_t>		 irindexes;
-	std::vector<double>		 delays;
+	std::vector<PARAMETERS>	 parameters;
 	double					 delayscale;
 	float					 audioscale;
 	bool					 hqproc;
@@ -177,10 +183,15 @@ protected:
 	virtual void EndConvolution(float *_output, uint_t outputchannels);
 
 	/*--------------------------------------------------------------------------------*/
-	/** Set filter, delay and high-quality processing options for convolution
+	/** Set parameters and options for convolution
+	 *
+	 * @param newfilter new IR filter from ConvolverManager
+	 * @param level audio output level
+	 * @param delay audio delay (due to ITD and source delay)
+	 * @param hqproc true for high-quality and CPU hungry processing
 	 */
 	/*--------------------------------------------------------------------------------*/
-	virtual void SetParameters(const APFFilter& newfilter, double delay, bool hqproc);
+	virtual void SetParameters(const APFFilter& newfilter, float level, double delay, bool hqproc);
 
 	/*--------------------------------------------------------------------------------*/
 	/** Stop processing thread
@@ -215,6 +226,7 @@ protected:
 	volatile float		     *input;
 	volatile float   	 	 *output;
 	volatile double  	 	 outputdelay;
+	volatile float			 outputlevel;
 	volatile bool    	 	 hqproc;
 	volatile bool    	 	 quitthread;
 };
