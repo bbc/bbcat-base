@@ -208,7 +208,7 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
  * @param convolver convolver number 0 .. nconvolvers as set above
  * @param ir IR number 0 .. number of IRs loaded by LoadIRs()
  * @param level audio output level
- * @param delay additional delay to be applied to the convolver
+ * @param delay additional delay to be applied to the convolver (in SAMPLES)
  *
  * @return true if IR selected
  */
@@ -530,7 +530,7 @@ void *Convolver::Process()
  *
  * @param newfilter new IR filter from ConvolverManager
  * @param level audio output level
- * @param delay audio delay (due to ITD and source delay)
+ * @param delay audio delay (due to ITD and source delay) (in SAMPLES)
  * @param hqproc true for high-quality and CPU hungry processing
  */
 /*--------------------------------------------------------------------------------*/
