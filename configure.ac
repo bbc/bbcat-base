@@ -36,24 +36,34 @@ AC_SUBST(ACLOCAL_AMFLAGS)
 DX_DOXYGEN_FEATURE(ON)
 DX_INIT_DOXYGEN(aplibs-dsp, doxygen.cfg)
 
-# Check if we should enable debug support  (./configure --enable-debug)
+# Check if we should enable GPL code  (./configure --enable-gpl)
 AC_MSG_CHECKING(whether to include code under gpl)
-gpl_default="yes"
-AC_ARG_ENABLE(gpl, [  --enable-gpl=[no/yes] include code under gpl [default=$gpl_default]],, ENABLE_GPL=$gpl_default)
-AM_CONDITIONAL(ENABLE_GPL, test "x$ENABLE_GPL" = "xyes")
+AC_ARG_ENABLE(gpl, AS_HELP_STRING([--disable-gpl], [disable code under GPL]), ENABLE_GPL="no", ENABLE_GPL="yes")
+AM_CONDITIONAL(ENABLE_GPL, test "x${ENABLE_GPL}" = "xyes")
+if test "x${ENABLE_GPL}" = "xyes"; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+
+AC_MSG_CHECKING(whether to include support for SOFA files)
+AC_ARG_ENABLE(sofa, AS_HELP_STRING([--disable-sofa], [disable SOFA support]), ENABLE_SOFA="no", ENABLE_SOFA="yes")
+AM_CONDITIONAL(ENABLE_SOFA, test "x${ENABLE_SOFA}" = "xyes")
+if test "x${ENABLE_SOFA}" = "xyes"; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
 
 # Check if we should enable debug support  (./configure --enable-debug)
-AC_MSG_CHECKING(whether to enable debugging)
-debug_default="no"
-AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging
-					   [default=$debug_default]],, enable_debug=$debug_default)
-if test "x$enable_debug" = "xyes"; then
-		 APLIBS_DSP_CFLAGS="$APLIBS_DSP_CFLAGS -g -O0"
-#		 APLIBS_DSP_CFLAGS="$APLIBS_DSP_CFLAGS -g -O0 -DDEBUG"
-		 CXXFLAGS="$CXXFLAGS -O0"
-AC_MSG_RESULT(yes)
+AC_MSG_CHECKING(whether to disable debug support)
+AC_ARG_ENABLE(sofa, AS_HELP_STRING([--disable-debug], [disable debugging]), ENABLE_DEBUG="no", ENABLE_DEBUG="yes")
+if test "x${ENABLE_DEBUG}" = "xyes"; then
+  APLIBS_DSP_CFLAGS="$APLIBS_DSP_CFLAGS -g"
+  CXXFLAGS="$CXXFLAGS -g"
+  AC_MSG_RESULT(yes)
 else
-AC_MSG_RESULT(no)
+  AC_MSG_RESULT(no)
 fi
 
 LIBBOOST_VER="1.49.0"
@@ -128,6 +138,24 @@ if test ! x$osx = xtrue ; then
   RT_LIBS=""
   AC_CHECK_LIB(rt, clock_gettime, [RT_LIBS="-lrt"])
   AC_SUBST(RT_LIBS)
+fi
+
+if test "x${ENABLE_SOFA}" = "xyes"; then
+  NETCDF_VER="4.1.3"
+  PKG_CHECK_MODULES([NETCDF], [netcdf >= $NETCDF_VER], HAVE_NETCDF=yes, HAVE_NETCDF=no)
+
+  if test "x${HAVE_NETCDF}" != "xyes" ; then
+    AC_MSG_ERROR([netcdf >= $NETCDF_VER is required])
+  fi
+
+  if test "x$osx" = "xtrue" ; then
+  	NETCDFCXX_VER="4.2.1"
+  	PKG_CHECK_MODULES([NETCDFCXX], [netcdf-cxx4 >= $NETCDFCXX_VER], HAVE_NETCDFCXX=yes, HAVE_NETCDFCXX=no)
+
+  	if test "x${HAVE_NETCDFCXX}" != "xyes" ; then
+  	  AC_MSG_ERROR([netcdf-cxx4 >= $NETCDFCXX_VER is required])
+  	fi
+  fi
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.

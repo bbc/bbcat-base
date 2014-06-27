@@ -52,10 +52,7 @@ public:
   /** Default constructor, defaults to origin and cartesian co-ordinates
    */
   /*--------------------------------------------------------------------------------*/
-  Position(double x = 0.0, double y = 0.0, double z = 0.0) : polar(false) {
-    memset(&pos, 0, sizeof(pos));
-    pos.x = x; pos.y = y; pos.z = z;
-  }
+  Position(double x = 0.0, double y = 0.0, double z = 0.0);
   /*--------------------------------------------------------------------------------*/
   /** Copy constructor
    */
@@ -179,13 +176,13 @@ public:
   /*--------------------------------------------------------------------------------*/
   friend Position CrossProduct(const Position& obj1, const Position& obj2);
 
-  bool polar;               // true if co-ordinates are polar
+  bool polar;                 // true if co-ordinates are polar
   union {
     struct {
-      double az, el, d;     // azimuth (degrees), elevation (degrees) and distance (m)
+      double az, el, d;   // azimuth (degrees), elevation (degrees) and distance (m)
     };
     struct {
-      double x, y, z;       // co-ordinates in m
+      double x, y, z;     // co-ordinates in m
     };
   } pos;
 };

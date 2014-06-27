@@ -116,6 +116,16 @@ void PositionTransform::Rotate(double& x, double& y, double angle) const
 /*----------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------*/
+/** Default constructor, defaults to origin and cartesian co-ordinates
+ */
+/*--------------------------------------------------------------------------------*/
+Position::Position(double x, double y, double z) : polar(false)
+{
+	memset(&pos, 0, sizeof(pos));
+	pos.x = x; pos.y = y; pos.z = z;
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Return the same position but as polar co-ordinates
  */
 /*--------------------------------------------------------------------------------*/
