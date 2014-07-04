@@ -11,49 +11,49 @@
 BBC_AUDIOTOOLBOX_START
 
 SoundDelayBuffer::SoundDelayBuffer() : buf(NULL),
-									   format(SampleFormat_Double),
-									   channels(0),
-									   buflen(0),
-									   writepos(0)
+                                       format(SampleFormat_Double),
+                                       channels(0),
+                                       buflen(0),
+                                       writepos(0)
 {
 }
 
 SoundDelayBuffer::~SoundDelayBuffer()
 {
-	if (buf) delete[] buf;
+  if (buf) delete[] buf;
 }
 
 void SoundDelayBuffer::SetSize(uint_t chans, uint_t length, SampleFormat_t type)
 {
-	chans  = MAX(chans, 1);
-	length = MAX(length, 1);
+  chans  = MAX(chans, 1);
+  length = MAX(length, 1);
 
-	if ((chans != channels) || (length != buflen) || (type != format)) {
-		uint8_t *newbuf;
-		uint_t  bps = GetBytesPerSample(type);
+  if ((chans != channels) || (length != buflen) || (type != format)) {
+    uint8_t *newbuf;
+    uint_t  bps = GetBytesPerSample(type);
 
-		// add space for an extra double at the end of the buffer (irrespective of the format of the buffer) 
-		// to allow space for conversion
-		if ((newbuf = new uint8_t[chans * length * bps]) != NULL) {
-			// clear new allocation
-			memset(newbuf, 0, chans * length * bps);
+    // add space for an extra double at the end of the buffer (irrespective of the format of the buffer) 
+    // to allow space for conversion
+    if ((newbuf = new uint8_t[chans * length * bps]) != NULL) {
+      // clear new allocation
+      memset(newbuf, 0, chans * length * bps);
 
-			if (buf) {
-				// map existing delay data into new buffer
-				TransferSamples(buf, format, MACHINE_IS_BIG_ENDIAN, 0, channels,
-								newbuf,   format, MACHINE_IS_BIG_ENDIAN, 0, chans,
-								~0,	// this will be limited to the smaller of channels and chans
-								buflen);
-				delete[] buf;
-			}
+      if (buf) {
+        // map existing delay data into new buffer
+        TransferSamples(buf, format, MACHINE_IS_BIG_ENDIAN, 0, channels,
+                        newbuf,   format, MACHINE_IS_BIG_ENDIAN, 0, chans,
+                        ~0, // this will be limited to the smaller of channels and chans
+                        buflen);
+        delete[] buf;
+      }
 
-			buf       = newbuf;
-			channels  = chans;
-			buflen    = length;
-			format    = type;
-			writepos %= buflen;
-		}
-	}
+      buf       = newbuf;
+      channels  = chans;
+      buflen    = length;
+      format    = type;
+      writepos %= buflen;
+    }
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -72,35 +72,35 @@ void SoundDelayBuffer::SetSize(uint_t chans, uint_t length, SampleFormat_t type)
 /*--------------------------------------------------------------------------------*/
 uint_t SoundDelayBuffer::WriteSamples(const uint8_t *src, SampleFormat_t srcformat, uint_t channel, uint_t nchannels, uint_t nframes)
 {
-	uint_t frames = 0;
+  uint_t frames = 0;
 
-	if (buf) {
-		uint_t srclen = GetBytesPerSample(srcformat);
-		uint_t dstlen = GetBytesPerSample(format);
-		uint_t pos    = writepos;
+  if (buf) {
+    uint_t srclen = GetBytesPerSample(srcformat);
+    uint_t dstlen = GetBytesPerSample(format);
+    uint_t pos    = writepos;
 
-		// limit requested channels to those held in the buffer
-		channel   = MIN(channel,   channels - 1);
-		nchannels = MIN(nchannels, channels - channel);
+    // limit requested channels to those held in the buffer
+    channel   = MIN(channel,   channels - 1);
+    nchannels = MIN(nchannels, channels - channel);
 
-		while (nframes) {
-			uint8_t *dst = buf + pos * channels * dstlen;	// destination for copy
-			uint_t n = MIN(nframes, buflen - pos);			// maximum number of frames that can be stored this time
+    while (nframes) {
+      uint8_t *dst = buf + pos * channels * dstlen;   // destination for copy
+      uint_t n = MIN(nframes, buflen - pos);          // maximum number of frames that can be stored this time
 
-			TransferSamples(src, srcformat, MACHINE_IS_BIG_ENDIAN, 0,       nchannels,		// note differing number of channels for source
-							dst, format,	MACHINE_IS_BIG_ENDIAN, channel, channels,		// and destination -> this essentially interleaves the data
-							nchannels,
-							n);
+      TransferSamples(src, srcformat, MACHINE_IS_BIG_ENDIAN, 0,       nchannels,      // note differing number of channels for source
+                      dst, format,    MACHINE_IS_BIG_ENDIAN, channel, channels,       // and destination -> this essentially interleaves the data
+                      nchannels,
+                      n);
 
-			src     += nchannels * srclen * n;
-			pos     += n;
-			pos     %= buflen;
-			nframes -= n;
-			frames  += n;
-		}
-	}
+      src     += nchannels * srclen * n;
+      pos     += n;
+      pos     %= buflen;
+      nframes -= n;
+      frames  += n;
+    }
+  }
 
-	return frames;
+  return frames;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -120,57 +120,57 @@ uint_t SoundDelayBuffer::WriteSamples(const uint8_t *src, SampleFormat_t srcform
 /*--------------------------------------------------------------------------------*/
 uint_t SoundDelayBuffer::ReadSamples(uint8_t *dst, SampleFormat_t dstformat, uint_t delay, uint_t channel, uint_t nchannels, uint_t nframes)
 {
-	uint_t frames = 0;
+  uint_t frames = 0;
 
-	if (buf) {
-		uint_t srclen = GetBytesPerSample(format);
-		uint_t dstlen = GetBytesPerSample(dstformat);
-		uint_t pos    = (writepos + buflen - delay) % buflen;
+  if (buf) {
+    uint_t srclen = GetBytesPerSample(format);
+    uint_t dstlen = GetBytesPerSample(dstformat);
+    uint_t pos    = (writepos + buflen - delay) % buflen;
 
-		// limit requested channels to those held in the buffer
-		channel   = MIN(channel,   channels - 1);
-		nchannels = MIN(nchannels, channels - channel);
+    // limit requested channels to those held in the buffer
+    channel   = MIN(channel,   channels - 1);
+    nchannels = MIN(nchannels, channels - channel);
 
-		// limit the number of frames to the delay parameter since this is the maximum amount of data
-		// that can be safely read
-		nframes   = MIN(nframes, delay);
+    // limit the number of frames to the delay parameter since this is the maximum amount of data
+    // that can be safely read
+    nframes   = MIN(nframes, delay);
 
-		while (nframes) {
-			const uint8_t *src = buf + pos * channels * srclen;	// source for copy
-			uint_t n = MIN(nframes, buflen - pos);					// maximum number of frames that can be stored this time
+    while (nframes) {
+      const uint8_t *src = buf + pos * channels * srclen; // source for copy
+      uint_t n = MIN(nframes, buflen - pos);                  // maximum number of frames that can be stored this time
 
-			TransferSamples(src, format,	MACHINE_IS_BIG_ENDIAN, channel, channels,		// note differing number of channels for source
-							dst, dstformat,	MACHINE_IS_BIG_ENDIAN, 0,	    nchannels,		// and destination -> this essentially de-interleaves the data
-							nchannels,
-							n);
-			
-			dst     += nchannels * dstlen * n;
-			pos     += n;
-			pos     %= buflen;
-			nframes -= n;
-			frames  += n;
-		}
-	}
+      TransferSamples(src, format,    MACHINE_IS_BIG_ENDIAN, channel, channels,       // note differing number of channels for source
+                      dst, dstformat, MACHINE_IS_BIG_ENDIAN, 0,       nchannels,      // and destination -> this essentially de-interleaves the data
+                      nchannels,
+                      n);
+            
+      dst     += nchannels * dstlen * n;
+      pos     += n;
+      pos     %= buflen;
+      nframes -= n;
+      frames  += n;
+    }
+  }
 
-	return frames;
+  return frames;
 }
 
 double SoundDelayBuffer::ReadSample(uint_t channel, uint_t delay) const
 {
-	uint_t srclen = GetBytesPerSample(format);
-	double res;
-	TransferSamples(buf + ((writepos + buflen - delay) % buflen) * channels * srclen,
-					format, MACHINE_IS_BIG_ENDIAN,
-					channel, channels,
-					&res, SampleFormatOf(res), MACHINE_IS_BIG_ENDIAN,
-					0, 1);
-	return res;
+  uint_t srclen = GetBytesPerSample(format);
+  double res;
+  TransferSamples(buf + ((writepos + buflen - delay) % buflen) * channels * srclen,
+                  format, MACHINE_IS_BIG_ENDIAN,
+                  channel, channels,
+                  &res, SampleFormatOf(res), MACHINE_IS_BIG_ENDIAN,
+                  0, 1);
+  return res;
 }
 
 /*----------------------------------------------------------------------------------------------------*/
 
 SoundRingBuffer::SoundRingBuffer() : SoundDelayBuffer(),
-									 readpos(0)
+                                     readpos(0)
 {
 }
 
@@ -189,8 +189,8 @@ SoundRingBuffer::~SoundRingBuffer()
 /*--------------------------------------------------------------------------------*/
 void SoundRingBuffer::SetSize(uint_t chans, uint_t length, SampleFormat_t type)
 {
-	SoundDelayBuffer::SetSize(chans, length, type);
-	readpos %= buflen;
+  SoundDelayBuffer::SetSize(chans, length, type);
+  readpos %= buflen;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -210,26 +210,26 @@ void SoundRingBuffer::SetSize(uint_t chans, uint_t length, SampleFormat_t type)
 /*--------------------------------------------------------------------------------*/
 uint_t SoundRingBuffer::WriteSamples(const uint8_t  *src, SampleFormat_t srcformat, uint_t channel, uint_t nchannels, uint_t nframes)
 {
-	/*
-	 * the buffer can be viewed like this:
-	 *
-	 *               write                            read
-	 * |---------------|-------------------------------|--------------|
-	 *                 |                              |
-	 *                 |----------------------------->|
-	 *                            maxframes
-	 *
-	 * Therefore:
-	 *   maxframes = read - write - 1
-	 *
-	 * - 1 is to stop write position being coincident with read position after a write
-	 *
-	 * (All modulo maths)
-	 */
-	// simply limit frames to write and call SoundDelayBuffer::WriteSamples()
-	uint_t maxframes = GetWriteFramesAvailable();
+  /*
+   * the buffer can be viewed like this:
+   *
+   *               write                            read
+   * |---------------|-------------------------------|--------------|
+   *                 |                              |
+   *                 |----------------------------->|
+   *                            maxframes
+   *
+   * Therefore:
+   *   maxframes = read - write - 1
+   *
+   * - 1 is to stop write position being coincident with read position after a write
+   *
+   * (All modulo maths)
+   */
+  // simply limit frames to write and call SoundDelayBuffer::WriteSamples()
+  uint_t maxframes = GetWriteFramesAvailable();
 
-	return SoundDelayBuffer::WriteSamples(src, srcformat, channel, nchannels, MIN(nframes, maxframes));
+  return SoundDelayBuffer::WriteSamples(src, srcformat, channel, nchannels, MIN(nframes, maxframes));
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -249,34 +249,34 @@ uint_t SoundRingBuffer::WriteSamples(const uint8_t  *src, SampleFormat_t srcform
 /*--------------------------------------------------------------------------------*/
 uint_t SoundRingBuffer::ReadSamples(uint8_t  *dst, SampleFormat_t dstformat, uint_t delay, uint_t channel, uint_t nchannels, uint_t nframes)
 {
-	/*
-	 * the buffer can be viewed like this:
-	 *
-	 *               write                            read
-	 * |---------------|-------------------------------|--------------|
-	 *                                                 |
-	 *                                          |<-----|
-	 *                                          | delay
-	 *                                          |
-	 *                                          |---------------------|
-	 * |-------------->|                               maxframes    >>>
-	 * >>> maxframes
-	 *
-	 * Therefore:
-	 *   0 <= delay <= read - write
-	 *
-	 *   maxframes = write - (read - delay)
-	 *   maxframes = write + delay - read
-	 *
-	 * (All modulo maths)
-	 */
-	// limit delay parameter to data available
-	delay = MIN(delay, ((readpos + buflen - writepos) % buflen));
+  /*
+   * the buffer can be viewed like this:
+   *
+   *               write                            read
+   * |---------------|-------------------------------|--------------|
+   *                                                 |
+   *                                          |<-----|
+   *                                          | delay
+   *                                          |
+   *                                          |---------------------|
+   * |-------------->|                               maxframes    >>>
+   * >>> maxframes
+   *
+   * Therefore:
+   *   0 <= delay <= read - write
+   *
+   *   maxframes = write - (read - delay)
+   *   maxframes = write + delay - read
+   *
+   * (All modulo maths)
+   */
+  // limit delay parameter to data available
+  delay = MIN(delay, ((readpos + buflen - writepos) % buflen));
 
-	// calculate maximum number of frames that can be read
-	uint_t maxframes = (writepos + buflen + delay - readpos) % buflen;
+  // calculate maximum number of frames that can be read
+  uint_t maxframes = (writepos + buflen + delay - readpos) % buflen;
 
-	return SoundDelayBuffer::ReadSamples(dst, dstformat, delay, channel, nchannels, MIN(nframes, maxframes));
+  return SoundDelayBuffer::ReadSamples(dst, dstformat, delay, channel, nchannels, MIN(nframes, maxframes));
 }
 
 BBC_AUDIOTOOLBOX_END

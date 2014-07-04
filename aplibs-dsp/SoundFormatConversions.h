@@ -18,36 +18,36 @@
 BBC_AUDIOTOOLBOX_START
 
 typedef enum {
-	SampleFormat_Unknown = 0,
+  SampleFormat_Unknown = 0,
 
-	SampleFormat_16bit,			// 2 bytes per sample
-	SampleFormat_24bit,			// 3 bytes per sample
-	SampleFormat_32bit,			// 4 bytes per sample
+  SampleFormat_16bit,         // 2 bytes per sample
+  SampleFormat_24bit,         // 3 bytes per sample
+  SampleFormat_32bit,         // 4 bytes per sample
 
-	SampleFormat_Float,			// 4 bytes per sample
-	SampleFormat_Double,		// 8 bytes per sample
+  SampleFormat_Float,         // 4 bytes per sample
+  SampleFormat_Double,        // 8 bytes per sample
 
-	SampleFormat_Count,
+  SampleFormat_Count,
 
-	_SampleFormat_Integer_First = SampleFormat_16bit,
-	_SampleFormat_Integer_Last  = SampleFormat_32bit,
-	_SampleFormat_Float_First 	= SampleFormat_Float,
-	_SampleFormat_Float_Last  	= SampleFormat_Double,
+  _SampleFormat_Integer_First = SampleFormat_16bit,
+  _SampleFormat_Integer_Last  = SampleFormat_32bit,
+  _SampleFormat_Float_First   = SampleFormat_Float,
+  _SampleFormat_Float_Last    = SampleFormat_Double,
 } SampleFormat_t;
 
 class Ditherer {
 public:
-	Ditherer() {}
-	virtual ~Ditherer() {}
+  Ditherer() {}
+  virtual ~Ditherer() {}
 
-	virtual void Dither(uint_t channel, sint32_t& data, uint_t bits) {UNUSED_PARAMETER(channel); UNUSED_PARAMETER(data); UNUSED_PARAMETER(bits);}
-	virtual void Dither(uint_t channel, float&    data, uint_t bits) {UNUSED_PARAMETER(channel); UNUSED_PARAMETER(data); UNUSED_PARAMETER(bits);}
-	virtual void Dither(uint_t channel, double&   data, uint_t bits) {UNUSED_PARAMETER(channel); UNUSED_PARAMETER(data); UNUSED_PARAMETER(bits);}
+  virtual void Dither(uint_t channel, sint32_t& data, uint_t bits) {UNUSED_PARAMETER(channel); UNUSED_PARAMETER(data); UNUSED_PARAMETER(bits);}
+  virtual void Dither(uint_t channel, float&    data, uint_t bits) {UNUSED_PARAMETER(channel); UNUSED_PARAMETER(data); UNUSED_PARAMETER(bits);}
+  virtual void Dither(uint_t channel, double&   data, uint_t bits) {UNUSED_PARAMETER(channel); UNUSED_PARAMETER(data); UNUSED_PARAMETER(bits);}
 };
 
 typedef enum {
-	Dither_None = 0,
-	Dither_TPDF,
+  Dither_None = 0,
+  Dither_TPDF,
 } Dither_t;
 
 /*--------------------------------------------------------------------------------*/
@@ -133,13 +133,13 @@ extern uint8_t GetBytesPerSample(SampleFormat_t type);
  *   0 <  nchannels   <= dst_channels
  */
 /*--------------------------------------------------------------------------------*/
-extern void TransferSamples(const void  *vsrc,		 SampleFormat_t srctype, bool src_be,
-							uint_t 	 	src_channel, uint_t src_channels,
-							void		*vdst,	     SampleFormat_t dsttype, bool dst_be,
-							uint_t 	 	dst_channel, uint_t dst_channels,
-							uint_t 	 	nchannels = ~0,
-							uint_t		nframes   = 1,
-							Ditherer	*ditherer = NULL);
+extern void TransferSamples(const void  *vsrc,       SampleFormat_t srctype, bool src_be,
+                            uint_t      src_channel, uint_t src_channels,
+                            void        *vdst,       SampleFormat_t dsttype, bool dst_be,
+                            uint_t      dst_channel, uint_t dst_channels,
+                            uint_t      nchannels = ~0,
+                            uint_t      nframes   = 1,
+                            Ditherer    *ditherer = NULL);
 
 /*--------------------------------------------------------------------------------*/
 /** Memory to memory conversions/transfers

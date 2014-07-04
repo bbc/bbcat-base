@@ -34,25 +34,26 @@ BBC_AUDIOTOOLBOX_START
  *
  */
 /*--------------------------------------------------------------------------------*/
-ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize) : blocksize(partitionsize),
-																										partitions(0),
-																										delayscale(1.0),
-																										audioscale(1.f),
-																										hqproc(true),
-																										updateparameters(true)
+ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize) :
+  blocksize(partitionsize),
+  partitions(0),
+  delayscale(1.0),
+  audioscale(1.f),
+  hqproc(true),
+  updateparameters(true)
 {
-	LoadIRs(irfile);
-	LoadIRDelays(irdelayfile);
+  LoadIRs(irfile);
+  LoadIRDelays(irdelayfile);
 }
 
 ConvolverManager::~ConvolverManager()
 {
-	// delete all convolvers
-	while (convolvers.size()) {
-		Convolver *conv = convolvers.back();
-		delete conv;
-		convolvers.pop_back();
-	}
+  // delete all convolvers
+  while (convolvers.size()) {
+    Convolver *conv = convolvers.back();
+    delete conv;
+    convolvers.pop_back();
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -61,7 +62,7 @@ ConvolverManager::~ConvolverManager()
 /*--------------------------------------------------------------------------------*/
 ConvolverManager::APFConvolver *ConvolverManager::CreateConvolver() const
 {
-	return new APFConvolver(blocksize, partitions);
+  return new APFConvolver(blocksize, partitions);
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -70,60 +71,60 @@ ConvolverManager::APFConvolver *ConvolverManager::CreateConvolver() const
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::LoadIRs(const char *filename)
 {
-	filters.clear();
+  filters.clear();
 
-	if (filename) {
-		SndfileHandle file(filename);
+  if (filename) {
+    SndfileHandle file(filename);
 
-		if (file) {
-			APFConvolver *convolver;
-			ulong_t len = file.frames();
-			uint_t i, n = file.channels();
+    if (file) {
+      APFConvolver *convolver;
+      ulong_t len = file.frames();
+      uint_t i, n = file.channels();
 
-			DEBUG3(("Opened '%s' okay, %u channels at %luHz", filename, n, (ulong_t)file.samplerate()));
+      DEBUG3(("Opened '%s' okay, %u channels at %luHz", filename, n, (ulong_t)file.samplerate()));
 
-			partitions = (uint_t)((len + blocksize - 1) / blocksize);
+      partitions = (uint_t)((len + blocksize - 1) / blocksize);
 
-			DEBUG2(("File '%s' is %lu samples long, therefore %u partitions are needed", filename, len, partitions));
+      DEBUG2(("File '%s' is %lu samples long, therefore %u partitions are needed", filename, len, partitions));
 
-			audioscale = .125f;
+      audioscale = .125f;
 
-			if ((convolver = CreateConvolver()) != NULL) {
-				float *sampledata = new float[blocksize * partitions * n]; 
-				float *response   = new float[blocksize * partitions];
-				slong_t res;
+      if ((convolver = CreateConvolver()) != NULL) {
+        float *sampledata = new float[blocksize * partitions * n]; 
+        float *response   = new float[blocksize * partitions];
+        slong_t res;
 
-				memset(sampledata, 0, blocksize * partitions * n * sizeof(*sampledata));
+        memset(sampledata, 0, blocksize * partitions * n * sizeof(*sampledata));
 
-				DEBUG2(("Reading sample data..."));
+        DEBUG2(("Reading sample data..."));
 
-				if ((res = file.read(sampledata, blocksize * partitions * n)) < 0) {
-					ERROR("Read of %u frames result: %ld", blocksize * partitions, res);
-				}
+        if ((res = file.read(sampledata, blocksize * partitions * n)) < 0) {
+          ERROR("Read of %u frames result: %ld", blocksize * partitions, res);
+        }
 
-				DEBUG2(("Creating %u filters...", n));
-				uint32_t tick = GetTickCount();
-				for (i = 0; i < n; i++) {
-					DEBUG5(("Creating filter for IR %u", i));
+        DEBUG2(("Creating %u filters...", n));
+        uint32_t tick = GetTickCount();
+        for (i = 0; i < n; i++) {
+          DEBUG5(("Creating filter for IR %u", i));
 
-					filters.push_back(APFFilter(blocksize, partitions));
+          filters.push_back(APFFilter(blocksize, partitions));
 
-					TransferSamples(sampledata, i, n, response, 0, 1, 1, blocksize * partitions);
+          TransferSamples(sampledata, i, n, response, 0, 1, 1, blocksize * partitions);
 
-					convolver->prepare_filter(response, response + blocksize * partitions, filters[i]);
-				}
-				DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+          convolver->prepare_filter(response, response + blocksize * partitions, filters[i]);
+        }
+        DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
 
-				delete[] sampledata;
-				delete[] response;
-				delete   convolver;
+        delete[] sampledata;
+        delete[] response;
+        delete   convolver;
 
-				// force update of parameters
-				updateparameters = true;
-			}
-		}
-		else ERROR("Failed to open IR file ('%s') for reading", filename);
-	}
+        // force update of parameters
+        updateparameters = true;
+      }
+    }
+    else ERROR("Failed to open IR file ('%s') for reading", filename);
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -132,40 +133,40 @@ void ConvolverManager::LoadIRs(const char *filename)
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::LoadIRDelays(const char *filename)
 {
-	irdelays.clear();
+  irdelays.clear();
 
-	if (filename) {
-		FILE *fp;
+  if (filename) {
+    FILE *fp;
 
-		DEBUG2(("Reading IR delays from '%s'", filename));
+    DEBUG2(("Reading IR delays from '%s'", filename));
 
-		if ((fp = fopen(filename, "r")) != NULL) {
-			double mindelay = 0.0;	// used to reduce delays to minimum
-			double delay = 0.0;
-			uint_t i;
-			bool   initialreading = true;
+    if ((fp = fopen(filename, "r")) != NULL) {
+      double mindelay = 0.0;  // used to reduce delays to minimum
+      double delay = 0.0;
+      uint_t i;
+      bool   initialreading = true;
 
-			while (fscanf(fp, "%lf", &delay) > 0) {
-				irdelays.push_back(delay);
+      while (fscanf(fp, "%lf", &delay) > 0) {
+        irdelays.push_back(delay);
 
-				// update minimum delay if necessary
-				if (initialreading || (delay < mindelay)) mindelay = delay;
+        // update minimum delay if necessary
+        if (initialreading || (delay < mindelay)) mindelay = delay;
 
-				initialreading = false;
-			}
+        initialreading = false;
+      }
 
-			// reduce each delay by mindelay to reduce overall delay
-			for (i = 0; i < irdelays.size(); i++) {
-				irdelays[i] -= mindelay;
-			}
+      // reduce each delay by mindelay to reduce overall delay
+      for (i = 0; i < irdelays.size(); i++) {
+        irdelays[i] -= mindelay;
+      }
 
-			fclose(fp);
+      fclose(fp);
 
-			// force update of parameters
-			updateparameters = true;
-		}
-		else DEBUG1(("Failed to open IR delays file ('%s') for reading, zeroing delays", filename));
-	}
+      // force update of parameters
+      updateparameters = true;
+    }
+    else DEBUG1(("Failed to open IR delays file ('%s') for reading, zeroing delays", filename));
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -174,32 +175,32 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
 {
-	// update parameters array size
-	parameters.resize(nconvolvers);
+  // update parameters array size
+  parameters.resize(nconvolvers);
 
-	// create convolvers if necessary
-	while (convolvers.size() < nconvolvers) {
-		Convolver *conv;
+  // create convolvers if necessary
+  while (convolvers.size() < nconvolvers) {
+    Convolver *conv;
 
-		// set up new convolver
-		if ((conv = new Convolver(convolvers.size(), blocksize, CreateConvolver(), audioscale)) != NULL) {
-			convolvers.push_back(conv);
+    // set up new convolver
+    if ((conv = new Convolver(convolvers.size(), blocksize, CreateConvolver(), audioscale)) != NULL) {
+      convolvers.push_back(conv);
 
-			// set default IR
-			SelectIR(convolvers.size() - 1, 0);
-		}
-		else {
-			ERROR("Failed to create new convolver!");
-			break;
-		}
-	}
+      // set default IR
+      SelectIR(convolvers.size() - 1, 0);
+    }
+    else {
+      ERROR("Failed to create new convolver!");
+      break;
+    }
+  }
 
-	// delete excessive convolvers
-	while (convolvers.size() > nconvolvers) {
-		Convolver *conv = convolvers.back();
-		delete conv;
-		convolvers.pop_back();
-	}
+  // delete excessive convolvers
+  while (convolvers.size() > nconvolvers) {
+    Convolver *conv = convolvers.back();
+    delete conv;
+    convolvers.pop_back();
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -215,29 +216,29 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
 /*--------------------------------------------------------------------------------*/
 bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir, double level, double delay)
 {
-	bool success = false;
+  bool success = false;
 
-	if (convolver < convolvers.size())
-	{
-		if (ir < filters.size())
-		{
-			DEBUG3(("[%010lu]: Selecting IR %03u for convolver %3u", (ulong_t)GetTickCount(), ir, convolver));
+  if (convolver < convolvers.size())
+  {
+    if (ir < filters.size())
+    {
+      DEBUG3(("[%010lu]: Selecting IR %03u for convolver %3u", (ulong_t)GetTickCount(), ir, convolver));
 
-			// store parameters for convolver
-			parameters[convolver].irindex = ir;
-			parameters[convolver].level   = level;
-			parameters[convolver].delay   = delay;
+      // store parameters for convolver
+      parameters[convolver].irindex = ir;
+      parameters[convolver].level   = level;
+      parameters[convolver].delay   = delay;
 
-			// update the parameters of the convolver
-			UpdateConvolverParameters(convolver);
+      // update the parameters of the convolver
+      UpdateConvolverParameters(convolver);
 
-			success = true;
-		}
-		else ERROR("Out-of-bounds IR %u requested", ir);
-	}
-	else ERROR("Out-of-bounds convolver %u requested", convolver);
+      success = true;
+    }
+    else ERROR("Out-of-bounds IR %u requested", ir);
+  }
+  else ERROR("Out-of-bounds convolver %u requested", convolver);
 
-	return success;
+  return success;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -250,21 +251,21 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir, double level, doubl
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::UpdateConvolverParameters(uint_t convolver)
 {
-	if (convolver < convolvers.size())
-	{
-		const PARAMETERS& params = parameters[convolver];
-		uint_t ir = params.irindex;
+  if (convolver < convolvers.size())
+  {
+    const PARAMETERS& params = parameters[convolver];
+    uint_t ir = params.irindex;
 
-		if (ir < filters.size())
-		{
-			// if a delay is available for this IR, subtract minimum delay and scale it by delayscale
-			// to compensate for ITD
-			double delay = (ir < irdelays.size()) ? irdelays[ir] * delayscale : 0.0;
+    if (ir < filters.size())
+    {
+      // if a delay is available for this IR, subtract minimum delay and scale it by delayscale
+      // to compensate for ITD
+      double delay = (ir < irdelays.size()) ? irdelays[ir] * delayscale : 0.0;
 
-			// pass parameters to convolver, add additional delay to scaled delay due to IR's
-			convolvers[convolver]->SetParameters(filters[ir], params.level, delay + params.delay, hqproc);
-		}
-	}
+      // pass parameters to convolver, add additional delay to scaled delay due to IR's
+      convolvers[convolver]->SetParameters(filters[ir], params.level, delay + params.delay, hqproc);
+    }
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -280,31 +281,31 @@ void ConvolverManager::UpdateConvolverParameters(uint_t convolver)
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::Convolve(const float *input, float *output, uint_t inputchannels, uint_t outputchannels)
 {
-	uint_t i;
+  uint_t i;
 
-	// ASSUMES output is clear before being called
+  // ASSUMES output is clear before being called
 
-	// start parallel convolving on all channels
-	for (i = 0; i < convolvers.size(); i++)
-	{
-		// if requested to, update the parameters of this convolver
-		if (updateparameters) UpdateConvolverParameters(i);
+  // start parallel convolving on all channels
+  for (i = 0; i < convolvers.size(); i++)
+  {
+    // if requested to, update the parameters of this convolver
+    if (updateparameters) UpdateConvolverParameters(i);
 
-		DEBUG5(("Starting convolver %u/%u...", i + 1, (uint_t)convolvers.size()));
-		convolvers[i]->StartConvolution(input + i / outputchannels, inputchannels);
-		DEBUG5(("Convolver %u/%u started", i + 1, (uint_t)convolvers.size()));
-	}
+    DEBUG5(("Starting convolver %u/%u...", i + 1, (uint_t)convolvers.size()));
+    convolvers[i]->StartConvolution(input + i / outputchannels, inputchannels);
+    DEBUG5(("Convolver %u/%u started", i + 1, (uint_t)convolvers.size()));
+  }
 
-	// clear flag
-	updateparameters = false;
+  // clear flag
+  updateparameters = false;
 
-	// now process outputs
-	for (i = 0; i < convolvers.size(); i++)
-	{
-		DEBUG5(("Waiting on convolver %u/%u to complete...", i + 1, (uint_t)convolvers.size()));
-		convolvers[i]->EndConvolution(output + (i % outputchannels), outputchannels);
-		DEBUG5(("Convolver %u/%u completed", i + 1, (uint_t)convolvers.size()));
-	}
+  // now process outputs
+  for (i = 0; i < convolvers.size(); i++)
+  {
+    DEBUG5(("Waiting on convolver %u/%u to complete...", i + 1, (uint_t)convolvers.size()));
+    convolvers[i]->EndConvolution(output + (i % outputchannels), outputchannels);
+    DEBUG5(("Convolver %u/%u completed", i + 1, (uint_t)convolvers.size()));
+  }
 }
 
 /*----------------------------------------------------------------------------------------------------*/
@@ -314,47 +315,47 @@ void ConvolverManager::Convolve(const float *input, float *output, uint_t inputc
  */
 /*--------------------------------------------------------------------------------*/
 Convolver::Convolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale) :
-	thread(0),
-	convolver(_convolver),
-	blocksize(_blocksize),
-	convindex(_convindex),
-	scale(_scale),
-	filter(NULL),
-	input(new float[blocksize]),
-	output(new float[blocksize]),
-	outputdelay(0.0),
-	outputlevel(1.0),
-	maxadditionaldelay(2400),
-	quitthread(false)
+  thread(0),
+  convolver(_convolver),
+  blocksize(_blocksize),
+  convindex(_convindex),
+  scale(_scale),
+  filter(NULL),
+  input(new float[blocksize]),
+  output(new float[blocksize]),
+  outputdelay(0.0),
+  outputlevel(1.0),
+  maxadditionaldelay(2400),
+  quitthread(false)
 {
-	// create thread
-	if (pthread_create(&thread, NULL, &__Process, (void *)this) != 0) {
-		ERROR("Failed to create thread (%s)", strerror(errno));
-		thread = 0;
-	}
+  // create thread
+  if (pthread_create(&thread, NULL, &__Process, (void *)this) != 0) {
+    ERROR("Failed to create thread (%s)", strerror(errno));
+    thread = 0;
+  }
 }
 
 Convolver::~Convolver()
 {
-	StopThread();
+  StopThread();
 
-	if (convolver) delete convolver;
-	if (input)     delete[] input;
-	if (output)    delete[] output;
+  if (convolver) delete convolver;
+  if (input)     delete[] input;
+  if (output)    delete[] output;
 }
 
 string Convolver::DebugHeader() const
 {
-	static const string column = "                    ";
-	static uint32_t tick0 = GetTickCount();
-	string res = "";
-	uint_t i;
+  static const string column = "                    ";
+  static uint32_t tick0 = GetTickCount();
+  string res = "";
+  uint_t i;
 
-	Printf(res, "%06lu (%02u): ", (ulong_t)(GetTickCount() - tick0), convindex);
+  Printf(res, "%06lu (%02u): ", (ulong_t)(GetTickCount() - tick0), convindex);
 
-	for (i = 0; i < convindex; i++) res += column;
+  for (i = 0; i < convindex; i++) res += column;
 
-	return res;
+  return res;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -363,16 +364,16 @@ string Convolver::DebugHeader() const
 /*--------------------------------------------------------------------------------*/
 void Convolver::StopThread()
 {
-	if (thread) {
-		quitthread = true;
+  if (thread) {
+    quitthread = true;
 
-		// release thread
-		startsignal.Signal();
+    // release thread
+    startsignal.Signal();
 
-		// wait until thread has finished
-		pthread_join(thread, NULL);
-		thread = 0;
-	}
+    // wait until thread has finished
+    pthread_join(thread, NULL);
+    thread = 0;
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -385,19 +386,19 @@ void Convolver::StopThread()
 /*--------------------------------------------------------------------------------*/
 void Convolver::StartConvolution(const float *_input, uint_t inputchannels)
 {
-	uint_t i;
+  uint_t i;
 
-	// copy input (de-interleaving)
-	for (i = 0; i < blocksize; i++) {
-		input[i] = _input[i * inputchannels];
-	}
+  // copy input (de-interleaving)
+  for (i = 0; i < blocksize; i++) {
+    input[i] = _input[i * inputchannels];
+  }
 
-	memcpy((float *)output, (const float *)input, blocksize * sizeof(*input));
+  memcpy((float *)output, (const float *)input, blocksize * sizeof(*input));
 
-	DEBUG4(("%smain signal", DebugHeader().c_str()));
+  DEBUG4(("%smain signal", DebugHeader().c_str()));
 
-	// release thread
-	startsignal.Signal();
+  // release thread
+  startsignal.Signal();
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -410,18 +411,18 @@ void Convolver::StartConvolution(const float *_input, uint_t inputchannels)
 /*--------------------------------------------------------------------------------*/
 void Convolver::EndConvolution(float *_output, uint_t outputchannels)
 {
-	DEBUG4(("%smain wait", DebugHeader().c_str()));
+  DEBUG4(("%smain wait", DebugHeader().c_str()));
 
-	// wait for completion
-	donesignal.Wait();
+  // wait for completion
+  donesignal.Wait();
 
-	DEBUG4(("%smain done", DebugHeader().c_str()));
+  DEBUG4(("%smain done", DebugHeader().c_str()));
 
-	// mix locally generated output into supplied output buffer
-	uint_t i;
-	for (i = 0; i < blocksize; i++) {
-		_output[i * outputchannels] += output[i];
-	}
+  // mix locally generated output into supplied output buffer
+  uint_t i;
+  for (i = 0; i < blocksize; i++) {
+    _output[i * outputchannels] += output[i];
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -430,111 +431,111 @@ void Convolver::EndConvolution(float *_output, uint_t outputchannels)
 /*--------------------------------------------------------------------------------*/
 void *Convolver::Process()
 {
-	const APFFilter *convfilter = NULL;
-	uint_t maxdelay = maxadditionaldelay;		// maximum delay in samples
-	uint_t delaypos = 0;
-	// delay length is maxdelay plus blocksize samples then rounded up to a whole number of blocksize's
-	uint_t delaylen = (1 + ((maxdelay + blocksize - 1) / blocksize)) * blocksize;
-	float  *delay   = new float[delaylen];		// delay memory
-	double level1   = 1.0;
-	double delay1   = 0.0;
+  const APFFilter *convfilter = NULL;
+  uint_t maxdelay = maxadditionaldelay;       // maximum delay in samples
+  uint_t delaypos = 0;
+  // delay length is maxdelay plus blocksize samples then rounded up to a whole number of blocksize's
+  uint_t delaylen = (1 + ((maxdelay + blocksize - 1) / blocksize)) * blocksize;
+  float  *delay   = new float[delaylen];      // delay memory
+  double level1   = 1.0;
+  double delay1   = 0.0;
 
-	// maxdelay can be extended now because of the rounding up of delaylen
-	maxdelay = delaylen - blocksize - 1 - FractionalSampleAdditionalDelayRequired();
+  // maxdelay can be extended now because of the rounding up of delaylen
+  maxdelay = delaylen - blocksize - 1 - FractionalSampleAdditionalDelayRequired();
 
-	// clear delay memory
-	memset(delay, 0, delaylen * sizeof(*delay));
+  // clear delay memory
+  memset(delay, 0, delaylen * sizeof(*delay));
 
-	while (!quitthread) {
-		uint_t i;
+  while (!quitthread) {
+    uint_t i;
 
-		DEBUG4(("%sproc wait", DebugHeader().c_str()));
+    DEBUG4(("%sproc wait", DebugHeader().c_str()));
 
-		// wait to be released
-		startsignal.Wait();
+    // wait to be released
+    startsignal.Wait();
 
-		DEBUG4(("%sproc start", DebugHeader().c_str()));
-	
-		// detect quit request
-		if (quitthread) {
-			break;
-		}
+    DEBUG4(("%sproc start", DebugHeader().c_str()));
+    
+    // detect quit request
+    if (quitthread) {
+      break;
+    }
 
-		// add input to convolver
-		convolver->add_block(input);
+    // add input to convolver
+    convolver->add_block(input);
 
-		// do convolution
-		const float *result = convolver->convolve(scale);
-		float       *dest   = delay + delaypos;
-			
-		// copy data into delay memory
-		memcpy(dest, result, blocksize * sizeof(*delay));
+    // do convolution
+    const float *result = convolver->convolve(scale);
+    float       *dest   = delay + delaypos;
+            
+    // copy data into delay memory
+    memcpy(dest, result, blocksize * sizeof(*delay));
 
-		// if filter needs updating, update it now
-		if (filter && (filter != convfilter)) {
-			convfilter = (const APFFilter *)filter;
-			convolver->set_filter(*convfilter);
-			DEBUG3(("[%010lu]: Selected new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
-		}
+    // if filter needs updating, update it now
+    if (filter && (filter != convfilter)) {
+      convfilter = (const APFFilter *)filter;
+      convolver->set_filter(*convfilter);
+      DEBUG3(("[%010lu]: Selected new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
+    }
 
-		// if queues_empty() returns false, must cross fade between convolutions
-		if (!convolver->queues_empty()) {
-			// rotate queues within convolver
-			convolver->rotate_queues();
+    // if queues_empty() returns false, must cross fade between convolutions
+    if (!convolver->queues_empty()) {
+      // rotate queues within convolver
+      convolver->rotate_queues();
 
-			// do convolution a second time
-			result = convolver->convolve(scale);
+      // do convolution a second time
+      result = convolver->convolve(scale);
 
-			// crossfade new convolution result into buffer
-			for (i = 0; i < blocksize; i++) {
-				double b = (double)i / (double)blocksize, a = 1.0 - b;
+      // crossfade new convolution result into buffer
+      for (i = 0; i < blocksize; i++) {
+        double b = (double)i / (double)blocksize, a = 1.0 - b;
 
-				dest[i] = dest[i] * a + b * result[i];
-			}
-		}
+        dest[i] = dest[i] * a + b * result[i];
+      }
+    }
 
-		// process delay memory using specified delay
-		uint_t pos1   = delaypos + delaylen;
-		double level2 = outputlevel;
-		double delay2 = MIN(outputdelay, (double)maxdelay);
-		double fpos1  = (double)pos1               - delay1;
-		double fpos2  = (double)(pos1 + blocksize) - delay2;
+    // process delay memory using specified delay
+    uint_t pos1   = delaypos + delaylen;
+    double level2 = outputlevel;
+    double delay2 = MIN(outputdelay, (double)maxdelay);
+    double fpos1  = (double)pos1               - delay1;
+    double fpos2  = (double)(pos1 + blocksize) - delay2;
 
-		if (hqproc) {
-			// high quality processing - use SRC filter to generate samples with fractional delays
-			for (i = 0; i < blocksize; i++) {
-				double b     = (double)i / (double)blocksize, a = 1.0 - b;
-				double fpos  = a * fpos1  + b * fpos2;
-				double level = a * level1 + b * level2;
+    if (hqproc) {
+      // high quality processing - use SRC filter to generate samples with fractional delays
+      for (i = 0; i < blocksize; i++) {
+        double b     = (double)i / (double)blocksize, a = 1.0 - b;
+        double fpos  = a * fpos1  + b * fpos2;
+        double level = a * level1 + b * level2;
 
-				output[i] = level * FractionalSample(delay, 0, 1, delaylen, fpos);
-			}
-		}
-		else {
-			// low quality processing - just use integer delays without SRC filter
-			for (i = 0; i < blocksize; i++) {
-				double b     = (double)i / (double)blocksize, a = 1.0 - b;
-				double fpos  = a * fpos1  + b * fpos2;
-				double level = a * level1 + b * level2;
+        output[i] = level * FractionalSample(delay, 0, 1, delaylen, fpos);
+      }
+    }
+    else {
+      // low quality processing - just use integer delays without SRC filter
+      for (i = 0; i < blocksize; i++) {
+        double b     = (double)i / (double)blocksize, a = 1.0 - b;
+        double fpos  = a * fpos1  + b * fpos2;
+        double level = a * level1 + b * level2;
 
-				output[i] = level * delay[(uint_t)fpos % delaylen];
-			}
-		}
+        output[i] = level * delay[(uint_t)fpos % delaylen];
+      }
+    }
 
-		// advance delay position by a block
-		delaypos = (delaypos + blocksize) % delaylen;
-		delay1   = delay2;
-		level1   = level2;
+    // advance delay position by a block
+    delaypos = (delaypos + blocksize) % delaylen;
+    delay1   = delay2;
+    level1   = level2;
 
-		DEBUG4(("%sproc done", DebugHeader().c_str()));
+    DEBUG4(("%sproc done", DebugHeader().c_str()));
 
-		// signal done
-		donesignal.Signal();
-	}
+    // signal done
+    donesignal.Signal();
+  }
 
-	pthread_exit(NULL);
+  pthread_exit(NULL);
 
-	return NULL;
+  return NULL;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -548,17 +549,17 @@ void *Convolver::Process()
 /*--------------------------------------------------------------------------------*/
 void Convolver::SetParameters(const APFFilter& newfilter, double level, double delay, bool hqproc)
 {
-	if (&newfilter != filter) {
-		DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
+  if (&newfilter != filter) {
+    DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
 
-		// set convolver filter
-		filter = &newfilter;
-	}
+    // set convolver filter
+    filter = &newfilter;
+  }
 
-	// update processing parameters
-	outputlevel  = level;
-	outputdelay  = delay;
-	this->hqproc = hqproc;
+  // update processing parameters
+  outputlevel  = level;
+  outputdelay  = delay;
+  this->hqproc = hqproc;
 }
 
 BBC_AUDIOTOOLBOX_END

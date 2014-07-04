@@ -13,26 +13,26 @@ BBC_AUDIOTOOLBOX_START
 /*--------------------------------------------------------------------------------*/
 class PositionCursor {
 public:
-	PositionCursor() {}
-	virtual ~PositionCursor() {}
+  PositionCursor() {}
+  virtual ~PositionCursor() {}
 
-	/*--------------------------------------------------------------------------------*/
-	/** Get position at specified time (ns)
-	 */
-	/*--------------------------------------------------------------------------------*/
-	virtual bool Seek(uint64_t t) = 0;
+  /*--------------------------------------------------------------------------------*/
+  /** Get position at specified time (ns)
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual bool Seek(uint64_t t) = 0;
 
-	/*--------------------------------------------------------------------------------*/
-	/** Return position at current time
-	 */
-	/*--------------------------------------------------------------------------------*/
-	virtual const Position *GetPosition() const = 0;
-	
-	/*--------------------------------------------------------------------------------*/
-	/** Return supplementary information
-	 */
-	/*--------------------------------------------------------------------------------*/
-	virtual const ParameterSet *GetPositionSupplement() const {return NULL;}
+  /*--------------------------------------------------------------------------------*/
+  /** Return position at current time
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual const Position *GetPosition() const = 0;
+    
+  /*--------------------------------------------------------------------------------*/
+  /** Return supplementary information
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual const ParameterSet *GetPositionSupplement() const {return NULL;}
 };
 
 BBC_AUDIOTOOLBOX_END

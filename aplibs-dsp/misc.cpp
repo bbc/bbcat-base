@@ -42,10 +42,10 @@ static void         *errorhandler_context = NULL;
 /*--------------------------------------------------------------------------------*/
 void SetDebugHandler(DEBUGHANDLER handler, void *context)
 {
-	ThreadLock lock(debuglock);
+  ThreadLock lock(debuglock);
 
-	debughandler = handler;
-	debughandler_context = context;
+  debughandler = handler;
+  debughandler_context = context;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -58,146 +58,146 @@ void SetDebugHandler(DEBUGHANDLER handler, void *context)
 /*--------------------------------------------------------------------------------*/
 void SetErrorHandler(DEBUGHANDLER handler, void *context)
 {
-	ThreadLock lock(debuglock);
+  ThreadLock lock(debuglock);
 
-	errorhandler = handler;
-	errorhandler_context = context;
+  errorhandler = handler;
+  errorhandler_context = context;
 }
 
 void debug_msg(const char *fmt, ...)
 {
-	va_list ap;
-	string  str;
+  va_list ap;
+  string  str;
 
-	va_start(ap, fmt);
-	VPrintf(str, fmt, ap);
-	va_end(ap);
+  va_start(ap, fmt);
+  VPrintf(str, fmt, ap);
+  va_end(ap);
 
-	{
-		ThreadLock lock(debuglock);
-		if (debughandler) {
-			(*debughandler)(str.c_str(), debughandler_context);
-		}
-		else {
-			printf("%s\n", str.c_str());
-			fflush(stdout);
-		}
+  {
+    ThreadLock lock(debuglock);
+    if (debughandler) {
+      (*debughandler)(str.c_str(), debughandler_context);
+    }
+    else {
+      printf("%s\n", str.c_str());
+      fflush(stdout);
+    }
 
-		FreeStrings();
-	}
+    FreeStrings();
+  }
 }
 
 void debug_err(const char *fmt, ...)
 {
-	FILE *errstr = stdout;
-	va_list ap;
-	string  str;
+  FILE *errstr = stdout;
+  va_list ap;
+  string  str;
 
-	va_start(ap, fmt);
-	VPrintf(str, fmt, ap);
-	va_end(ap);
+  va_start(ap, fmt);
+  VPrintf(str, fmt, ap);
+  va_end(ap);
 
-	{
-		ThreadLock lock(debuglock);
-		if (errorhandler) {
-			(*errorhandler)(str.c_str(), errorhandler_context);
-		}
-		else {
-			fprintf(errstr, "%s\n", str.c_str());
-			fflush(errstr);
-		}
+  {
+    ThreadLock lock(debuglock);
+    if (errorhandler) {
+      (*errorhandler)(str.c_str(), errorhandler_context);
+    }
+    else {
+      fprintf(errstr, "%s\n", str.c_str());
+      fflush(errstr);
+    }
 
-		FreeStrings();
-	}
+    FreeStrings();
+  }
 }
 
 const char *CreateString(const char *data, uint_t len)
 {
-	char *str;
+  char *str;
 
-	if ((str = new char[len + 1]) != NULL) {
-		memcpy(str, data, len);
-		str[len] = 0;
+  if ((str = new char[len + 1]) != NULL) {
+    memcpy(str, data, len);
+    str[len] = 0;
 
-		AllocatedStrings.push_back(str);
-	}
+    AllocatedStrings.push_back(str);
+  }
 
-	return str;
+  return str;
 }
 
 void FreeStrings()
 {
-	uint_t i;
+  uint_t i;
 
-	for (i = 0; i < AllocatedStrings.size(); i++) {
-		delete[] AllocatedStrings[i];
-	}
+  for (i = 0; i < AllocatedStrings.size(); i++) {
+    delete[] AllocatedStrings[i];
+  }
 
-	AllocatedStrings.clear();
+  AllocatedStrings.clear();
 }
 
 uint32_t GetTickCount()
 {
 #ifdef __MACH__
-	static mach_timebase_info_data_t timebase;
-	static bool inited = false;
+  static mach_timebase_info_data_t timebase;
+  static bool inited = false;
 
-	if (!inited) {
-		mach_timebase_info(&timebase);
-		inited = true;
-	}
+  if (!inited) {
+    mach_timebase_info(&timebase);
+    inited = true;
+  }
 
-	uint64_t tick = mach_absolute_time();
-	tick = (tick * timebase.numer) / timebase.denom;
+  uint64_t tick = mach_absolute_time();
+  tick = (tick * timebase.numer) / timebase.denom;
 
-	return (uint32_t)(tick / 1000000);
+  return (uint32_t)(tick / 1000000);
 #else
-	struct timespec timespec;
+  struct timespec timespec;
 
 #ifdef ANDROID
-	clock_gettime(CLOCK_MONOTONIC_HR, &timespec);
+  clock_gettime(CLOCK_MONOTONIC_HR, &timespec);
 #elif defined(__CYGWIN__)
-	clock_gettime(CLOCK_MONOTONIC, &timespec);
+  clock_gettime(CLOCK_MONOTONIC, &timespec);
 #else
-	clock_gettime(CLOCK_MONOTONIC_RAW, &timespec);
+  clock_gettime(CLOCK_MONOTONIC_RAW, &timespec);
 #endif
 
-	return timespec.tv_sec * 1000 + (timespec.tv_nsec / 1000000);
+  return timespec.tv_sec * 1000 + (timespec.tv_nsec / 1000000);
 #endif
 }
 
 uint32_t IEEEExtendedToINT32u(const IEEEEXTENDED *num)
 {
-	/* Format of 80-bit IEEE floating point number is:
-	 *
-	 * sign(1).exponent(15).mantissa(64)
-	 *
-	 * NOTE: mantissa has explicit 1
-	 */
+  /* Format of 80-bit IEEE floating point number is:
+   *
+   * sign(1).exponent(15).mantissa(64)
+   *
+   * NOTE: mantissa has explicit 1
+   */
 
-	const uint8_t *p = num->b;
-	int16_t  expo = (int16_t)(((uint16_t)(p[0] & 0x7f) << 8) | (uint16_t)p[1]) - 16383;
-	uint64_t mant;
-	uint32_t val;
+  const uint8_t *p = num->b;
+  int16_t  expo = (int16_t)(((uint16_t)(p[0] & 0x7f) << 8) | (uint16_t)p[1]) - 16383;
+  uint64_t mant;
+  uint32_t val;
 
-	/* generate mantissa... */
-	memcpy(&mant, p + 2, sizeof(mant));
-	/* ...and swap bytes if necessary */
-	if (!MACHINE_IS_BIG_ENDIAN) BYTESWAP_VAR(mant);
+  /* generate mantissa... */
+  memcpy(&mant, p + 2, sizeof(mant));
+  /* ...and swap bytes if necessary */
+  if (!MACHINE_IS_BIG_ENDIAN) BYTESWAP_VAR(mant);
 
-	/* mantissa has decimal point between bits 63 and 62
-	 * whereas we want it between bits 32 and 31 so we need
-	 * to bias expo by 31 bits */
-	expo -= 31;
+  /* mantissa has decimal point between bits 63 and 62
+   * whereas we want it between bits 32 and 31 so we need
+   * to bias expo by 31 bits */
+  expo -= 31;
 
-	/* shift mantissa appropriately */
-	if      (expo < 0) mant >>= -expo;
-	else if (expo > 0) mant <<=  expo;
+  /* shift mantissa appropriately */
+  if      (expo < 0) mant >>= -expo;
+  else if (expo > 0) mant <<=  expo;
 
-	/* round 64-bit mantissa (which is now 32.32) and return integer part */
-	val = (uint32_t)((mant + 0x80000000) >> 32);
+  /* round 64-bit mantissa (which is now 32.32) and return integer part */
+  val = (uint32_t)((mant + 0x80000000) >> 32);
 
-	return val;
+  return val;
 }
 
 /*------------------------------------------------------------
@@ -205,53 +205,53 @@ uint32_t IEEEExtendedToINT32u(const IEEEEXTENDED *num)
   ----------------------------------------------------------*/
 void INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num)
 {
-	int16_t expo = 0;
-	int64_t mant = 0;
+  int16_t expo = 0;
+  int64_t mant = 0;
 
-	memset(num, 0, sizeof(*num));
+  memset(num, 0, sizeof(*num));
 
-	while (!(val & 0x80000000)) {
-		val <<= 1;
-		expo--;
-	}
+  while (!(val & 0x80000000)) {
+    val <<= 1;
+    expo--;
+  }
 
-	mant  = (uint64_t)val << 32;
-	expo += 31 + 16383;
+  mant  = (uint64_t)val << 32;
+  expo += 31 + 16383;
 
-	if (!MACHINE_IS_BIG_ENDIAN) {
-		BYTESWAP_VAR(expo);
-		BYTESWAP_VAR(mant);
-	}
+  if (!MACHINE_IS_BIG_ENDIAN) {
+    BYTESWAP_VAR(expo);
+    BYTESWAP_VAR(mant);
+  }
 
-	memcpy(num->b, &expo, sizeof(expo));
-	num->b[0] &= 0x7f;
-	memcpy(num->b + 2, &mant, sizeof(mant));
+  memcpy(num->b, &expo, sizeof(expo));
+  num->b[0] &= 0x7f;
+  memcpy(num->b + 2, &mant, sizeof(mant));
 }
 
 string CreateIndent(const string& indent, uint_t count)
 {
-	uint_t len = indent.size();
-	string str;
-	char *buf;
+  uint_t len = indent.size();
+  string str;
+  char *buf;
 
-	if ((count * len) > 0) {
-		if ((buf = new char[count * len]) != NULL) {
-			uint_t pos = 0, endpos = count * len;
+  if ((count * len) > 0) {
+    if ((buf = new char[count * len]) != NULL) {
+      uint_t pos = 0, endpos = count * len;
 
-			memcpy(buf, indent.c_str(), len);
+      memcpy(buf, indent.c_str(), len);
 
-			for (pos = len; pos < endpos;) {
-				uint_t n = MIN(endpos - pos, pos);
+      for (pos = len; pos < endpos;) {
+        uint_t n = MIN(endpos - pos, pos);
 
-				memcpy(buf + pos, buf, n);
-				pos += n;
-			}
+        memcpy(buf + pos, buf, n);
+        pos += n;
+      }
 
-			str.assign(buf, pos);
-		}
-	}
+      str.assign(buf, pos);
+    }
+  }
 
-	return str;
+  return str;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -264,16 +264,16 @@ string CreateIndent(const string& indent, uint_t count)
 /*--------------------------------------------------------------------------------*/
 void Printf(string& str, const char *fmt, ...)
 {
-	va_list ap;
-	va_start(ap,fmt);
+  va_list ap;
+  va_start(ap,fmt);
 
-	char *buf = NULL;
-	if (vasprintf(&buf, fmt, ap) > 0) {
-		str += buf;
-		free(buf);
-	}
+  char *buf = NULL;
+  if (vasprintf(&buf, fmt, ap) > 0) {
+    str += buf;
+    free(buf);
+  }
 
-	va_end(ap);
+  va_end(ap);
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -287,11 +287,11 @@ void Printf(string& str, const char *fmt, ...)
 /*--------------------------------------------------------------------------------*/
 void VPrintf(std::string& str, const char *fmt, va_list ap)
 {
-	char *buf = NULL;
-	if (vasprintf(&buf, fmt, ap) > 0) {
-		str += buf;
-		free(buf);
-	}
+  char *buf = NULL;
+  if (vasprintf(&buf, fmt, ap) > 0) {
+    str += buf;
+    free(buf);
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -306,24 +306,24 @@ void VPrintf(std::string& str, const char *fmt, va_list ap)
 /*--------------------------------------------------------------------------------*/
 int ReadLine(FILE *fp, char *line, uint_t maxlen)
 {
-	uint_t i;
-	int    c;	// characters read as int to allow EOF to be detected
+  uint_t i;
+  int    c;   // characters read as int to allow EOF to be detected
 
-	// reduce buffer space by one for terminator
-	maxlen--;
+  // reduce buffer space by one for terminator
+  maxlen--;
 
-	// loop reading characters until EOF or no more space or linefeed character read
-	for (i = 0; (i < maxlen) && ((c = fgetc(fp)) != EOF) && (c != '\n');) {
-		// ignore carriage-returns 
-		if (c != '\r') line[i++] = c;
-	}
+  // loop reading characters until EOF or no more space or linefeed character read
+  for (i = 0; (i < maxlen) && ((c = fgetc(fp)) != EOF) && (c != '\n');) {
+    // ignore carriage-returns 
+    if (c != '\r') line[i++] = c;
+  }
 
-	// add terminator
-	line[i] = 0;
+  // add terminator
+  line[i] = 0;
 
-	// if any characters stored or last character wasn't an EOF then return line length
-	// if no characters stored and the last character read was an EOF, return EOF
-	return (i || (c != EOF)) ? i : EOF;
+  // if any characters stored or last character wasn't an EOF then return line length
+  // if no characters stored and the last character read was an EOF, return EOF
+  return (i || (c != EOF)) ? i : EOF;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -332,8 +332,8 @@ int ReadLine(FILE *fp, char *line, uint_t maxlen)
 /*--------------------------------------------------------------------------------*/
 void Interpolate(double& current, double target, double coeff, double limit)
 {
-	current += (target - current) * coeff;
-	if (fabs(target - current) < limit) current = target;
+  current += (target - current) * coeff;
+  if (fabs(target - current) < limit) current = target;
 }
 
 BBC_AUDIOTOOLBOX_END

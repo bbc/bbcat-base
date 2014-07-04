@@ -6,10 +6,10 @@
 BBC_AUDIOTOOLBOX_START
 
 enum {
-	SWAP_NEVER = 0,
-	SWAP_ALWAYS,
-	SWAP_FOR_LE,
-	SWAP_FOR_BE,
+  SWAP_NEVER = 0,
+  SWAP_ALWAYS,
+  SWAP_FOR_LE,
+  SWAP_FOR_BE,
 };
 
 extern void ByteSwap(void     *data, uint8_t itemsize, uint_t nitems = 1, uint8_t type = SWAP_ALWAYS);

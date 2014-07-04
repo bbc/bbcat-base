@@ -49,8 +49,8 @@ extern const bool MACHINE_IS_BIG_ENDIAN;
 #endif
 
 typedef int16_t       sint16_t;
-typedef int32_t 	  sint32_t;
-typedef int64_t 	  sint64_t;
+typedef int32_t       sint32_t;
+typedef int64_t       sint64_t;
 typedef signed   int  sint_t;
 typedef unsigned int  uint_t;
 typedef signed   long slong_t;
@@ -132,7 +132,7 @@ extern void FreeStrings();
 #endif
 
 typedef PACKEDSTRUCT {
-	uint8_t b[10];
+  uint8_t b[10];
 } IEEEEXTENDED;
 
 extern uint32_t GetTickCount();
@@ -212,9 +212,9 @@ extern void Interpolate(double& current, double target, double coeff, double lim
 
 template <typename Map>
 bool map_compare (Map const &lhs, Map const &rhs) {
-    // No predicate needed because there is operator== for pairs already.
-    return ((lhs.size() == rhs.size()) &&
-			std::equal(lhs.begin(), lhs.end(), rhs.begin()));
+  // No predicate needed because there is operator== for pairs already.
+  return ((lhs.size() == rhs.size()) &&
+          std::equal(lhs.begin(), lhs.end(), rhs.begin()));
 }
 
 BBC_AUDIOTOOLBOX_END
