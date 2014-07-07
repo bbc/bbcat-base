@@ -99,7 +99,7 @@ public:
    * @return true if speaker set found
    */
   /*--------------------------------------------------------------------------------*/
-  bool FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) const;
+  virtual bool FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) const;
 
 protected:
   typedef struct {
@@ -116,6 +116,7 @@ protected:
     double inv[Dimensions][Dimensions];     // inverse matrix of speaker positions
   } SpeakerGroup_t;
 
+  // TODO: should this be public or called from the FindSpeakerGroups method
   static bool SortGroups(const SpeakerGroup_t& a, const SpeakerGroup_t& b) {
     uint_t na = ((1000 * a.speakers[0]) + a.speakers[1]) * 1000 + a.speakers[2];
     uint_t nb = ((1000 * b.speakers[0]) + b.speakers[1]) * 1000 + b.speakers[2];
@@ -128,7 +129,7 @@ protected:
   /*--------------------------------------------------------------------------------*/
   void SetGainAndDelay(Speaker_t& speaker);
 
-  bool Invert(SpeakerGroup_t& group);
+  virtual bool Invert(SpeakerGroup_t& group);
 
   /*--------------------------------------------------------------------------------*/
   /** Test that the specified speaker group is valid for the specified position and if it is, calculate the gain factors
@@ -141,7 +142,7 @@ protected:
    *
    */
   /*--------------------------------------------------------------------------------*/
-  double TestSpeakers(const Position& pos, const SpeakerGroup_t& group, double gains[MaxSpeakersPerSet]) const;
+  virtual double TestSpeakers(const Position& pos, const SpeakerGroup_t& group, double *gains) const;
 
   void DebugSpeaker(FILE *fp, uint_t sp, const char *str = NULL);
   void DebugGroup(FILE *fp, const SpeakerGroup_t& group, const char *str = NULL);

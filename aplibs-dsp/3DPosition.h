@@ -233,8 +233,8 @@ public:
 
   Position pretranslation;
   double   xrotation; // rotation around the x-axis
-  double   yrotation; // rotation around the y-ayis
-  double   zrotation; // rotation around the z-azis
+  double   yrotation; // rotation around the y-axis
+  double   zrotation; // rotation around the z-axis
   Position posttranslation;
 
   /*--------------------------------------------------------------------------------*/

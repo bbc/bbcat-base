@@ -16,7 +16,7 @@
 #include <sndfile.hh>
 #include <apf/convolver.h>
 
-#define DEBUG_LEVEL 2
+#define DEBUG_LEVEL 1
 #include "Convolver.h"
 #include "SoundFormatConversions.h"
 #include "FractionalSample.h"
@@ -28,7 +28,26 @@ BBC_AUDIOTOOLBOX_START
 /*--------------------------------------------------------------------------------*/
 /** Constructor for convolver manager
  *
- * @param irfile WAV file containing IRs
+ * @param irfile file containing IRs (either WAV or SOFA) - SOFA file can also contain delays
+ * @param partitionsize the convolution partition size - essentially the block size of the processing
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
+  blocksize(partitionsize),
+  partitions(0),
+  delayscale(1.0),
+  audioscale(1.f),
+  hqproc(true),
+  updateparameters(true)
+{
+  LoadIRs(irfile);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Constructor for convolver manager
+ *
+ * @param irfile file containing IRs (either WAV or SOFA if enabled)
  * @param irdelayfile text file containing the required delays (in SAMPLES) of each IR in irfile
  * @param partitionsize the convolution partition size - essentially the block size of the processing
  *
@@ -66,17 +85,84 @@ ConvolverManager::APFConvolver *ConvolverManager::CreateConvolver() const
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Load IR files from WAV file
+/** Load IRs from a file (either WAV or SOFA if enabled).
+ *
+ * @param filename file containing IRs
  */
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::LoadIRs(const char *filename)
+{
+  if (filename) {
+#if ENABLE_SOFA
+    if (LoadSOFA(filename))
+    {
+      DEBUG3(("Loaded IRs from SOFA file (%s).", filename));
+    } else
+#endif
+      if (LoadIRsSndFile(filename)) {
+        DEBUG3(("Loaded IRs from WAV file (%s).", filename));
+      } else {
+        ERROR("Failed to load IRs from file (%s).", filename);
+      }
+  }
+  else
+  {
+    ERROR("Invalid filename for IR file ('%s')", filename);
+  }
+}
+
+#if ENABLE_SOFA
+/*--------------------------------------------------------------------------------*/
+/** Load impulse reponse data from a SOFA file.
+ *
+ * @param file SOFA file object, opened for reading
+ *
+ * @note Receiver measurements are interleaved.
+ */
+/*--------------------------------------------------------------------------------*/
+bool ConvolverManager::LoadSOFA(const char *filename)
+{
+
+  filters.clear();
+
+  if (filename) {
+
+    SOFA file(filename);
+
+    if (file) {
+
+      DEBUG3(("Opened '%s' okay, %u measurements from %u sources at %luHz", filename, file.get_num_measurements(), file.get_num_emitters(), (ulong_t)file.get_samplerate()));
+      LoadIRsSOFA(file);
+      LoadDelaysSOFA(file);
+      return true;
+    }
+    else
+    {
+      ERROR("SOFA file is invalid");
+    }
+  }
+  else
+  {
+    ERROR("Invalid filename for IR file ('%s')", filename);
+  }
+  return false;
+}
+#endif
+
+/*--------------------------------------------------------------------------------*/
+/** Load IR files from a WAV file
+ *
+ * @param filename name of a WAV file containing IRs
+ */
+/*--------------------------------------------------------------------------------*/
+bool ConvolverManager::LoadIRsSndFile(const char *filename)
 {
   filters.clear();
 
   if (filename) {
     SndfileHandle file(filename);
 
-    if (file) {
+    if (file && file.frames() && file.channels()) {
       APFConvolver *convolver;
       ulong_t len = file.frames();
       uint_t i, n = file.channels();
@@ -86,8 +172,6 @@ void ConvolverManager::LoadIRs(const char *filename)
       partitions = (uint_t)((len + blocksize - 1) / blocksize);
 
       DEBUG2(("File '%s' is %lu samples long, therefore %u partitions are needed", filename, len, partitions));
-
-      audioscale = .125f;
 
       if ((convolver = CreateConvolver()) != NULL) {
         float *sampledata = new float[blocksize * partitions * n]; 
@@ -121,10 +205,23 @@ void ConvolverManager::LoadIRs(const char *filename)
 
         // force update of parameters
         updateparameters = true;
+        return true;
+      }
+      else
+      {
+        ERROR("Failed to create convolver instance for preparing filters.");
       }
     }
-    else ERROR("Failed to open IR file ('%s') for reading", filename);
+    else
+    {
+      ERROR("Failed to open IR file ('%s') for reading", filename);
+    }
   }
+  else
+  {
+    ERROR("Invalid filename for IR file ('%s')", filename);
+  }
+  return false;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -222,7 +319,7 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir, double level, doubl
   {
     if (ir < filters.size())
     {
-      DEBUG3(("[%010lu]: Selecting IR %03u for convolver %3u", (ulong_t)GetTickCount(), ir, convolver));
+      DEBUG4(("[%010lu]: Selecting IR %03u for convolver %3u", (ulong_t)GetTickCount(), ir, convolver));
 
       // store parameters for convolver
       parameters[convolver].irindex = ir;
@@ -307,6 +404,104 @@ void ConvolverManager::Convolve(const float *input, float *output, uint_t inputc
     DEBUG5(("Convolver %u/%u completed", i + 1, (uint_t)convolvers.size()));
   }
 }
+
+/*--------------------------------------------------------------------------------*/
+/** Get the number of IRs that have been loaded.
+ *
+ * @return number of IRs loaded
+ */
+/*--------------------------------------------------------------------------------*/
+uint_t ConvolverManager::NumIRs()
+{
+  return filters.size();
+}
+
+#if ENABLE_SOFA
+/*--------------------------------------------------------------------------------*/
+/** Load impulse reponse data from a SOFA file.
+ *
+ * @param file SOFA file object, opened for reading
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::LoadIRsSOFA(SOFA& file)
+{
+  // load impulse responses
+  APFConvolver *convolver;
+  ulong_t len = file.get_ir_length();
+  uint_t i, j, k, l, m = file.get_num_measurements(), r = file.get_num_receivers(), e = file.get_num_emitters(), n = m*r*e;
+
+  partitions = (uint_t)((len + blocksize - 1) / blocksize);
+
+  DEBUG2(("File is %lu samples long, therefore %u partitions are needed", len, partitions));
+
+  if ((convolver = CreateConvolver()) != NULL) {
+    float *response   = new float[blocksize * partitions];
+    float *ir         = new float[len];
+
+    DEBUG2(("Creating %u filters...", n));
+    uint32_t tick = GetTickCount();
+    l = 0;
+    for (k = 0; k < e; k++) {
+      for (i = 0; i < m; i++) {
+        for (j = 0; j < r; j++) {
+          DEBUG3(("Creating filter for IR %u", l));
+          filters.push_back(APFFilter(blocksize, partitions));
+
+          if (!file.get_ir(ir, i, j, k)) ERROR("Error reading IR measurement %u for receiver %u and emitter %u from SOFA file", i, j, k);
+          TransferSamples(ir, 0, 1, response, 0, 1, 1, blocksize * partitions);
+          convolver->prepare_filter(response, response + blocksize * partitions, filters[l]);
+          l++;
+        }
+      }
+    }
+    DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+
+    delete[] response;
+    delete[] ir;
+    delete   convolver;
+
+    // force update of parameters
+    updateparameters = true;
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Load delay data from a SOFA file.
+ *
+ * @param file SOFA file object, opened for reading
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::LoadDelaysSOFA(SOFA& file)
+{
+  irdelays.clear();
+
+  // get number of measurements and receivers
+  uint_t i, j, k, m = file.get_num_measurements(), r = file.get_num_receivers(), e = file.get_num_emitters(), n = m*r*e;
+
+  // read delays for each receiver and insert into irdelays interleaved
+  irdelays.resize(n);
+  DEBUG2(("Loading %u delays from SOFA file", n));
+  SOFA::delay_buffer_t delays_recv;
+  float sr = file.get_samplerate();
+  for (k = 0; k < e; k++)
+  {
+    for (j=0; j<r; j++)
+    {
+      file.get_delays(delays_recv, j, k);
+      for (i=0; i<m; i++)
+      {
+        if (delays_recv.size() == 1) irdelays[k*m*r + i*r + j] = delays_recv[0]*sr;
+        else                         irdelays[k*m*r + i*r + j] = delays_recv[i]*sr;
+      }
+    }
+  }
+
+  // force update of parameters
+  updateparameters = true;
+}
+#endif
 
 /*----------------------------------------------------------------------------------------------------*/
 
@@ -551,7 +746,7 @@ void Convolver::SetParameters(const APFFilter& newfilter, double level, double d
 {
   if (&newfilter != filter) {
     DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
-
+    DEBUG3(("\tdelay %.3f", delay));
     // set convolver filter
     filter = &newfilter;
   }

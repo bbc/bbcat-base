@@ -114,7 +114,7 @@ void VBAPanner::AddSpeaker(uint_t channel, const Position& pos, double gain)
 
   SetGainAndDelay(sp);
 
-  DEBUG5(("Adding speaker index %u, channel %u", (uint_t)speakers.size(), channel));
+  DEBUG2(("Adding speaker index %u, channel %u", (uint_t)speakers.size(), channel));
 
   speakers.push_back(sp);
 }
@@ -406,6 +406,7 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
     }
     else {
       // no solution found -> collapse to first speakers
+      DEBUG3(("VBAPanner - No panning solution found?!"));
       memset(speakerset.speakers, 0, sizeof(speakerset.speakers));
 
       for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < speakers.size()); i++) {
@@ -469,7 +470,7 @@ bool VBAPanner::Invert(SpeakerGroup_t& group)
       trans[i][j] = mat[j][i];
     }
   }
-    
+
   /* Calculate the adjoint matrix of mat[][] */
   adjoint[0][0] =   trans[1][1] * trans[2][2] - trans[2][1] * trans[1][2];
   adjoint[0][1] = -(trans[1][0] * trans[2][2] - trans[2][0] * trans[1][2]);
@@ -480,7 +481,7 @@ bool VBAPanner::Invert(SpeakerGroup_t& group)
   adjoint[2][0] =   trans[0][1] * trans[1][2] - trans[1][1] * trans[0][2];
   adjoint[2][1] = -(trans[0][0] * trans[1][2] - trans[1][0] * trans[0][2]);
   adjoint[2][2] =   trans[0][0] * trans[1][1] - trans[1][0] * trans[0][1];
-    
+
   /* Calculate the inverse matrix of mat[][] */
   for (i = 0; i < Dimensions; i++) {
     for (j = 0; j < Dimensions; j++) {
@@ -526,6 +527,7 @@ return true;
 
 VBAPannerPulkki::VBAPannerPulkki() : VBAPanner()
 {
+  DEBUG2(("Using VBAPannerPulkki"));
 }
 
 VBAPannerPulkki::~VBAPannerPulkki()

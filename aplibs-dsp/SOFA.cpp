@@ -7,21 +7,20 @@
 
 #include "SOFA.h"
 
-USE_BBC_AUDIOTOOLBOX
+#define DEBUG_LEVEL 2
+
+BBC_AUDIOTOOLBOX_START
 
 SOFA::SOFA(const std::string filename) :
-  sofa_file(filename.c_str(), sofa_file_t::read),
   sample_rate(0.f)
 {
   try
   {
     // Open the file and check to make sure it's valid.
-    DEBUG("Creating SOFA with filename: %s", filename.c_str());
-    // try some calls to check BadId error
-    DEBUG("SOFA name: %s",sofa_file.getName().c_str());
+    DEBUG2(("Creating SOFA with filename: %s", filename.c_str()));
+    sofa_file = new sofa_file_t(filename.c_str(), sofa_file_t::read);
 
-
-    sofa_att_collection_t sofa_atts = sofa_file.getAtts();
+    sofa_att_collection_t sofa_atts = sofa_file->getAtts();
 
     // check it's a SOFA file
     sofa_att_t conventions = get_att("Conventions");
@@ -36,26 +35,21 @@ SOFA::SOFA(const std::string filename) :
     }
 
     // get sofa dimensions
-    sofa_dims.N = sofa_file.getDim("N");
+    sofa_dims.N = sofa_file->getDim("N");
     if(sofa_dims.N.isNull()) ERROR("SOFA dim N is null");
-    sofa_dims.M = sofa_file.getDim("M");
+    sofa_dims.M = sofa_file->getDim("M");
     if(sofa_dims.M.isNull()) ERROR("SOFA dim M is null");
-    sofa_dims.R = sofa_file.getDim("R");
+    sofa_dims.R = sofa_file->getDim("R");
     if(sofa_dims.R.isNull()) ERROR("SOFA dim R is null");
-    sofa_dims.E = sofa_file.getDim("E");
+    sofa_dims.E = sofa_file->getDim("E");
     if(sofa_dims.E.isNull()) ERROR("SOFA dim E is null");
-    sofa_dims.C = sofa_file.getDim("C");
+    sofa_dims.C = sofa_file->getDim("C");
     if(sofa_dims.C.isNull()) ERROR("SOFA dim C is null");
-    sofa_dims.I = sofa_file.getDim("I");
+    sofa_dims.I = sofa_file->getDim("I");
     if(sofa_dims.I.isNull()) ERROR("SOFA dim I is null");
 
     // explicitly check and report SOFA Convention
-    sofa_att_t sofa_convention = get_att("SOFAConventions");
-    if (!sofa_convention.isNull())
-    {
-      sofa_convention.getValues(convention_name);
-      DEBUG("Convention: %s", convention_name.c_str());
-    }
+    DEBUG2(("Convention: %s", get_convention_name().c_str()));
 
     sofa_var_t sr_var = get_var("Data.SamplingRate");
     if (!sr_var.isNull())
@@ -63,7 +57,7 @@ SOFA::SOFA(const std::string filename) :
       sr_var.getVar(&sample_rate);
       std::string sr_units;
       sr_var.getAtt("Units").getValues(sr_units);
-      DEBUG("Sample rate is: %f %s", sample_rate, sr_units.c_str());
+      DEBUG("Sample rate is: %.1f %s", sample_rate, sr_units.c_str());
     }
     else
     {
@@ -78,6 +72,19 @@ SOFA::SOFA(const std::string filename) :
 
 SOFA::~SOFA()
 {
+  delete sofa_file;
+}
+
+std::string SOFA::get_convention_name() const
+{
+  sofa_att_t sofa_convention = get_att("SOFAConventions");
+  std::string convention_name;
+  if (!sofa_convention.isNull())
+  {
+    sofa_convention.getValues(convention_name);
+
+  }
+  return convention_name;
 }
 
 float SOFA::get_samplerate() const
@@ -132,6 +139,33 @@ bool SOFA::get_ir(SOFA::audio_buffer_t& ir_buffer, uint_t indexM, uint_t indexR,
 }
 
 /**
+ * This gets an IR measurement for a given receiver with all samples,
+ * for at least SimpleFreeFieldHRIR and MultiSpeakerBRIR.
+ */
+bool SOFA::get_ir(float *ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE) const
+{
+  sofa_var_t ir_data = get_var("Data.IR");
+  if (ir_data.isNull()) return false;
+  size_t n_dims = ir_data.getDimCount();
+
+  get_index_vec_t start(n_dims,0);
+  get_index_vec_t count(n_dims,1);
+  if (indexM >= sofa_dims.M.getSize() || indexR >= sofa_dims.R.getSize() || indexE >= sofa_dims.E.getSize())
+  {
+    ERROR("Index out of range.");
+    return false;
+  } else {
+    // set start and count indices
+    start[0] = indexM;
+    start[1] = indexR;
+    if (n_dims > 3) start[2] = indexE; // for MultiSpeakerBRIR
+    count[n_dims-1] = sofa_dims.N.getSize();
+
+    return get_ir_data(start, count, ir_buffer);
+  }
+}
+
+/**
  * Get a vector of delays for a particular receiver emitter combo
  */
 bool SOFA::get_delays(SOFA::delay_buffer_t& delays, uint_t indexR, uint_t indexE) const
@@ -149,7 +183,7 @@ bool SOFA::get_delays(SOFA::delay_buffer_t& delays, uint_t indexR, uint_t indexE
   }
   // set start and count indices
   start[1] = indexR;
-  if (n_dims > 2) start[1] = indexE; // for MultiSpeakerBRIR
+  if (n_dims > 2) start[2] = indexE; // for MultiSpeakerBRIR
   if (delay_data.getDims()[0].getName() == "M")
   {
     count[0] = sofa_dims.M.getSize();
@@ -189,7 +223,7 @@ SOFA::positions_array_t SOFA::get_listener_up_vecs() const
 
 void SOFA::list_vars() const
 {
-  sofa_var_collection_t sofa_vars = sofa_file.getVars();
+  sofa_var_collection_t sofa_vars = sofa_file->getVars();
   // loop through variables and print name
   std::cout << "SOFA variables are:" << std::endl;
   for (sofa_var_collection_t::iterator var_it = sofa_vars.begin(); var_it != sofa_vars.end(); var_it++)
@@ -207,7 +241,7 @@ void SOFA::list_vars() const
 
 void SOFA::list_atts() const
 {
-  sofa_att_collection_t sofa_atts = sofa_file.getAtts();
+  sofa_att_collection_t sofa_atts = sofa_file->getAtts();
   // loop through variables and print name
   std::cout << "SOFA attributes are:" << std::endl;
   for (sofa_att_collection_t::iterator att_it = sofa_atts.begin(); att_it != sofa_atts.end(); att_it++)
@@ -235,7 +269,7 @@ void SOFA::list_varatts(const sofa_var_t sofa_var) const
 
 SOFA::sofa_var_t SOFA::get_var(const std::string var_name) const
 {
-  sofa_var_collection_t sofa_vars = sofa_file.getVars();
+  sofa_var_collection_t sofa_vars = sofa_file->getVars();
   sofa_var_collection_t::iterator var_search = sofa_vars.find(var_name);
   if (var_search == sofa_vars.end())
   {
@@ -244,14 +278,14 @@ SOFA::sofa_var_t SOFA::get_var(const std::string var_name) const
   }
   else
   {
-    DEBUG("Reading variable: %s", var_name.c_str());
+    DEBUG3(("Reading variable: %s", var_name.c_str()));
     return (*var_search).second;
   }
 }
 
 SOFA::sofa_att_t SOFA::get_att(const std::string att_name) const
 {
-  sofa_att_collection_t sofa_atts = sofa_file.getAtts();
+  sofa_att_collection_t sofa_atts = sofa_file->getAtts();
   sofa_att_collection_t::iterator att_search = sofa_atts.find(att_name);
   if (att_search == sofa_atts.end())
   {
@@ -260,7 +294,7 @@ SOFA::sofa_att_t SOFA::get_att(const std::string att_name) const
   }
   else
   {
-    DEBUG("Reading attribute: %s", att_name.c_str());
+    DEBUG3(("Reading attribute: %s", att_name.c_str()));
     return (*att_search).second;
   }
 }
@@ -278,12 +312,30 @@ bool SOFA::get_ir_data(get_index_vec_t start, get_index_vec_t count, SOFA::audio
   {
     size *= count[ii];
   }
-  if (ir_buffer.size() != size)
+  if (ir_buffer.size() < size)
   {
     DEBUG("Warning: resizing ir_buffer.");
     ir_buffer.resize(size);
   }
   ir_data.getVar(start,count,&ir_buffer[0]);
+  return true;
+}
+
+bool SOFA::get_ir_data(get_index_vec_t start, get_index_vec_t count, float *ir_buffer) const
+{
+  sofa_var_t ir_data = get_var("Data.IR");
+  if (ir_data.isNull())
+  {
+    return false;
+  }
+  size_t size = 1;
+  if (ir_data.getDimCount() < 0) ERROR("Dim count is <0?!");
+  for (uint_t ii = 0; ii < static_cast<uint_t>(ir_data.getDimCount()); ii ++)
+  {
+    size *= count[ii];
+  }
+
+  ir_data.getVar(start,count,ir_buffer);
   return true;
 }
 
@@ -346,10 +398,19 @@ SOFA::positions_array_t SOFA::get_position_var_data(const std::string position_v
     // create array of Position objects
     for (uint_t ii = 0; ii < count[0]; ii++)
     {
-      pos_var_data[ii].pos.x = pos_raw[ii*count[1]];
-      pos_var_data[ii].pos.y = pos_raw[ii*count[1] + 1];
-      pos_var_data[ii].pos.z = pos_raw[ii*count[1] + 2];
       pos_var_data[ii].polar = (coord_type == "spherical");
+      // SOFA uses different cartesian system to aplibs and ADM
+      if (!pos_var_data[ii].polar) {
+        pos_var_data[ii].pos.x = -pos_raw[ii*count[1] + 1];
+        pos_var_data[ii].pos.y =  pos_raw[ii*count[1]];
+        pos_var_data[ii].pos.z =  pos_raw[ii*count[1] + 2];
+      }
+      else
+      {
+        pos_var_data[ii].pos.az = pos_raw[ii*count[1]];
+        pos_var_data[ii].pos.el = pos_raw[ii*count[1] + 1];
+        pos_var_data[ii].pos.d  = pos_raw[ii*count[1] + 2];
+      }
     }
 
     return pos_var_data;
@@ -360,3 +421,5 @@ SOFA::positions_array_t SOFA::get_position_var_data(const std::string position_v
     return positions_array_t();
   }
 }
+
+BBC_AUDIOTOOLBOX_END

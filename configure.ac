@@ -148,12 +148,14 @@ if test "x${ENABLE_SOFA}" = "xyes"; then
     AC_MSG_ERROR([netcdf >= $NETCDF_VER is required])
   fi
 
-  NETCDFCXX_VER="4.2.1"
-  PKG_CHECK_MODULES([NETCDFCXX], [netcdf-cxx4 >= $NETCDFCXX_VER], HAVE_NETCDFCXX=yes, HAVE_NETCDFCXX=no)
+  #if test "x$osx" = "xtrue" ; then
+  	NETCDFCXX_VER="4.2.1"
+  	PKG_CHECK_MODULES([NETCDFCXX], [netcdf-cxx4 >= $NETCDFCXX_VER], HAVE_NETCDFCXX=yes, HAVE_NETCDFCXX=no)
 
-  if test "x${HAVE_NETCDFCXX}" != "xyes" ; then
-    AC_MSG_ERROR([netcdf-cxx4 >= $NETCDFCXX_VER is required])
-  fi
+  	if test "x${HAVE_NETCDFCXX}" != "xyes" ; then
+  	  AC_MSG_ERROR([netcdf-cxx4 >= $NETCDFCXX_VER is required])
+  	fi
+ # fi
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -161,7 +163,7 @@ AC_TYPE_SIZE_T
 AX_CREATE_STDINT_H([aplibs-dsp/aplibs-dsp-stdint.h])
 
 AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Wall])
-AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Werror])
+#AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Werror])
 AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Wextra])
 AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-msse2])
 

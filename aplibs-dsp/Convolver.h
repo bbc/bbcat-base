@@ -15,6 +15,9 @@
 
 #include "misc.h"
 #include "ThreadLock.h"
+#if ENABLE_SOFA
+#include "SOFA.h"
+#endif
 
 // APF convolver header files cannot be included in header files because of function implementations in the header files
 // which lead to multiple definitions when linking!
@@ -40,7 +43,19 @@ public:
   /*--------------------------------------------------------------------------------*/
   /** Constructor for convolver manager
    *
-   * @param irfile WAV file containing IRs
+   * @param irfile file containing IRs (either WAV or SOFA) - SOFA file can also contain delays
+   * @param partitionsize the convolution partition size - essentially the block size of the processing
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  ConvolverManager(const char *irfile, uint_t partitionsize);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Constructor for convolver manager.
+   *  The delays in @param irdelayfile will overwrite any specified within @irfile if
+   *  @irfile is a SOFA file.
+   *
+   * @param irfile file containing IRs (either WAV or SOFA)
    * @param irdelayfile text file containing the required delays (in SAMPLES) of each IR in irfile
    * @param partitionsize the convolution partition size - essentially the block size of the processing
    *
@@ -50,10 +65,26 @@ public:
   virtual ~ConvolverManager();
 
   /*--------------------------------------------------------------------------------*/
-  /** Load IR files from WAV file
+  /** Load IRs from a file (either WAV or SOFA if enabled).
+   *
+   * @param filename file containing IRs
    */
   /*--------------------------------------------------------------------------------*/
   void LoadIRs(const char *filename);
+
+#if ENABLE_SOFA
+  /*--------------------------------------------------------------------------------*/
+  /** Load IR data from SOFA file (including delays if available)
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool LoadSOFA(const char *filename);
+#endif
+
+  /*--------------------------------------------------------------------------------*/
+  /** Load IR data from WAV file
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool LoadIRsSndFile(const char *filename);
 
   /*--------------------------------------------------------------------------------*/
   /** Load IR delays from text file
@@ -105,6 +136,14 @@ public:
   /*--------------------------------------------------------------------------------*/
   void Convolve(const float *input, float *output, uint_t inputchannels, uint_t outputchannels);
 
+  /*--------------------------------------------------------------------------------*/
+  /** Get the number of IRs that have been loaded.
+   *
+   * @return number of IRs loaded
+   */
+  /*--------------------------------------------------------------------------------*/
+  uint_t NumIRs();
+
 protected:
   typedef apf::conv::Convolver APFConvolver;
   typedef apf::conv::Filter    APFFilter;
@@ -132,6 +171,26 @@ protected:
   } PARAMETERS;
 
 protected:
+#if ENABLE_SOFA
+  /*--------------------------------------------------------------------------------*/
+  /** Load impulse reponse data from a SOFA file.
+   *
+   * @param file SOFA file object, opened for reading
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  void LoadIRsSOFA(SOFA& file);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Load delay data from a SOFA file.
+   *
+   * @param file SOFA file object, opened for reading
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  void LoadDelaysSOFA(SOFA& file);
+#endif
+
   uint_t                   blocksize;
   uint_t                   partitions;
   std::vector<Convolver *> convolvers;

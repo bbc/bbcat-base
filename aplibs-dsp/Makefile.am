@@ -26,7 +26,8 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
 	SoundFormatConversions.cpp					\
 	SoundFormatRawConversions.cpp				\
 	ThreadLock.cpp								\
-	VBAPanner.cpp
+	VBAPanner.cpp								\
+	VBAPanner2D.cpp
 
 pkginclude_HEADERS =							\
 	3DPosition.h								\
@@ -41,7 +42,8 @@ pkginclude_HEADERS =							\
 	SoundFormatConversions.h					\
 	SoundFormatRawConversions.h					\
 	ThreadLock.h								\
-	VBAPanner.h
+	VBAPanner.h								\
+	VBAPanner2D.h
 
 if ENABLE_GPL
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS += $(APF_CFLAGS) $(SNDFILE_CFLAGS) $(FFTW_CFLAGS)
