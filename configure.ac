@@ -148,13 +148,11 @@ if test "x${ENABLE_SOFA}" = "xyes"; then
     AC_MSG_ERROR([netcdf >= $NETCDF_VER is required])
   fi
 
-  if test "x$osx" = "xtrue" ; then
-  	NETCDFCXX_VER="4.2.1"
-  	PKG_CHECK_MODULES([NETCDFCXX], [netcdf-cxx4 >= $NETCDFCXX_VER], HAVE_NETCDFCXX=yes, HAVE_NETCDFCXX=no)
+  NETCDFCXX_VER="4.2.1"
+  PKG_CHECK_MODULES([NETCDFCXX], [netcdf-cxx4 >= $NETCDFCXX_VER], HAVE_NETCDFCXX=yes, HAVE_NETCDFCXX=no)
 
-  	if test "x${HAVE_NETCDFCXX}" != "xyes" ; then
-  	  AC_MSG_ERROR([netcdf-cxx4 >= $NETCDFCXX_VER is required])
-  	fi
+  if test "x${HAVE_NETCDFCXX}" != "xyes" ; then
+    AC_MSG_ERROR([netcdf-cxx4 >= $NETCDFCXX_VER is required])
   fi
 fi
 
