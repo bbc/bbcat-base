@@ -44,8 +44,11 @@ public:
 
   std::string         get_convention_name() const;
   float               get_samplerate() const;
+  bool                get_all_irs(audio_buffer_t& ir_buffer) const;
+  bool                get_all_irs(float* ir_buffer) const;
   bool                get_ir(audio_buffer_t& ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE = 0) const;
   bool                get_ir(float* ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE = 0) const;
+  bool                get_all_delays(delay_buffer_t& delays) const;
   bool                get_delays(delay_buffer_t& delays, uint_t indexR, uint_t indexE = 0) const;
   size_t              get_num_measurements() const;
   size_t              get_ir_length() const;

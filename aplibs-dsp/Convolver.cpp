@@ -33,13 +33,26 @@ BBC_AUDIOTOOLBOX_START
  *
  */
 /*--------------------------------------------------------------------------------*/
-ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
+ConvolverManager::ConvolverManager(uint_t partitionsize) :
   blocksize(partitionsize),
   partitions(0),
   delayscale(1.0),
   audioscale(1.f),
   hqproc(true),
   updateparameters(true)
+{
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Constructor for convolver manager
+ *
+ * @param irfile file containing IRs (either WAV or SOFA) - SOFA file can also contain delays
+ * @param partitionsize the convolution partition size - essentially the block size of the processing
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
+  ConvolverManager(partitionsize)
 {
   LoadIRs(irfile);
 }
@@ -54,14 +67,8 @@ ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
  */
 /*--------------------------------------------------------------------------------*/
 ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize) :
-  blocksize(partitionsize),
-  partitions(0),
-  delayscale(1.0),
-  audioscale(1.f),
-  hqproc(true),
-  updateparameters(true)
+  ConvolverManager(irfile, partitionsize)
 {
-  LoadIRs(irfile);
   LoadIRDelays(irdelayfile);
 }
 
@@ -82,6 +89,57 @@ ConvolverManager::~ConvolverManager()
 ConvolverManager::APFConvolver *ConvolverManager::CreateConvolver() const
 {
   return new APFConvolver(blocksize, partitions);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Create impulse responses (IRs) from sample data.
+ *  IRs are sequential and data is contiguous.
+ *
+ * @param irdata pointer to impulse response data
+ * @param numirs the number of impulse responses
+ * @param irlength the length of each impulse response
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::CreateIRs(const float *irdata, const uint_t numirs, const ulong_t irlength)
+{
+	uint_t i = 0;
+
+	filters.clear();
+
+	if (numirs && irlength)
+	{
+    APFConvolver *convolver;
+
+    partitions = (uint_t)((irlength + blocksize - 1) / blocksize);
+
+    DEBUG2(("File '%s' is %lu samples long, therefore %u partitions are needed", filename, irlength, partitions));
+
+    if ((convolver = CreateConvolver()) != NULL) {
+
+      DEBUG2(("Creating %u filters...", n));
+      uint32_t tick = GetTickCount();
+      for (i = 0; i < numirs; i++)
+      {
+          DEBUG5(("Creating filter for IR %u", i));
+
+          filters.push_back(APFFilter(blocksize, partitions));
+
+          convolver->prepare_filter((irdata+i*blocksize*partitions), (irdata+(i+1)*blocksize*partitions), filters[i]);
+      }
+      DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+      #if DEBUG_LEVEL < 2
+      UNUSED_PARAMETER(tick);
+      #endif
+      delete   convolver;
+
+      // force update of parameters
+      updateparameters = true;
+    }
+    else
+    {
+      ERROR("Failed to create convolver instance for preparing filters.");
+    }
+	}
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -198,6 +256,9 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
           convolver->prepare_filter(response, response + blocksize * partitions, filters[i]);
         }
         DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+        #if DEBUG_LEVEL < 2
+        UNUSED_PARAMETER(tick);
+        #endif
 
         delete[] sampledata;
         delete[] response;
@@ -253,6 +314,7 @@ void ConvolverManager::LoadIRDelays(const char *filename)
       }
 
       // reduce each delay by mindelay to reduce overall delay
+      // TODO: this isn't always acceptable behaviour
       for (i = 0; i < irdelays.size(); i++) {
         irdelays[i] -= mindelay;
       }
@@ -263,6 +325,27 @@ void ConvolverManager::LoadIRDelays(const char *filename)
       updateparameters = true;
     }
     else DEBUG1(("Failed to open IR delays file ('%s') for reading, zeroing delays", filename));
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Set IR delays
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::SetIRDelays(const double *delays, const uint_t num_delays)
+{
+  irdelays.clear();
+
+  if (num_delays)
+  {
+      uint_t i;
+
+      irdelays.resize(num_delays);
+
+      // reduce each delay by mindelay to reduce overall delay
+      for (i = 0; i < irdelays.size(); i++) {
+        irdelays[i] = delays[i];
+      }
   }
 }
 
@@ -429,7 +512,7 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
   // load impulse responses
   APFConvolver *convolver;
   ulong_t len = file.get_ir_length();
-  uint_t i, j, k, l, m = file.get_num_measurements(), r = file.get_num_receivers(), e = file.get_num_emitters(), n = m*r*e;
+  uint_t i, j, k, l, m = file.get_num_measurements(), r = file.get_num_receivers(), e = file.get_num_emitters();
 
   partitions = (uint_t)((len + blocksize - 1) / blocksize);
 
@@ -456,6 +539,9 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
       }
     }
     DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+    #if DEBUG_LEVEL < 2
+    UNUSED_PARAMETER(tick);
+    #endif
 
     delete[] response;
     delete[] ir;
@@ -626,6 +712,7 @@ void Convolver::EndConvolution(float *_output, uint_t outputchannels)
 /*--------------------------------------------------------------------------------*/
 void *Convolver::Process()
 {
+  DEBUG1(("Convolver Process"));
   const APFFilter *convfilter = NULL;
   uint_t maxdelay = maxadditionaldelay;       // maximum delay in samples
   uint_t delaypos = 0;
@@ -755,6 +842,273 @@ void Convolver::SetParameters(const APFFilter& newfilter, double level, double d
   outputlevel  = level;
   outputdelay  = delay;
   this->hqproc = hqproc;
+}
+
+/*----------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------*/
+/** Constructor for static convolver manager
+ *
+ * @param partitionsize the convolution partition size - essentially the block size of the processing
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+StaticConvolverManager::StaticConvolverManager(uint_t partitionsize) :
+  blocksize(partitionsize),
+  partitions(0),
+  delayscale(1.0),
+  audioscale(1.f),
+  hqproc(true),
+  updateparameters(true)
+{
+}
+
+StaticConvolverManager::~StaticConvolverManager()
+{
+  // delete all convolvers
+  while (convolvers.size()) {
+    StaticConvolver *conv = convolvers.back();
+    delete conv;
+    convolvers.pop_back();
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Sets the expected impulse response length.
+ *  Should be called before creating convolvers, will clear all initialised ones
+ *  if existing.
+ *
+ * @param irlength the length of the irs to be added
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void StaticConvolverManager::SetIRLength(ulong_t irlength)
+{
+  partitions = (uint_t)((irlength + blocksize - 1) / blocksize);
+  if (convolvers.size()) DEBUG1(("Warning: removing existing static convolvers."));
+  while (convolvers.size()) {
+    StaticConvolver *conv = convolvers.back();
+    delete conv;
+    convolvers.pop_back();
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Load IRs from a file (either WAV or SOFA if enabled).
+ *
+ * @param irdate pointer to impulse response data buffer
+ * @param irlength length of the buffer in samples
+ * @param delay a delay associated with the static convolver
+ */
+/*--------------------------------------------------------------------------------*/
+void StaticConvolverManager::CreateConvolver(const float *irdata, const ulong_t irlength, double delay)
+{
+  StaticConvolver *conv;
+  APFStaticConvolver *apfconv;
+  if ((apfconv = new APFStaticConvolver(blocksize, irdata, irdata + irlength)) != nullptr)
+  {
+    if ((conv = new StaticConvolver(convolvers.size(), blocksize, apfconv, delay, audioscale)) != nullptr) {
+      convolvers.push_back(conv);
+      if ((uint_t)((irlength + blocksize - 1) / blocksize) != partitions) ERROR("IR has incorrect length.");
+    }
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Update the parameters of an individual convolver
+ *
+ * @param convolver convolver number
+ *
+ * @note this function updates the filter, delay and HQ processing flag
+ */
+/*--------------------------------------------------------------------------------*/
+void StaticConvolverManager::UpdateConvolverParameters(uint_t convolver)
+{
+  if (convolver < convolvers.size())
+  {
+    const PARAMETERS& params = parameters[convolver];
+    // pass parameters to convolver, add additional delay to scaled delay due to IR's
+    convolvers[convolver]->SetParameters(params.level, hqproc);
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Perform convolution on all convolvers
+ *
+ * @param input input data array (inputchannels wide by partitionsize frames long) containing input data
+ * @param output output data array (outputchannels wide by partitionsize frames long) for receiving output data
+ * @param inputchannels number of input channels (>= nconvolvers * outputchannels)
+ * @param outputchannels number of output channels
+ *
+ * @note this kicks off nconvolvers parallel threads to do the processing - can be VERY CPU hungry!
+ */
+/*--------------------------------------------------------------------------------*/
+void StaticConvolverManager::Convolve(const float *input, float *output, uint_t inputchannels, uint_t outputchannels)
+{
+  uint_t i;
+
+  // ASSUMES output is clear before being called
+
+  // start parallel convolving on all channels
+  for (i = 0; i < convolvers.size(); i++)
+  {
+    // if requested to, update the parameters of this convolver
+    if (updateparameters) UpdateConvolverParameters(i);
+
+    DEBUG5(("Starting convolver %u/%u...", i + 1, (uint_t)convolvers.size()));
+    convolvers[i]->StartConvolution(input + i / outputchannels, inputchannels);
+    DEBUG5(("Convolver %u/%u started", i + 1, (uint_t)convolvers.size()));
+  }
+
+  // clear flag
+  updateparameters = false;
+
+  // now process outputs
+  for (i = 0; i < convolvers.size(); i++)
+  {
+    DEBUG5(("Waiting on convolver %u/%u to complete...", i + 1, (uint_t)convolvers.size()));
+    convolvers[i]->EndConvolution(output + (i % outputchannels), outputchannels);
+    DEBUG5(("Convolver %u/%u completed", i + 1, (uint_t)convolvers.size()));
+  }
+}
+
+/*----------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------*/
+/** Protected constructor so that only ConvolverManager can create convolvers
+ */
+/*--------------------------------------------------------------------------------*/
+StaticConvolver::StaticConvolver(uint_t _convindex, uint_t _blocksize, APFStaticConvolver *_convolver, double _delay, float _scale) :
+  Convolver(_convindex, _blocksize, NULL, _scale),
+  convolver(_convolver),
+  inputdelay(_delay)
+{
+}
+
+StaticConvolver::~StaticConvolver()
+{
+  StopThread();
+
+  if (convolver) delete convolver;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Set parameters and options for convolution.
+ *
+ * @note filter and delay can't be changed for static convolver
+ *
+ * @param newfilter new IR filter from ConvolverManager
+ * @param level audio output level
+ * @param delay audio delay (due to ITD and source delay) (in SAMPLES)
+ * @param hqproc true for high-quality and CPU hungry processing
+ */
+/*--------------------------------------------------------------------------------*/
+void StaticConvolver::SetParameters(const APFFilter& newfilter, double level, double delay, bool hqproc)
+{
+  UNUSED_PARAMETER(newfilter);
+  UNUSED_PARAMETER(delay);
+  ERROR("StaticConvolver parameters cannot be changed.");
+  SetParameters(level, hqproc);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Set parameters and options for convolution
+ *
+ * @param level audio output level
+ * @param hqproc true for high-quality and CPU hungry processing
+ */
+/*--------------------------------------------------------------------------------*/
+void StaticConvolver::SetParameters(double level, bool hqproc)
+{
+  outputlevel  = level;
+  this->hqproc = hqproc;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Processing thread
+ */
+/*--------------------------------------------------------------------------------*/
+void *StaticConvolver::Process()
+{
+  DEBUG1(("StaticConvolver Process"));
+  uint_t delay = (uint_t)inputdelay;       // delay in samples (rounded down)
+  uint_t delaypos = 0;
+  // delay length is maxdelay plus blocksize samples then rounded up to a whole number of blocksize's
+  uint_t delaybuflen = (1 + ((delay + blocksize - 1) / blocksize)) * blocksize;
+  float  *delaybuffer   = new float[delaybuflen];      // delay memory
+  double level1   = 1.0;
+
+  // maxdelay can be extended now because of the rounding up of delaylen
+  delay = delaybuflen - blocksize - 1 - FractionalSampleAdditionalDelayRequired();
+
+  // clear delay memory
+  memset(delaybuffer, 0, delaybuflen * sizeof(*delaybuffer));
+
+  while (!quitthread) {
+    uint_t i;
+
+    DEBUG4(("%sproc wait", DebugHeader().c_str()));
+
+    // wait to be released
+    startsignal.Wait();
+
+    DEBUG4(("%sproc start", DebugHeader().c_str()));
+
+    // detect quit request
+    if (quitthread) {
+      break;
+    }
+
+    // add input to convolver
+    convolver->add_block(input);
+
+    // do convolution
+    const float *result = convolver->convolve(scale);
+    float       *dest   = delaybuffer + delaypos;
+
+    // copy data into delay memory
+    memcpy(dest, result, blocksize * sizeof(*delaybuffer));
+
+    // process delay memory using specified delay
+    uint_t pos1   = delaypos + delaybuflen;
+    double level2 = outputlevel;
+    double fpos1  = (double)pos1               - inputdelay;
+    double fpos2  = (double)(pos1 + blocksize) - inputdelay;
+
+    if (hqproc) {
+      // high quality processing - use SRC filter to generate samples with fractional delays
+      for (i = 0; i < blocksize; i++) {
+        double b     = (double)i / (double)blocksize, a = 1.0 - b;
+        double fpos  = a * fpos1  + b * fpos2;
+        double level = a * level1 + b * level2;
+
+        output[i] = level * FractionalSample(delaybuffer, 0, 1, delaybuflen, fpos);
+      }
+    }
+    else {
+      // low quality processing - just use integer delays without SRC filter
+      for (i = 0; i < blocksize; i++) {
+        double b     = (double)i / (double)blocksize, a = 1.0 - b;
+        double fpos  = a * fpos1  + b * fpos2;
+        double level = a * level1 + b * level2;
+
+        output[i] = level * delaybuffer[(uint_t)fpos % delaybuflen];
+      }
+    }
+
+    // advance delay position by a block
+    delaypos = (delaypos + blocksize) % delaybuflen;
+    level1   = level2;
+
+    DEBUG4(("%sproc done", DebugHeader().c_str()));
+
+    // signal done
+    donesignal.Signal();
+  }
+
+  pthread_exit(NULL);
+
+  return NULL;
 }
 
 BBC_AUDIOTOOLBOX_END

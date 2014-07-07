@@ -112,6 +112,38 @@ size_t SOFA::get_num_emitters() const
   return sofa_dims.E.getSize();
 }
 
+bool SOFA::get_all_irs(audio_buffer_t& ir_buffer) const
+{
+  sofa_var_t ir_data = get_var("Data.IR");
+  if (ir_data.isNull()) return false;
+  size_t n_dims = ir_data.getDimCount();
+
+  get_index_vec_t start(n_dims,0);
+  get_index_vec_t count(n_dims,1);
+  count[0] = sofa_dims.M.getSize();
+  count[1] = sofa_dims.R.getSize();
+  if (n_dims > 3) count[2] = sofa_dims.E.getSize(); // for MultiSpeakerBRIR
+  count[n_dims-1] = sofa_dims.N.getSize();
+
+  return get_ir_data(start, count, ir_buffer);
+}
+
+bool SOFA::get_all_irs(float* ir_buffer) const
+{
+  sofa_var_t ir_data = get_var("Data.IR");
+  if (ir_data.isNull()) return false;
+  size_t n_dims = ir_data.getDimCount();
+
+  get_index_vec_t start(n_dims,0);
+  get_index_vec_t count(n_dims,1);
+  count[0] = sofa_dims.M.getSize();
+  count[1] = sofa_dims.R.getSize();
+  if (n_dims > 3) count[2] = sofa_dims.E.getSize(); // for MultiSpeakerBRIR
+  count[n_dims-1] = sofa_dims.N.getSize();
+
+  return get_ir_data(start, count, ir_buffer);
+}
+
 /**
  * This gets an IR measurement for a given receiver with all samples,
  * for at least SimpleFreeFieldHRIR and MultiSpeakerBRIR.
