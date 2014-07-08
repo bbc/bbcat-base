@@ -66,11 +66,11 @@ AC_MSG_CHECKING(whether to disable debug support)
 AC_ARG_ENABLE(sofa, AS_HELP_STRING([--disable-debug], [disable debugging]), ENABLE_DEBUG="no", ENABLE_DEBUG="yes")
 if test "x${ENABLE_DEBUG}" = "xyes"; then
   APLIBS_DSP_CFLAGS="$APLIBS_DSP_CFLAGS -g"
-  CXXFLAGS="$CXXFLAGS -g"
   AC_MSG_RESULT(yes)
 else
   AC_MSG_RESULT(no)
 fi
+AC_SUBST(APLIBS_DSP_CFLAGS)
 
 LIBBOOST_VER="1.49.0"
 AX_BOOST_BASE($LIBBOOST_VER, HAVE_BOOST=yes, HAVE_BOOST=no)
@@ -120,7 +120,6 @@ if test "x${with_thread}" = "xgthread" ; then
   PKG_CHECK_MODULES(GTHREAD, gthread-2.0, HAVE_GTHREAD=yes, HAVE_GTHREAD=no)
   AC_SUBST(GTHREAD_LIBS)
   AC_SUBST(GTHREAD_CFLAGS)
-  COG_PKG_DEPS="$COG_PKG_DEPS gthread-2.0"
 fi
 
 if test "x$ENABLE_GPL" = "xyes"; then
