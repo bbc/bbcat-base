@@ -118,13 +118,18 @@ void ConvolverManager::CreateIRs(const float *irdata, const uint_t numirs, const
 
       DEBUG2(("Creating %u filters...", n));
       uint32_t tick = GetTickCount();
+
+      // create array to take an IR (which won't be full length because we've rounded up to a whole number of partitions)
+      float ir[blocksize*partitions];
+      memset(ir, 0.f, blocksize*partitions);
+
       for (i = 0; i < numirs; i++)
       {
           DEBUG5(("Creating filter for IR %u", i));
 
           filters.push_back(APFFilter(blocksize, partitions));
-
-          convolver->prepare_filter((irdata+i*blocksize*partitions), (irdata+(i+1)*blocksize*partitions), filters[i]);
+          memcpy(ir, (irdata+i*irlength), sizeof(float)*irlength);
+          convolver->prepare_filter(ir, (ir+irlength), filters[i]);
       }
       DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
       #if DEBUG_LEVEL < 2
@@ -712,7 +717,6 @@ void Convolver::EndConvolution(float *_output, uint_t outputchannels)
 /*--------------------------------------------------------------------------------*/
 void *Convolver::Process()
 {
-  DEBUG1(("Convolver Process"));
   const APFFilter *convfilter = NULL;
   uint_t maxdelay = maxadditionaldelay;       // maximum delay in samples
   uint_t delaypos = 0;
@@ -905,6 +909,7 @@ void StaticConvolverManager::CreateConvolver(const float *irdata, const ulong_t 
 {
   StaticConvolver *conv;
   APFStaticConvolver *apfconv;
+  PARAMETERS p; p.level = 1.0f; parameters.push_back(p);
   if ((apfconv = new APFStaticConvolver(blocksize, irdata, irdata + irlength)) != nullptr)
   {
     if ((conv = new StaticConvolver(convolvers.size(), blocksize, apfconv, delay, audioscale)) != nullptr) {
@@ -912,6 +917,9 @@ void StaticConvolverManager::CreateConvolver(const float *irdata, const ulong_t 
       if ((uint_t)((irlength + blocksize - 1) / blocksize) != partitions) ERROR("IR has incorrect length.");
     }
   }
+
+  // force update of parameters
+  updateparameters = true;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -1030,7 +1038,6 @@ void StaticConvolver::SetParameters(double level, bool hqproc)
 /*--------------------------------------------------------------------------------*/
 void *StaticConvolver::Process()
 {
-  DEBUG1(("StaticConvolver Process"));
   uint_t delay = (uint_t)inputdelay;       // delay in samples (rounded down)
   uint_t delaypos = 0;
   // delay length is maxdelay plus blocksize samples then rounded up to a whole number of blocksize's
