@@ -9,10 +9,12 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LDFLAGS =	\
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD =	\
 	$(PTHREAD_LIBS)								\
+	$(SOFA_LIBS)								\
 	$(RT_LIBS)
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS =	\
 	$(APLIBS_DSP_CFLAGS)						\
+	$(SOFA_CFLAGS)								\
 	$(PTHREAD_CFLAGS)
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
@@ -42,7 +44,7 @@ pkginclude_HEADERS =							\
 	SoundFormatConversions.h					\
 	SoundFormatRawConversions.h					\
 	ThreadLock.h								\
-	VBAPanner.h								\
+	VBAPanner.h									\
 	VBAPanner2D.h
 
 if ENABLE_GPL
@@ -53,7 +55,8 @@ pkginclude_HEADERS += Convolver.h
 endif
 
 if ENABLE_SOFA
-libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS += $(NETCDF_CFLAGS) $(NETCDFCXX_CFLAGS) -DENABLE_SOFA
+#-DENABLE_SOFA is passed through SOFA_CFLAGS
+libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS += $(NETCDF_CFLAGS) $(NETCDFCXX_CFLAGS)
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD += $(NETCDF_LIBS) $(NETCDFCXX_LIBS)
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES += SOFA.cpp
 pkginclude_HEADERS += SOFA.h

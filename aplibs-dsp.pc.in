@@ -9,7 +9,7 @@ Name: aplibs-dsp-@APLIBS_DSP_MAJORMINOR@
 Description: General purpose audio DSP library
 Requires.private: @APLIBS_DSP_PKG_DEPS@
 Version: @VERSION@
-Libs: -L${libdir} -lap-dsp-@APLIBS_DSP_MAJORMINOR@
-Cflags: -I${includedir}
+Libs: -L${libdir} -lap-dsp-@APLIBS_DSP_MAJORMINOR@ @SOFA_LIBS@
+Cflags: -I${includedir} @SOFA_CFLAGS@
 
 
