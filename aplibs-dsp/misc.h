@@ -210,6 +210,56 @@ extern int ReadLine(FILE *fp, char *line, uint_t maxlen);
 /*--------------------------------------------------------------------------------*/
 extern void Interpolate(double& current, double target, double coeff, double limit = 1.0e-7);
 
+/*--------------------------------------------------------------------------------*/
+/** 'cout' like debug stream handling
+ * 
+ * Basically use local instance of DebugStream or global 'dbg' instance (thread-safe)
+ * instead of 'cout' and then wrap entire line in DEBUG() macro
+ *
+ * For example:
+ * DEBUG2((dbg << "Test " << i << " of " << n << ":" << DebugStream::eol));
+ *
+ * Alternatively, for an explicit display function:
+ *
+ * dbg << "Test ";
+ * ...
+ * dbg << i << " of " << n << "(";
+ * ...
+ * dbg << ")" << DebugStream::eol;
+ * ...
+ * DEBUG2((dbg));
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+class DebugStream {
+public:
+  DebugStream();
+  ~DebugStream();
+
+  DebugStream& operator << (const std::string& str);
+  DebugStream& operator << (const char *str);
+  DebugStream& operator << (sint_t n);
+  DebugStream& operator << (uint_t n);
+  DebugStream& operator << (slong_t n);
+  DebugStream& operator << (ulong_t n);
+  DebugStream& operator << (sllong_t n);
+  DebugStream& operator << (ullong_t n);
+
+  const char *get() const;
+  operator const char *() const {return get();}
+  void clear();
+
+  static const char *eol;
+
+protected:
+  std::string data;
+};
+
+extern DebugStream dbg;
+
+extern void debug_msg(DebugStream& str);
+extern void debug_err(DebugStream& str);
+
 template <typename Map>
 bool map_compare (Map const &lhs, Map const &rhs) {
   // No predicate needed because there is operator== for pairs already.

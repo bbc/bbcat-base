@@ -336,4 +336,117 @@ void Interpolate(double& current, double target, double coeff, double limit)
   if (fabs(target - current) < limit) current = target;
 }
 
+const char *DebugStream::eol = "\n";
+
+DebugStream::DebugStream()
+{
+  clear();
+}
+
+DebugStream::~DebugStream()
+{
+}
+
+DebugStream& DebugStream::operator << (const std::string& str)
+{
+  ThreadLock lock(debuglock);
+  data += str;
+  return *this;
+}
+
+DebugStream& DebugStream::operator << (const char *str)
+{
+  ThreadLock lock(debuglock);
+  Printf(data, "%s", str);
+  return *this;
+}
+
+DebugStream& DebugStream::operator << (sint_t n)
+{
+  ThreadLock lock(debuglock);
+  Printf(data, "%d", n);
+  return *this;
+}
+
+DebugStream& DebugStream::operator << (uint_t n)
+{
+  ThreadLock lock(debuglock);
+  Printf(data, "%u", n);
+  return *this;
+}
+
+DebugStream& DebugStream::operator << (slong_t n)
+{
+  ThreadLock lock(debuglock);
+  Printf(data, "%ld", n);
+  return *this;
+}
+
+DebugStream& DebugStream::operator << (ulong_t n)
+{
+  ThreadLock lock(debuglock);
+  Printf(data, "%lu", n);
+  return *this;
+}
+
+DebugStream& DebugStream::operator << (sllong_t n)
+{
+  ThreadLock lock(debuglock);
+  Printf(data, "%lld", n);
+  return *this;
+}
+
+DebugStream& DebugStream::operator << (ullong_t n)
+{
+  ThreadLock lock(debuglock);
+  Printf(data, "%llu", n);
+  return *this;
+}
+
+const char *DebugStream::get() const
+{
+  ThreadLock lock(debuglock);
+  return data.c_str();
+}
+
+void DebugStream::clear()
+{
+  ThreadLock lock(debuglock);
+  data = "";
+}
+
+DebugStream dbg;
+
+void debug_msg(DebugStream& str)
+{
+    ThreadLock lock(debuglock);
+    const char *p = str.get();
+    if (debughandler) {
+      (*debughandler)(p, debughandler_context);
+    }
+    else {
+      printf("%s\n", p);
+      fflush(stdout);
+    }
+
+    FreeStrings();
+    str.clear();
+}
+
+void debug_err(DebugStream& str)
+{
+    ThreadLock lock(debuglock);
+    const char *p = str.get();
+    if (errorhandler) {
+      (*errorhandler)(p, errorhandler_context);
+    }
+    else {
+      printf("%s\n", p);
+      fflush(stdout);
+    }
+
+    FreeStrings();
+    str.clear();
+}
+
 BBC_AUDIOTOOLBOX_END

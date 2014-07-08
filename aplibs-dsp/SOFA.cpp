@@ -5,9 +5,9 @@
  *      Author: chrisp
  */
 
-#include "SOFA.h"
 
 #define DEBUG_LEVEL 2
+#include "SOFA.h"
 
 BBC_AUDIOTOOLBOX_START
 
@@ -257,46 +257,48 @@ void SOFA::list_vars() const
 {
   sofa_var_collection_t sofa_vars = sofa_file->getVars();
   // loop through variables and print name
-  std::cout << "SOFA variables are:" << std::endl;
+  dbg << "SOFA variables are:" << DebugStream::eol;
   for (sofa_var_collection_t::iterator var_it = sofa_vars.begin(); var_it != sofa_vars.end(); var_it++)
   {
-    std::cout << "\t" << (*var_it).first << " (" << (*var_it).second.getType().getName() << ")" << std::endl;
+    dbg << "\t" << (*var_it).first << " (" << (*var_it).second.getType().getName() << ")" << DebugStream::eol;
     sofa_dims_vec_t var_dims = (*var_it).second.getDims();
-    std::cout << "\t\tDims: ";
+    dbg << "\t\tDims: ";
     for (sofa_dims_vec_t::iterator dims_it = var_dims.begin(); dims_it != var_dims.end(); dims_it++)
     {
-      std::cout << (*dims_it).getName() << " (" << (*dims_it).getSize() << "), ";
+      dbg << (*dims_it).getName() << " (" << (*dims_it).getSize() << "), ";
     }
-    std::cout << std::endl;
   }
+  DEBUG2((dbg));
 }
 
 void SOFA::list_atts() const
 {
   sofa_att_collection_t sofa_atts = sofa_file->getAtts();
   // loop through variables and print name
-  std::cout << "SOFA attributes are:" << std::endl;
+  dbg << "SOFA attributes are:" << DebugStream::eol;
   for (sofa_att_collection_t::iterator att_it = sofa_atts.begin(); att_it != sofa_atts.end(); att_it++)
   {
-    std::cout << "\t" << (*att_it).first << " (" << (*att_it).second.getType().getName() << ")" << std::endl;
+    dbg << "\t" << (*att_it).first << " (" << (*att_it).second.getType().getName() << ")" << DebugStream::eol;
     std::string att_val;
     (*att_it).second.getValues(att_val);
-    std::cout << "\t\t" << att_val << std::endl;
+    dbg << "\t\t" << att_val << DebugStream::eol;
   }
+  DEBUG2((dbg));
 }
 
 void SOFA::list_varatts(const sofa_var_t sofa_var) const
 {
   sofa_varatt_collection_t sofa_atts = sofa_var.getAtts();
   // loop through variables and print name
-  DEBUG2(sofa_var.getName() << " attributes are:");
+  dbg << sofa_var.getName() << " attributes are:" << DebugStream::eol;
   for (sofa_varatt_collection_t::iterator att_it = sofa_atts.begin(); att_it != sofa_atts.end(); att_it++)
   {
-    DEBUG2("\t" << (*att_it).first << " (" << (*att_it).second.getType().getName() << ")");
+    dbg << "\t" << (*att_it).first << " (" << (*att_it).second.getType().getName() << ")" << DebugStream::eol;
     std::string att_val;
     (*att_it).second.getValues(att_val);
-    DEBUG2("\t\t" << att_val);
+    dbg << "\t\t" << att_val << DebugStream::eol;
   }
+  DEBUG2((dbg));
 }
 
 SOFA::sofa_var_t SOFA::get_var(const std::string var_name) const
