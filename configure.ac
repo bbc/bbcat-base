@@ -52,9 +52,10 @@ AC_MSG_CHECKING(whether to include support for SOFA files)
 AC_ARG_ENABLE(sofa, AS_HELP_STRING([--disable-sofa], [disable SOFA support]), ENABLE_SOFA="no", ENABLE_SOFA="yes")
 AM_CONDITIONAL(ENABLE_SOFA, test "x${ENABLE_SOFA}" = "xyes")
 if test "x${ENABLE_SOFA}" = "xyes"; then
-  SOFA_CFLAGS="-DENABLE_SOFA"
+  SOFA_CFLAGS="-DENABLE_SOFA=1"
   AC_MSG_RESULT(yes)
 else
+  SOFA_CFLAGS="-DENABLE_SOFA=0"
   AC_MSG_RESULT(no)
 fi
 AC_SUBST(SOFA_CFLAGS)
