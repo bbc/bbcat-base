@@ -5,15 +5,21 @@
  *      Author: chrisp
  */
 
+#include <netcdf>
 
 #define DEBUG_LEVEL 2
 #include "SOFA.h"
 
 BBC_AUDIOTOOLBOX_START
 
-SOFA::SOFA(const std::string filename) :
+typedef struct SOFA::_sofa_dims_t {
+  netCDF::NcDim N,M,R,E,C,I;
+} sofa_dims_t;
+
+SOFA::SOFA(const std::string& filename) :
   sample_rate(0.f)
 {
+  sofa_dims = new sofa_dims_t;
   try
   {
     // Open the file and check to make sure it's valid.
@@ -35,18 +41,18 @@ SOFA::SOFA(const std::string filename) :
     }
 
     // get sofa dimensions
-    sofa_dims.N = sofa_file->getDim("N");
-    if(sofa_dims.N.isNull()) ERROR("SOFA dim N is null");
-    sofa_dims.M = sofa_file->getDim("M");
-    if(sofa_dims.M.isNull()) ERROR("SOFA dim M is null");
-    sofa_dims.R = sofa_file->getDim("R");
-    if(sofa_dims.R.isNull()) ERROR("SOFA dim R is null");
-    sofa_dims.E = sofa_file->getDim("E");
-    if(sofa_dims.E.isNull()) ERROR("SOFA dim E is null");
-    sofa_dims.C = sofa_file->getDim("C");
-    if(sofa_dims.C.isNull()) ERROR("SOFA dim C is null");
-    sofa_dims.I = sofa_file->getDim("I");
-    if(sofa_dims.I.isNull()) ERROR("SOFA dim I is null");
+    sofa_dims->N = sofa_file->getDim("N");
+    if(sofa_dims->N.isNull()) ERROR("SOFA dim N is null");
+    sofa_dims->M = sofa_file->getDim("M");
+    if(sofa_dims->M.isNull()) ERROR("SOFA dim M is null");
+    sofa_dims->R = sofa_file->getDim("R");
+    if(sofa_dims->R.isNull()) ERROR("SOFA dim R is null");
+    sofa_dims->E = sofa_file->getDim("E");
+    if(sofa_dims->E.isNull()) ERROR("SOFA dim E is null");
+    sofa_dims->C = sofa_file->getDim("C");
+    if(sofa_dims->C.isNull()) ERROR("SOFA dim C is null");
+    sofa_dims->I = sofa_file->getDim("I");
+    if(sofa_dims->I.isNull()) ERROR("SOFA dim I is null");
 
     // explicitly check and report SOFA Convention
     DEBUG2(("Convention: %s", get_convention_name().c_str()));
@@ -73,6 +79,7 @@ SOFA::SOFA(const std::string filename) :
 SOFA::~SOFA()
 {
   delete sofa_file;
+  delete sofa_dims;
 }
 
 std::string SOFA::get_convention_name() const
@@ -94,22 +101,22 @@ float SOFA::get_samplerate() const
 
 size_t SOFA::get_num_measurements() const
 {
-  return sofa_dims.M.getSize();
+  return sofa_dims->M.getSize();
 }
 
 size_t SOFA::get_ir_length() const
 {
-  return sofa_dims.N.getSize();
+  return sofa_dims->N.getSize();
 }
 
 size_t SOFA::get_num_receivers() const
 {
-  return sofa_dims.R.getSize();
+  return sofa_dims->R.getSize();
 }
 
 size_t SOFA::get_num_emitters() const
 {
-  return sofa_dims.E.getSize();
+  return sofa_dims->E.getSize();
 }
 
 bool SOFA::get_all_irs(audio_buffer_t& ir_buffer) const
@@ -120,10 +127,10 @@ bool SOFA::get_all_irs(audio_buffer_t& ir_buffer) const
 
   get_index_vec_t start(n_dims,0);
   get_index_vec_t count(n_dims,1);
-  count[0] = sofa_dims.M.getSize();
-  count[1] = sofa_dims.R.getSize();
-  if (n_dims > 3) count[2] = sofa_dims.E.getSize(); // for MultiSpeakerBRIR
-  count[n_dims-1] = sofa_dims.N.getSize();
+  count[0] = sofa_dims->M.getSize();
+  count[1] = sofa_dims->R.getSize();
+  if (n_dims > 3) count[2] = sofa_dims->E.getSize(); // for MultiSpeakerBRIR
+  count[n_dims-1] = sofa_dims->N.getSize();
 
   return get_ir_data(start, count, ir_buffer);
 }
@@ -136,10 +143,10 @@ bool SOFA::get_all_irs(float* ir_buffer) const
 
   get_index_vec_t start(n_dims,0);
   get_index_vec_t count(n_dims,1);
-  count[0] = sofa_dims.M.getSize();
-  count[1] = sofa_dims.R.getSize();
-  if (n_dims > 3) count[2] = sofa_dims.E.getSize(); // for MultiSpeakerBRIR
-  count[n_dims-1] = sofa_dims.N.getSize();
+  count[0] = sofa_dims->M.getSize();
+  count[1] = sofa_dims->R.getSize();
+  if (n_dims > 3) count[2] = sofa_dims->E.getSize(); // for MultiSpeakerBRIR
+  count[n_dims-1] = sofa_dims->N.getSize();
 
   return get_ir_data(start, count, ir_buffer);
 }
@@ -156,7 +163,7 @@ bool SOFA::get_ir(SOFA::audio_buffer_t& ir_buffer, uint_t indexM, uint_t indexR,
 
   get_index_vec_t start(n_dims,0);
   get_index_vec_t count(n_dims,1);
-  if (indexM >= sofa_dims.M.getSize() || indexR >= sofa_dims.R.getSize() || indexE >= sofa_dims.E.getSize())
+  if (indexM >= sofa_dims->M.getSize() || indexR >= sofa_dims->R.getSize() || indexE >= sofa_dims->E.getSize())
   {
     ERROR("Index out of range.");
     return false;
@@ -165,7 +172,7 @@ bool SOFA::get_ir(SOFA::audio_buffer_t& ir_buffer, uint_t indexM, uint_t indexR,
   start[0] = indexM;
   start[1] = indexR;
   if (n_dims > 3) start[2] = indexE; // for MultiSpeakerBRIR
-  count[n_dims-1] = sofa_dims.N.getSize();
+  count[n_dims-1] = sofa_dims->N.getSize();
 
   return get_ir_data(start, count, ir_buffer);
 }
@@ -182,7 +189,7 @@ bool SOFA::get_ir(float *ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE)
 
   get_index_vec_t start(n_dims,0);
   get_index_vec_t count(n_dims,1);
-  if (indexM >= sofa_dims.M.getSize() || indexR >= sofa_dims.R.getSize() || indexE >= sofa_dims.E.getSize())
+  if (indexM >= sofa_dims->M.getSize() || indexR >= sofa_dims->R.getSize() || indexE >= sofa_dims->E.getSize())
   {
     ERROR("Index out of range.");
     return false;
@@ -191,7 +198,7 @@ bool SOFA::get_ir(float *ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE)
     start[0] = indexM;
     start[1] = indexR;
     if (n_dims > 3) start[2] = indexE; // for MultiSpeakerBRIR
-    count[n_dims-1] = sofa_dims.N.getSize();
+    count[n_dims-1] = sofa_dims->N.getSize();
 
     return get_ir_data(start, count, ir_buffer);
   }
@@ -208,7 +215,7 @@ bool SOFA::get_delays(SOFA::delay_buffer_t& delays, uint_t indexR, uint_t indexE
 
   get_index_vec_t start(n_dims,0);
   get_index_vec_t count(n_dims,1);
-  if (indexR >= sofa_dims.R.getSize() || indexE >= sofa_dims.E.getSize())
+  if (indexR >= sofa_dims->R.getSize() || indexE >= sofa_dims->E.getSize())
   {
     ERROR("Index out of range.");
     return false;
@@ -218,7 +225,7 @@ bool SOFA::get_delays(SOFA::delay_buffer_t& delays, uint_t indexR, uint_t indexE
   if (n_dims > 2) start[2] = indexE; // for MultiSpeakerBRIR
   if (delay_data.getDims()[0].getName() == "M")
   {
-    count[0] = sofa_dims.M.getSize();
+    count[0] = sofa_dims->M.getSize();
   }
   return get_delay_data(start, count, delays);
 }

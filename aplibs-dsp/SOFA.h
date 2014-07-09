@@ -10,24 +10,31 @@
 
 #include <vector>
 #include <string>
-#include <netcdf>
 
 #include <aplibs-dsp/misc.h>
 #include <aplibs-dsp/3DPosition.h>
+
+namespace netCDF {
+  class NcFile;
+  class NcVar;
+  class NcDim;
+  class NcGroupAtt;
+  class NcVarAtt;
+}
 
 BBC_AUDIOTOOLBOX_START
 
 class SOFA {
 public:
-  SOFA(const std::string filename);
+  SOFA(const std::string& filename);
   virtual ~SOFA();
-
 
   typedef netCDF::NcFile                          sofa_file_t;
   typedef netCDF::NcVar                           sofa_var_t;
   typedef netCDF::NcDim                           sofa_dim_t;
   typedef netCDF::NcGroupAtt                      sofa_att_t;
   typedef netCDF::NcVarAtt                        sofa_varatt_t;
+
   typedef std::multimap<std::string,sofa_var_t>   sofa_var_collection_t;
   typedef std::multimap<std::string,sofa_dim_t>   sofa_dim_collection_t;
   typedef std::vector<sofa_dim_t>                 sofa_dims_vec_t;
@@ -71,10 +78,11 @@ protected:
   bool get_ir_data(get_index_vec_t start, get_index_vec_t count, float* ir_buffer) const;
   bool get_delay_data(get_index_vec_t start, get_index_vec_t count, delay_buffer_t& delays) const;
   positions_array_t get_position_var_data(const std::string position_variable_name) const;
+
+  struct _sofa_dims_t;
+
 private:
-  struct {
-    netCDF::NcDim N,M,R,E,C,I;
-  } sofa_dims;
+  struct _sofa_dims_t *sofa_dims;
   sofa_file_t* sofa_file;
   std::string convention_name;
   float sample_rate;
