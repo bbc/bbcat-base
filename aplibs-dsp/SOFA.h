@@ -47,7 +47,7 @@ public:
   typedef std::vector<audio_sample_t>             delay_buffer_t;
   typedef std::vector<bbcat::Position>            positions_array_t;
 
-  operator bool () const { return (sofa_file != nullptr); }
+  operator bool () const { return (sofa_file != NULL); }
 
   std::string         get_convention_name() const;
   float               get_samplerate() const;
