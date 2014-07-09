@@ -52,7 +52,12 @@ ConvolverManager::ConvolverManager(uint_t partitionsize) :
  */
 /*--------------------------------------------------------------------------------*/
 ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
-  ConvolverManager(partitionsize)
+  blocksize(partitionsize),
+  partitions(0),
+  delayscale(1.0),
+  audioscale(1.f),
+  hqproc(true),
+  updateparameters(true)
 {
   LoadIRs(irfile);
 }
@@ -67,8 +72,14 @@ ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
  */
 /*--------------------------------------------------------------------------------*/
 ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize) :
-  ConvolverManager(irfile, partitionsize)
+  blocksize(partitionsize),
+  partitions(0),
+  delayscale(1.0),
+  audioscale(1.f),
+  hqproc(true),
+  updateparameters(true)
 {
+  LoadIRs(irfile);
   LoadIRDelays(irdelayfile);
 }
 
@@ -201,10 +212,12 @@ void ConvolverManager::LoadIRs(const char *filename)
 {
   if (filename) {
 #if ENABLE_SOFA
-    if (LoadSOFA(filename))
+    // only attempt to load file as SOFA if suffix is .sofa (otherwise app bombs out on none SOFA files)
+    if ((strlen(filename) >= 5) && (strcasecmp(filename + strlen(filename) - 5, ".sofa") == 0) && LoadSOFA(filename))
     {
       DEBUG3(("Loaded IRs from SOFA file (%s).", filename));
-    } else
+    }
+    else
 #endif
       if (LoadIRsSndFile(filename)) {
         DEBUG3(("Loaded IRs from WAV file (%s).", filename));
