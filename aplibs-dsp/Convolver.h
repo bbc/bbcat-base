@@ -201,21 +201,6 @@ protected:
   typedef apf::conv::Filter APFFilter;
 
   /*--------------------------------------------------------------------------------*/
-  /** Create a dynamic convolver with the correct parameters for inclusion in this manager
-   */
-  /*--------------------------------------------------------------------------------*/
-  APFConvolver CreateConvolver() const;
-
-  /*--------------------------------------------------------------------------------*/
-  /** Create a static convolver with the correct parameters for inclusion in this manager
-   *
-   * @param irdate pointer to impulse response data buffer
-   * @param irlength length of the buffer in samples
-   */
-  /*--------------------------------------------------------------------------------*/
-  APFConvolver CreateConvolver(const float *irdata, const ulong_t irlength);
-
-  /*--------------------------------------------------------------------------------*/
   /** Update the parameters of an individual convolver
    *
    * @param convolver convolver number
@@ -262,11 +247,11 @@ protected:
   float                    audioscale;
   bool                     hqproc;
   bool                     updateparameters;
-  bool                     usestaticconvolver;
 };
 
 class Convolver {
 public:
+  // no public constructor
   virtual ~Convolver();
 
   // no public members - everything is driven by a ConvolverManager
@@ -274,14 +259,13 @@ public:
 protected:
   friend class ConvolverManager;
 
-  typedef ConvolverManager::APFConvolver APFConvolver;
-  typedef apf::conv::Filter              APFFilter;
+  typedef apf::conv::Filter APFFilter;
 
   /*--------------------------------------------------------------------------------*/
   /** Protected constructor so that only ConvolverManager can create convolvers
    */
   /*--------------------------------------------------------------------------------*/
-  Convolver(uint_t _convindex, uint_t _blocksize, const APFConvolver& _convolver, float _scale, double _delay = 0.0);
+  Convolver(uint_t _convindex, uint_t _blocksize, float _scale, double _delay = 0.0);
 
   /*--------------------------------------------------------------------------------*/
   /** Start convolution thread
@@ -306,22 +290,12 @@ protected:
   /*--------------------------------------------------------------------------------*/
   /** Set parameters and options for convolution
    *
-   * @param newfilter new IR filter from ConvolverManager
    * @param level audio output level
    * @param delay audio delay (due to ITD and source delay) (in SAMPLES)
    * @param hqproc true for high-quality and CPU hungry processing
    */
   /*--------------------------------------------------------------------------------*/
-  virtual void SetParameters(const APFFilter& newfilter, double level, double delay, bool hqproc);
-
-  /*--------------------------------------------------------------------------------*/
-  /** Set parameters and options for convolution
-   *
-   * @param level audio output level
-   * @param hqproc true for high-quality and CPU hungry processing
-   */
-  /*--------------------------------------------------------------------------------*/
-  virtual void SetParameters(double level, bool hqproc);
+  virtual void SetParameters(double level, double delay, bool hqproc);
 
   /*--------------------------------------------------------------------------------*/
   /** Stop processing thread
@@ -341,6 +315,7 @@ protected:
   }
 
   virtual void *Process();
+  virtual void Convolve(float *dest) {UNUSED_PARAMETER(dest);}
 
   std::string DebugHeader() const;
 
@@ -348,12 +323,10 @@ protected:
   ThreadBoolSignalObject   startsignal;
   ThreadBoolSignalObject   donesignal;
   pthread_t                thread;
-  APFConvolver             convolver;
   uint_t                   blocksize;
   uint_t                   convindex;
   float                    scale;
 
-  volatile const APFFilter *filter;
   volatile float           *input;
   volatile float           *output;
   volatile double          outputdelay;
@@ -361,6 +334,81 @@ protected:
   volatile uint_t          maxadditionaldelay;
   volatile bool            hqproc;
   volatile bool            quitthread;
+};
+
+/*----------------------------------------------------------------------------------------------------*/
+
+class DynamicConvolver : public Convolver {
+public:
+  // no public constructor
+  virtual ~DynamicConvolver();
+
+  // no public members - everything is driven by a ConvolverManager
+
+protected:
+  friend class ConvolverManager;
+  typedef apf::conv::Convolver APFConvolver;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Protected constructor so that only ConvolverManager can create convolvers
+   */
+  /*--------------------------------------------------------------------------------*/
+  DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale);
+  
+  /*--------------------------------------------------------------------------------*/
+  /** Set IR filter for convolution
+   *
+   * @param newfilter new IR filter from ConvolverManager
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void SetFilter(const APFFilter& newfilter);
+  
+  /*--------------------------------------------------------------------------------*/
+  /** Actually perform convolution on the input and store it in the provided buffer
+   *
+   * @param dest destination buffer
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void Convolve(float *dest);
+
+protected:
+  APFConvolver    *convolver;
+  const APFFilter *convfilter;
+
+  volatile const APFFilter *filter;
+};
+
+/*----------------------------------------------------------------------------------------------------*/
+
+class StaticConvolver : public Convolver {
+public:
+  // no public constructor
+  virtual ~StaticConvolver();
+
+  // no public members - everything is driven by a ConvolverManager
+
+protected:
+  friend class ConvolverManager;
+  typedef apf::conv::StaticConvolver APFConvolver;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Protected constructor so that only ConvolverManager can create convolvers
+   */
+  /*--------------------------------------------------------------------------------*/
+  StaticConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale, double _delay);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Actually perform convolution on the input and store it in the provided buffer
+   *
+   * @param dest destination buffer
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void Convolve(float *dest);
+
+protected:
+  APFConvolver *convolver;
 };
 
 BBC_AUDIOTOOLBOX_END

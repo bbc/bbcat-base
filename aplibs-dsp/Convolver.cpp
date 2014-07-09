@@ -94,37 +94,6 @@ ConvolverManager::~ConvolverManager()
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Create a dynamic convolver with the correct parameters for inclusion in this manager
- */
-/*--------------------------------------------------------------------------------*/
-ConvolverManager::APFConvolver ConvolverManager::CreateConvolver() const
-{
-  APFConvolver convolver;
-
-  memset(&convolver, 0, sizeof(convolver));
-  convolver.dynamicconvolver = new apf::conv::Convolver(blocksize, partitions);
-
-  return convolver;
-}
-
-/*--------------------------------------------------------------------------------*/
-/** Create a static convolver with the correct parameters for inclusion in this manager
- *
- * @param irdate pointer to impulse response data buffer
- * @param irlength length of the buffer in samples
- */
-/*--------------------------------------------------------------------------------*/
-ConvolverManager::APFConvolver ConvolverManager::CreateConvolver(const float *irdata, const ulong_t irlength)
-{
-  APFConvolver convolver;
-
-  memset(&convolver, 0, sizeof(convolver));
-  convolver.staticconvolver = new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength);
-
-  return convolver;
-}
-
-/*--------------------------------------------------------------------------------*/
 /** Sets the expected impulse response length (for static convolvers ONLY)
  *  Should be called before creating convolvers, will clear all initialised ones
  *  if existing.
@@ -212,7 +181,7 @@ void ConvolverManager::LoadIRs(const char *filename)
 {
   if (filename) {
 #if ENABLE_SOFA
-    // only attempt to load file as SOFA if suffix is .sofa (otherwise app bombs out on none SOFA files)
+    // only attempt to load file as SOFA if suffix is .sofa (otherwise app bombs out on non-SOFA files)
     if ((strlen(filename) >= 5) && (strcasecmp(filename + strlen(filename) - 5, ".sofa") == 0) && LoadSOFA(filename))
     {
       DEBUG3(("Loaded IRs from SOFA file (%s).", filename));
@@ -416,10 +385,12 @@ void ConvolverManager::CreateStaticConvolver(const float *irdata, const ulong_t 
 
   memset(&params, 0, sizeof(params));
   params.delay = delay;
+  params.level = 1.0;
   parameters.push_back(params);
 
   // set up new convolver
-  if ((conv = new Convolver(convolvers.size(), blocksize, CreateConvolver(irdata, irlength), audioscale, delay)) != NULL) {
+  if ((conv = new StaticConvolver(convolvers.size(), blocksize, new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength), audioscale, delay)) != NULL) {
+    conv->SetParameters(params.level, params.delay, hqproc);
     convolvers.push_back(conv);
   }
 }
@@ -438,7 +409,7 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
     Convolver *conv;
 
     // set up new convolver
-    if ((conv = new Convolver(convolvers.size(), blocksize, CreateConvolver(), audioscale)) != NULL) {
+    if ((conv = new DynamicConvolver(convolvers.size(), blocksize, new apf::conv::Convolver(blocksize, partitions), audioscale)) != NULL) {
       convolvers.push_back(conv);
 
       // set default IR
@@ -518,7 +489,15 @@ void ConvolverManager::UpdateConvolverParameters(uint_t convolver)
       double delay = (ir < irdelays.size()) ? irdelays[ir] * delayscale : 0.0;
 
       // pass parameters to convolver, add additional delay to scaled delay due to IR's
-      convolvers[convolver]->SetParameters(filters[ir], params.level, delay + params.delay, hqproc);
+      DynamicConvolver *dynconv;
+      if ((dynconv = dynamic_cast<DynamicConvolver *>(convolvers[convolver])) != NULL)
+      {
+        // Dynamic Convolver -> set IR filter
+        dynconv->SetFilter(filters[ir]);
+      }
+
+      // set other parameters
+      convolvers[convolver]->SetParameters(params.level, delay + params.delay, hqproc);
     }
   }
 }
@@ -669,13 +648,11 @@ void ConvolverManager::LoadDelaysSOFA(SOFA& file)
 /** Protected constructor so that only ConvolverManager can create convolvers
  */
 /*--------------------------------------------------------------------------------*/
-Convolver::Convolver(uint_t _convindex, uint_t _blocksize, const APFConvolver& _convolver, float _scale, double _delay) :
+Convolver::Convolver(uint_t _convindex, uint_t _blocksize, float _scale, double _delay) :
   thread(0),
-  convolver(_convolver),
   blocksize(_blocksize),
   convindex(_convindex),
   scale(_scale),
-  filter(NULL),
   input(new float[blocksize]),
   output(new float[blocksize]),
   outputdelay(_delay),
@@ -693,9 +670,6 @@ Convolver::Convolver(uint_t _convindex, uint_t _blocksize, const APFConvolver& _
 Convolver::~Convolver()
 {
   StopThread();
-
-  if (convolver.dynamicconvolver) delete convolver.dynamicconvolver;
-  if (convolver.staticconvolver)  delete convolver.staticconvolver;
 
   if (input)  delete[] input;
   if (output) delete[] output;
@@ -788,7 +762,6 @@ void Convolver::EndConvolution(float *_output, uint_t outputchannels)
 /*--------------------------------------------------------------------------------*/
 void *Convolver::Process()
 {
-  const APFFilter *convfilter = NULL;
   uint_t maxdelay = maxadditionaldelay;       // maximum delay in samples
   uint_t delaypos = 0;
   // delay length is maxdelay plus blocksize samples then rounded up to a whole number of blocksize's
@@ -817,57 +790,8 @@ void *Convolver::Process()
     // detect quit request
     if (quitthread) break;
 
-    if (convolver.dynamicconvolver)
-    {
-      apf::conv::Convolver *conv = convolver.dynamicconvolver;
-
-      // add input to convolver
-      conv->add_block(input);
-
-      // do convolution
-      const float *result = conv->convolve(scale);
-      float       *dest   = delay + delaypos;
-            
-      // copy data into delay memory
-      memcpy(dest, result, blocksize * sizeof(*delay));
-
-      // if filter needs updating, update it now
-      if (filter && (filter != convfilter)) {
-        convfilter = (const APFFilter *)filter;
-        conv->set_filter(*convfilter);
-        DEBUG3(("[%010lu]: Selected new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
-      }
-
-      // if queues_empty() returns false, must cross fade between convolutions
-      if (!conv->queues_empty()) {
-        // rotate queues within convolver
-        conv->rotate_queues();
-
-        // do convolution a second time
-        result = conv->convolve(scale);
-
-        // crossfade new convolution result into buffer
-        for (i = 0; i < blocksize; i++) {
-          double b = (double)i / (double)blocksize, a = 1.0 - b;
-
-          dest[i] = dest[i] * a + b * result[i];
-        }
-      }
-    }
-    else if (convolver.staticconvolver)
-    {
-      apf::conv::StaticConvolver *conv = convolver.staticconvolver;
-
-      // add input to convolver
-      conv->add_block(input);
-
-      // do convolution
-      const float *result = conv->convolve(scale);
-      float       *dest   = delay + delaypos;
-            
-      // copy data into delay memory
-      memcpy(dest, result, blocksize * sizeof(*delay));
-    }
+    // call APF Convolver or StaticConvolver
+    Convolve(delay + delaypos);
 
     // process delay memory using specified delay
     uint_t pos1   = delaypos + delaylen;
@@ -920,38 +844,129 @@ void *Convolver::Process()
 /*--------------------------------------------------------------------------------*/
 /** Set parameters and options for convolution
  *
- * @param newfilter new IR filter from ConvolverManager
  * @param level audio output level
  * @param delay audio delay (due to ITD and source delay) (in SAMPLES)
  * @param hqproc true for high-quality and CPU hungry processing
  */
 /*--------------------------------------------------------------------------------*/
-void Convolver::SetParameters(const APFFilter& newfilter, double level, double delay, bool hqproc)
+void Convolver::SetParameters(double level, double delay, bool hqproc)
 {
-  if (&newfilter != filter) {
-    DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
-    // set convolver filter
-    filter = &newfilter;
-  }
-
   // update processing parameters
   outputlevel  = level;
   outputdelay  = delay;
   this->hqproc = hqproc;
 }
 
+/*----------------------------------------------------------------------------------------------------*/
+
 /*--------------------------------------------------------------------------------*/
-/** Set parameters and options for convolution
- *
- * @param level audio output level
- * @param hqproc true for high-quality and CPU hungry processing
+/** Protected constructor so that only ConvolverManager can create convolvers
  */
 /*--------------------------------------------------------------------------------*/
-void Convolver::SetParameters(double level, bool hqproc)
+DynamicConvolver::DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale) : Convolver(_convindex, _blocksize, _scale),
+                                                                                                                   convolver(_convolver),
+                                                                                                                   convfilter(NULL),
+                                                                                                                   filter(NULL)
 {
-  // update processing parameters
-  outputlevel  = level;
-  this->hqproc = hqproc;
+}
+
+DynamicConvolver::~DynamicConvolver()
+{
+  if (convolver) delete convolver;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Set IR filter for convolution
+ *
+ * @param newfilter new IR filter from ConvolverManager
+ */
+/*--------------------------------------------------------------------------------*/
+void DynamicConvolver::SetFilter(const APFFilter& newfilter)
+{
+  if (&newfilter != filter) {
+    DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
+    // set convolver filter
+    filter = &newfilter;
+  }
+}
+  
+/*--------------------------------------------------------------------------------*/
+/** Actually perform convolution on the input and store it in the provided buffer
+ *
+ * @param dest destination buffer
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void DynamicConvolver::Convolve(float *dest)
+{
+  // add input to convolver
+  convolver->add_block(input);
+
+  // do convolution
+  const float *result = convolver->convolve(scale);
+            
+  // copy data into delay memory
+  memcpy(dest, result, blocksize * sizeof(*dest));
+
+  // if filter needs updating, update it now
+  if (filter && (filter != convfilter)) {
+    convfilter = (const APFFilter *)filter;
+    convolver->set_filter(*convfilter);
+    DEBUG3(("[%010lu]: Selected new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
+  }
+
+  // if queues_empty() returns false, must cross fade between convolutions
+  if (!convolver->queues_empty()) {
+    uint_t i;
+
+    // rotate queues within convolver
+    convolver->rotate_queues();
+
+    // do convolution a second time
+    result = convolver->convolve(scale);
+
+    // crossfade new convolution result into buffer
+    for (i = 0; i < blocksize; i++) {
+      double b = (double)i / (double)blocksize, a = 1.0 - b;
+
+      dest[i] = dest[i] * a + b * result[i];
+    }
+  }
+}
+
+/*----------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------*/
+/** Protected constructor so that only ConvolverManager can create convolvers
+ */
+/*--------------------------------------------------------------------------------*/
+StaticConvolver::StaticConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale, double _delay) : Convolver(_convindex, _blocksize, _scale, _delay),
+                                                                                                                                convolver(_convolver)
+{
+}
+
+StaticConvolver::~StaticConvolver()
+{
+  if (convolver) delete convolver;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Actually perform convolution on the input and store it in the provided buffer
+ *
+ * @param dest destination buffer
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void StaticConvolver::Convolve(float *dest)
+{
+  // add input to convolver
+  convolver->add_block(input);
+
+  // do convolution
+  const float *result = convolver->convolve(scale);
+            
+  // copy data into delay memory
+  memcpy(dest, result, blocksize * sizeof(*dest));
 }
 
 BBC_AUDIOTOOLBOX_END
