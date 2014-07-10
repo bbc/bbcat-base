@@ -24,6 +24,7 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
 	FractionalSample.cpp						\
 	misc.cpp									\
 	ParameterSet.cpp							\
+	PerformanceMonitor.cpp						\
 	SoundDelayBuffer.cpp						\
 	SoundFormatConversions.cpp					\
 	SoundFormatRawConversions.cpp				\
@@ -39,6 +40,7 @@ pkginclude_HEADERS =							\
 	Logging.hpp									\
 	misc.h										\
 	ParameterSet.h								\
+	PerformanceMonitor.h						\
 	PositionCursor.h							\
 	SoundDelayBuffer.h							\
 	SoundFormatConversions.h					\
