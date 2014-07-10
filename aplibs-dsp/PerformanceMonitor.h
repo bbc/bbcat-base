@@ -106,6 +106,20 @@ protected:
   uint32_t   reportinterval;
 };
 
+/*--------------------------------------------------------------------------------*/
+/** Simple class wrapper for performance start/stop
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+class MonitorPerformance {
+public:
+  MonitorPerformance(PerformanceMonitor& _perfmon) : perfmon(_perfmon) {perfmon.Start();}
+  ~MonitorPerformance() {perfmon.Stop();}
+
+protected:
+  PerformanceMonitor& perfmon;
+};
+
 BBC_AUDIOTOOLBOX_END
 
 #endif
