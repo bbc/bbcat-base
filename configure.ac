@@ -72,12 +72,6 @@ else
 fi
 AC_SUBST(APLIBS_DSP_CFLAGS)
 
-LIBBOOST_VER="1.49.0"
-AX_BOOST_BASE($LIBBOOST_VER, HAVE_BOOST=yes, HAVE_BOOST=no)
-if test "x${HAVE_BOOST}" != xyes ; then
-  AC_MSG_ERROR([Boost library is required])
-fi
-
 LIBSNDFILE_VER="1.0.25"
 PKG_CHECK_MODULES([SNDFILE], [sndfile >= LIBSNDFILE_VER], HAVE_SNDFILE=yes, HAVE_SNDFILE=no)
 if test "x${HAVE_SNDFILE}" != xyes ; then
