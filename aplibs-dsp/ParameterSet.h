@@ -109,6 +109,8 @@ public:
   bool Get(const std::string& name, ulong_t&     val) const;
   bool Get(const std::string& name, double&      val) const;
 
+  const std::string& Raw(const std::string& name) {return values[name];}
+
 protected:
   std::map<std::string,std::string> values;
 };
