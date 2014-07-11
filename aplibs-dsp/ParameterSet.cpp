@@ -34,7 +34,8 @@ ParameterSet& ParameterSet::operator += (const ParameterSet& obj)
 {
   map<string,string>::const_iterator it;
 
-  for (it = obj.values.begin(); it != obj.values.end(); ++it) {
+  for (it = obj.values.begin(); it != obj.values.end(); ++it)
+  {
     values[it->first] = it->second;
   }
 
@@ -51,8 +52,10 @@ ParameterSet& ParameterSet::operator -= (const ParameterSet& obj)
 {
   map<string,string>::const_iterator it, it2;
 
-  for (it = obj.values.begin(); it != obj.values.end(); ++it) {
-    if ((it2 = values.find(it->first)) != values.end()) {
+  for (it = obj.values.begin(); it != obj.values.end(); ++it)
+  {
+    if ((it2 = values.find(it->first)) != values.end())
+    {
       values.erase(it2);
     }
   }
@@ -65,7 +68,8 @@ string ParameterSet::ToString() const
   map<string,string>::const_iterator it;
   string str;
 
-  for (it = values.begin(); it != values.end(); ++it) {
+  for (it = values.begin(); it != values.end(); ++it)
+  {
     if (it != values.begin()) Printf(str, ", ");
     Printf(str, "%s %s", it->first.c_str(), it->second.c_str());
   }
@@ -178,6 +182,5 @@ std::string ParameterSet::Raw(const std::string& name, const std::string& defval
   if (Exists(name)) return values[name];
   return defval; 
 }
-
 
 BBC_AUDIOTOOLBOX_END
