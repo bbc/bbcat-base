@@ -33,6 +33,20 @@ public:
   bool operator != (const ParameterSet& obj) const {return !operator == (obj);}
 
   /*--------------------------------------------------------------------------------*/
+  /** Merge operator
+   */
+  /*--------------------------------------------------------------------------------*/
+  ParameterSet& operator += (const ParameterSet& obj);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Removal operator
+   *
+   * Removes any parameters specified on obj that exist in this object
+   */
+  /*--------------------------------------------------------------------------------*/
+  ParameterSet& operator -= (const ParameterSet& obj);
+
+  /*--------------------------------------------------------------------------------*/
   /** Return whether parameter set is empty
    */
   /*--------------------------------------------------------------------------------*/

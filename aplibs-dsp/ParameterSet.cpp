@@ -26,6 +26,40 @@ ParameterSet& ParameterSet::operator = (const ParameterSet& obj)
   return *this;
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Merge operator
+ */
+/*--------------------------------------------------------------------------------*/
+ParameterSet& ParameterSet::operator += (const ParameterSet& obj)
+{
+  map<string,string>::const_iterator it;
+
+  for (it = obj.values.begin(); it != obj.values.end(); ++it) {
+    values[it->first] = it->second;
+  }
+
+  return *this;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Removal operator
+ *
+ * Removes any parameters specified on obj that exist in this object
+ */
+/*--------------------------------------------------------------------------------*/
+ParameterSet& ParameterSet::operator -= (const ParameterSet& obj)
+{
+  map<string,string>::const_iterator it, it2;
+
+  for (it = obj.values.begin(); it != obj.values.end(); ++it) {
+    if ((it2 = values.find(it->first)) != values.end()) {
+      values.erase(it2);
+    }
+  }
+
+  return *this;
+}
+
 string ParameterSet::ToString() const
 {
   map<string,string>::const_iterator it;
