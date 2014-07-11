@@ -61,16 +61,18 @@ fi
 AC_SUBST(SOFA_CFLAGS)
 AC_SUBST(SOFA_LIBS)
 
-# Check if we should enable debug support  (./configure --enable-debug)
-AC_MSG_CHECKING(whether to disable debug support)
-AC_ARG_ENABLE(sofa, AS_HELP_STRING([--disable-debug], [disable debugging]), ENABLE_DEBUG="no", ENABLE_DEBUG="yes")
-if test "x${ENABLE_DEBUG}" = "xyes"; then
-  APLIBS_DSP_CFLAGS="$APLIBS_DSP_CFLAGS -g"
+# Check if we should disable optimization  (./configure --disable-opt)
+AC_MSG_CHECKING(whether to disable optimization)
+AC_ARG_ENABLE(opt, AS_HELP_STRING([--disable-opt], [disable optimzation]), DISABLE_OPTIMIZATION="yes", DISABLE_OPTIMIZATION="no")
+if test "x${DISABLE_OPTIMIZATION}" = "xyes"; then
+  CFLAGS="$CFLAGS -O0"
+  CXXFLAGS="$CXXFLAGS -O0"
   AC_MSG_RESULT(yes)
 else
   AC_MSG_RESULT(no)
 fi
-AC_SUBST(APLIBS_DSP_CFLAGS)
+AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
 
 LIBSNDFILE_VER="1.0.25"
 PKG_CHECK_MODULES([SNDFILE], [sndfile >= LIBSNDFILE_VER], HAVE_SNDFILE=yes, HAVE_SNDFILE=no)
