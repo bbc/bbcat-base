@@ -109,7 +109,7 @@ public:
   bool Get(const std::string& name, ulong_t&     val) const;
   bool Get(const std::string& name, double&      val) const;
 
-  const std::string& Raw(const std::string& name) {return values[name];}
+  std::string Raw(const std::string& name, const std::string& defval = "");
 
 protected:
   std::map<std::string,std::string> values;

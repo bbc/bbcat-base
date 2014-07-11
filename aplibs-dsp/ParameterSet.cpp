@@ -173,4 +173,11 @@ bool ParameterSet::Get(const string& name, double& val) const
   return ((it != values.end()) && (sscanf(it->second.c_str(), "%lf", &val) > 0));
 }
 
+std::string ParameterSet::Raw(const std::string& name, const std::string& defval)
+{
+  if (Exists(name)) return values[name];
+  return defval; 
+}
+
+
 BBC_AUDIOTOOLBOX_END
