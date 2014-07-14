@@ -175,9 +175,9 @@ Position Position::Cart() const
     // z =  sin(el)
 
     newpos.polar = false;
-    newpos.pos.x = -sin(pos.az * M_PI / 180.0) * cos(pos.el * M_PI / 180.0);
-    newpos.pos.y =  cos(pos.az * M_PI / 180.0) * cos(pos.el * M_PI / 180.0);
-    newpos.pos.z =  sin(pos.el * M_PI / 180.0);
+    newpos.pos.x = pos.d * -sin(pos.az * M_PI / 180.0) * cos(pos.el * M_PI / 180.0);
+    newpos.pos.y = pos.d *  cos(pos.az * M_PI / 180.0) * cos(pos.el * M_PI / 180.0);
+    newpos.pos.z = pos.d *  sin(pos.el * M_PI / 180.0);
   }
         
   return newpos;
