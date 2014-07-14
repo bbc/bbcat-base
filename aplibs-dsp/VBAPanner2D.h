@@ -35,12 +35,12 @@ public:
   /*--------------------------------------------------------------------------------*/
   /** Add a speaker at specified position with specified additional gain
    *
-   * @param channel channel that the speaker appears on
+   * @param channel channel that the speaker appears on (< 0 == dummy / no output)
    * @param pos physical position of speaker
    * @param gain modification of gain (1 == no modification)
    */
   /*--------------------------------------------------------------------------------*/
-  void AddSpeaker(uint_t channel, const Position& pos, double gain = 1.0);
+  void AddSpeaker(sint_t channel, const Position& pos, double gain = 1.0);
 
   /*--------------------------------------------------------------------------------*/
   /** Add a group of speakers to group list

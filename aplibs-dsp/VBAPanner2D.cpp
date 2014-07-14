@@ -30,7 +30,7 @@ VBAPanner2D::~VBAPanner2D()
 /** Store cartesian version speaker position
  */
 /*--------------------------------------------------------------------------------*/
-void VBAPanner2D::AddSpeaker(uint_t channel, const Position& pos, double gain)
+void VBAPanner2D::AddSpeaker(sint_t channel, const Position& pos, double gain)
 {
   Speaker_t sp = {
     .channel  = channel,

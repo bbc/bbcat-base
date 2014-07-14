@@ -23,7 +23,8 @@ BBC_AUDIOTOOLBOX_START
 VBAPanner::VBAPanner() : decay_power(1.4),
                          speed_of_sound(330.0),
                          max_dist(0.0),
-                         max_delay(0.0)
+                         max_delay(0.0),
+                         max_outputs(0)
 {
 }
 
@@ -100,7 +101,7 @@ void VBAPanner::SetGainAndDelay(Speaker_t& speaker)
 /** Store cartesian version speaker position
  */
 /*--------------------------------------------------------------------------------*/
-void VBAPanner::AddSpeaker(uint_t channel, const Position& pos, double gain)
+void VBAPanner::AddSpeaker(sint_t channel, const Position& pos, double gain)
 {
   Speaker_t sp = {
     .channel  = channel,
@@ -117,6 +118,8 @@ void VBAPanner::AddSpeaker(uint_t channel, const Position& pos, double gain)
   DEBUG2(("Adding speaker index %u, channel %u", (uint_t)speakers.size(), channel));
 
   speakers.push_back(sp);
+
+  if (channel >= (sint_t)max_outputs) max_outputs = channel + 1;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -134,13 +137,14 @@ void VBAPanner::Read(const char *filename)
 
     while ((l = ReadLine(fp, line, sizeof(line))) != EOF) {
       Position pos;
-      uint_t   channel, spn[3];
+      sint_t   channel;
+      uint_t   spn[3];
       double   gain = 0.0;
 
       if ((l == 0) || (line[0] == '#')) continue;
 
       // attempt to interpret data as speaker positions or speaker indices
-      if (readingspeakers && (sscanf(line, "%u %lf,%lf,%lf %lf", &channel, &pos.pos.x, &pos.pos.y, &pos.pos.z, &gain) >= 4)) {
+      if (readingspeakers && (sscanf(line, "%d %lf,%lf,%lf %lf", &channel, &pos.pos.x, &pos.pos.y, &pos.pos.z, &gain) >= 4)) {
         pos.polar   = false;
         
         DEBUG3(("Adding %s as speaker (channel %u, gain %0.2lfdB)", pos.ToString().c_str(), channel, gain));

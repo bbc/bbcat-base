@@ -46,14 +46,20 @@ public:
   void Read(const char *filename);
 
   /*--------------------------------------------------------------------------------*/
+  /** Return maximum number of outputs required for the VBAP rendering
+   */
+  /*--------------------------------------------------------------------------------*/
+  uint_t GetMaxOutputs() const {return max_outputs;}
+
+  /*--------------------------------------------------------------------------------*/
   /** Add a speaker at specified position with specified additional gain
    *
-   * @param channel channel that the speaker appears on 
+   * @param channel channel that the speaker appears on (< 0 == dummy / no output)
    * @param pos physical position of speaker
    * @param gain modification of gain (1 == no modification)
    */
   /*--------------------------------------------------------------------------------*/
-  void AddSpeaker(uint_t channel, const Position& pos, double gain = 1.0);
+  void AddSpeaker(sint_t channel, const Position& pos, double gain = 1.0);
 
   /*--------------------------------------------------------------------------------*/
   /** Add a group of speakers to group list
@@ -78,14 +84,14 @@ public:
     double x, y, z;         // last test position
     struct {
       uint_t index;       // speaker index
-      uint_t channel;     // output channel
+      sint_t channel;     // output channel (< 0 == ignored) 
       double gain;        // gain of this speaker
       double delay;       // delay in s to delay this speaker by
     } speakers[MaxSpeakersPerSet];
   } SpeakerSet_t;
 
   typedef struct {
-    uint_t channel;     // output channel
+    sint_t channel;     // output channel (< 0 == ignored) 
     double gain;        // gain of this speaker
     double delay;       // delay in s to delay this speaker by
   } SpeakerOutput_t;
@@ -103,7 +109,7 @@ public:
 
 protected:
   typedef struct {
-    uint_t   channel;                       // channel on which this speaker appears
+    sint_t   channel;                       // channel on which this speaker appears (< 0 == ignored)
     Position vec;                           // unit vector of speaker position
     double   dist;                          // distance of speaker
     double   usergain;                      // user supplied gain of speaker
@@ -154,6 +160,7 @@ protected:
   double speed_of_sound;
   double max_dist;
   double max_delay;
+  uint_t max_outputs;
 };
 
 /*----------------------------------------------------------------------------------------------------*/
