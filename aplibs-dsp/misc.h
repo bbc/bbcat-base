@@ -20,7 +20,7 @@
 #define NUMBEROF(x) (sizeof(x) / sizeof(x[0]))
 #endif
 #ifndef RANGE
-#define RANGE(a, b, c) (((a) < (b)) || ((b) > (c)))
+#define RANGE(a, b, c) (((a) >= (b)) && ((b) <= (c)))
 #endif
 
 #define IFFID(name) (((uint32_t)name[0] << 24) | ((uint32_t)name[1] << 16) | ((uint32_t)name[2] << 8) | (uint32_t)name[3])
