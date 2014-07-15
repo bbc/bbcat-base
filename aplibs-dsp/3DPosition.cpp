@@ -446,10 +446,10 @@ string Position::ToString() const
   string str;
 
   if (polar) {
-    Printf(str, "polar (%0.1lf, %0.1lf) x %0.1lfm", pos.az, pos.el, pos.d);
+    Printf(str, "polar (%0.3lf, %0.3lf) x %0.3lfm", pos.az, pos.el, pos.d);
   }
   else {
-    Printf(str, "cart (%0.1lfm, %0.1lfm, %0.1lfm)", pos.x, pos.y, pos.z);
+    Printf(str, "cart (%0.3lfm, %0.3lfm, %0.3lfm)", pos.x, pos.y, pos.z);
   }
     
   return str;
