@@ -6,8 +6,6 @@
 
 #include "3DPosition.h"
 
-using namespace std;
-
 BBC_AUDIOTOOLBOX_START
 
 PositionTransform::PositionTransform() : xrotation(0.0),
@@ -441,9 +439,9 @@ double Angle(const Position& obj1, const Position& obj2)
   return acos(dot) * 180.0 / M_PI;
 }
 
-string Position::ToString() const
+std::string Position::ToString() const
 {
-  string str;
+  std::string str;
 
   if (polar) {
     Printf(str, "polar (%0.3lf, %0.3lf) x %0.3lfm", pos.az, pos.el, pos.d);

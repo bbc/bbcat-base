@@ -21,14 +21,11 @@
 #include "SoundFormatConversions.h"
 #include "FractionalSample.h"
 
-using namespace std;
-
 BBC_AUDIOTOOLBOX_START
 
 /*--------------------------------------------------------------------------------*/
 /** Constructor for convolver manager
  *
- * @param irfile file containing IRs (either WAV or SOFA) - SOFA file can also contain delays
  * @param partitionsize the convolution partition size - essentially the block size of the processing
  *
  */
@@ -64,6 +61,8 @@ ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
 
 /*--------------------------------------------------------------------------------*/
 /** Constructor for convolver manager
+ *  The delays in irdelayfile will overwrite any specified within irfile if
+ *  irfile is a SOFA file.
  *
  * @param irfile file containing IRs (either WAV or SOFA if enabled)
  * @param irdelayfile text file containing the required delays (in SAMPLES) of each IR in irfile
@@ -373,7 +372,7 @@ void ConvolverManager::SetIRDelays(const double *delays, const uint_t num_delays
 /*--------------------------------------------------------------------------------*/
 /** Create a static convolver with the correct parameters for inclusion in this manager
  *
- * @param irdate pointer to impulse response data buffer
+ * @param irdata pointer to impulse response data buffer
  * @param irlength length of the buffer in samples
  * @param delay a delay associated with the static convolver
  */
@@ -675,11 +674,11 @@ Convolver::~Convolver()
   if (output) delete[] output;
 }
 
-string Convolver::DebugHeader() const
+std::string Convolver::DebugHeader() const
 {
-  static const string column = "                    ";
+  static const std::string column = "                    ";
   static uint32_t tick0 = GetTickCount();
-  string res = "";
+  std::string res = "";
   uint_t i;
 
   Printf(res, "%06lu (%02u): ", (ulong_t)(GetTickCount() - tick0), convindex);

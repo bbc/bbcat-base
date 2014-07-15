@@ -16,8 +16,6 @@
 #define OUTPUT_GROUPS 0
 #endif
 
-using namespace std;
-
 BBC_AUDIOTOOLBOX_START
 
 VBAPanner::VBAPanner() : decay_power(1.4),
@@ -251,8 +249,8 @@ void VBAPanner::DebugSpeaker(FILE *fp, uint_t sp, const char *str)
 
 void VBAPanner::DebugGroup(FILE *fp, const SpeakerGroup_t& group, const char *str)
 {
+  std::string str2;
   Position pos;
-  string str2;
   uint_t i;
 
   for (i = 0; i < NUMBEROF(group.speakers); i++) {
@@ -647,7 +645,7 @@ static bool SpeakerOfIntereset(uint_t sp)
 /*--------------------------------------------------------------------------------*/
 void VBAPannerPulkki::FindSpeakerGroups()
 {
-  vector<Pair_t> pairs;
+  std::vector<Pair_t> pairs;
 #if DEBUG_INTERSECTIONS
   FILE *fp;
 #endif
@@ -679,7 +677,7 @@ void VBAPannerPulkki::FindSpeakerGroups()
 #endif
 
   // remove further apart pairs that cross nearer pairs
-  vector<Pair_t>::iterator it1, it2, it3;
+  std::vector<Pair_t>::iterator it1, it2, it3;
   for (it1 = pairs.begin(); it1 != pairs.end(); ++it1) {
     const Pair_t& pair1 = *it1;
 

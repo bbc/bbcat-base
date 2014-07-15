@@ -18,11 +18,9 @@
 #include "ByteSwap.h"
 #include "ThreadLock.h"
 
-using namespace std;
-
 BBC_AUDIOTOOLBOX_START
 
-static vector<char *> AllocatedStrings;
+static std::vector<char *> AllocatedStrings;
 
 static ThreadLockObject debuglock;
 
@@ -66,8 +64,8 @@ void SetErrorHandler(DEBUGHANDLER handler, void *context)
 
 void debug_msg(const char *fmt, ...)
 {
-  va_list ap;
-  string  str;
+  va_list     ap;
+  std::string str;
 
   va_start(ap, fmt);
   VPrintf(str, fmt, ap);
@@ -90,8 +88,8 @@ void debug_msg(const char *fmt, ...)
 void debug_err(const char *fmt, ...)
 {
   FILE *errstr = stdout;
-  va_list ap;
-  string  str;
+  va_list     ap;
+  std::string str;
 
   va_start(ap, fmt);
   VPrintf(str, fmt, ap);
@@ -228,10 +226,10 @@ void INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num)
   memcpy(num->b + 2, &mant, sizeof(mant));
 }
 
-string CreateIndent(const string& indent, uint_t count)
+std::string CreateIndent(const std::string& indent, uint_t count)
 {
   uint_t len = indent.size();
-  string str;
+  std::string str;
   char *buf;
 
   if ((count * len) > 0) {
@@ -262,7 +260,7 @@ string CreateIndent(const string& indent, uint_t count)
  *
  */
 /*--------------------------------------------------------------------------------*/
-void Printf(string& str, const char *fmt, ...)
+void Printf(std::string& str, const char *fmt, ...)
 {
   va_list ap;
   va_start(ap,fmt);

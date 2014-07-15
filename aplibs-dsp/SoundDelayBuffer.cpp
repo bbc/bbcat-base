@@ -108,6 +108,7 @@ uint_t SoundDelayBuffer::WriteSamples(const uint8_t *src, SampleFormat_t srcform
  *
  * @param dst destination for samples
  * @param dstformat destination format for samples (ASSUMES same endianness as machine)
+ * @param delay delay in samples (back from current write position)
  * @param channel channel within BUFFER (not destination) to start read from
  * @param nchannels number of channels within BUFFER (not destination) to read
  * @param nframes number of frames to read
@@ -237,6 +238,7 @@ uint_t SoundRingBuffer::WriteSamples(const uint8_t  *src, SampleFormat_t srcform
  *
  * @param dst destination for samples
  * @param dstformat destination format for samples (ASSUMES same endianness as machine)
+ * @param delay delay in samples (back from current write position)
  * @param channel channel within BUFFER (not destination) to start read from
  * @param nchannels number of channels within BUFFER (not destination) to read
  * @param nframes number of frames to read

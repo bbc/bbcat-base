@@ -62,8 +62,8 @@ public:
 
   /*--------------------------------------------------------------------------------*/
   /** Constructor for convolver manager.
-   *  The delays in @param irdelayfile will overwrite any specified within @irfile if
-   *  @irfile is a SOFA file.
+   *  The delays in irdelayfile will overwrite any specified within irfile if
+   *  irfile is a SOFA file.
    *
    * @param irfile file containing IRs (either WAV or SOFA)
    * @param irdelayfile text file containing the required delays (in SAMPLES) of each IR in irfile
@@ -133,7 +133,7 @@ public:
   /*--------------------------------------------------------------------------------*/
   /** Create a static convolver with the correct parameters for inclusion in this manager
    *
-   * @param irdate pointer to impulse response data buffer
+   * @param irdata pointer to impulse response data buffer
    * @param irlength length of the buffer in samples
    * @param delay a delay associated with the static convolver
    */

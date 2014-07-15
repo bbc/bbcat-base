@@ -6,8 +6,6 @@
 #define DEBUG_LEVEL 0
 #include "ParameterSet.h"
 
-using namespace std;
-
 BBC_AUDIOTOOLBOX_START
 
 ParameterSet::ParameterSet(const ParameterSet& obj)
@@ -32,7 +30,7 @@ ParameterSet& ParameterSet::operator = (const ParameterSet& obj)
 /*--------------------------------------------------------------------------------*/
 ParameterSet& ParameterSet::operator += (const ParameterSet& obj)
 {
-  map<string,string>::const_iterator it;
+  std::map<std::string,std::string>::const_iterator it;
 
   for (it = obj.values.begin(); it != obj.values.end(); ++it)
   {
@@ -50,7 +48,7 @@ ParameterSet& ParameterSet::operator += (const ParameterSet& obj)
 /*--------------------------------------------------------------------------------*/
 ParameterSet& ParameterSet::operator -= (const ParameterSet& obj)
 {
-  map<string,string>::const_iterator it, it2;
+  std::map<std::string,std::string>::const_iterator it, it2;
 
   for (it = obj.values.begin(); it != obj.values.end(); ++it)
   {
@@ -63,10 +61,10 @@ ParameterSet& ParameterSet::operator -= (const ParameterSet& obj)
   return *this;
 }
 
-string ParameterSet::ToString() const
+std::string ParameterSet::ToString() const
 {
-  map<string,string>::const_iterator it;
-  string str;
+  std::map<std::string,std::string>::const_iterator it;
+  std::string str;
 
   for (it = values.begin(); it != values.end(); ++it)
   {
@@ -84,35 +82,35 @@ string ParameterSet::ToString() const
  *
  */
 /*--------------------------------------------------------------------------------*/
-void ParameterSet::Set(const string& name, const string& val)
+void ParameterSet::Set(const std::string& name, const std::string& val)
 {
   values[name] = val;
 }
 
-void ParameterSet::Set(const string& name, bool val)
+void ParameterSet::Set(const std::string& name, bool val)
 {
-  string str;
+  std::string str;
   Printf(str, "%u", val ? 1 : 0);
   Set(name, str);
 }
 
-void ParameterSet::Set(const string& name, sint_t val)
+void ParameterSet::Set(const std::string& name, sint_t val)
 {
-  string str;
+  std::string str;
   Printf(str, "%d", val);
   Set(name, str);
 }
 
-void ParameterSet::Set(const string& name, slong_t val)
+void ParameterSet::Set(const std::string& name, slong_t val)
 {
-  string str;
+  std::string str;
   Printf(str, "%ld", val);
   Set(name, str);
 }
 
-void ParameterSet::Set(const string& name, double val)
+void ParameterSet::Set(const std::string& name, double val)
 {
-  string str;
+  std::string str;
   Printf(str, "%0.32le", val);
   Set(name, str);
 }
@@ -126,16 +124,16 @@ void ParameterSet::Set(const string& name, double val)
  * @return true if parameter found and value extracted
  */
 /*--------------------------------------------------------------------------------*/
-bool ParameterSet::Get(const string& name, string& val) const
+bool ParameterSet::Get(const std::string& name, std::string& val) const
 {
-  const map<string,string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
   if (it != values.end()) val = it->second;
   return (it != values.end());
 }
 
-bool ParameterSet::Get(const string& name, bool& val) const
+bool ParameterSet::Get(const std::string& name, bool& val) const
 {
-  const map<string,string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
   uint_t n;
   bool   success = false;
 
@@ -147,39 +145,39 @@ bool ParameterSet::Get(const string& name, bool& val) const
   return success;
 }
 
-bool ParameterSet::Get(const string& name, sint_t& val) const
+bool ParameterSet::Get(const std::string& name, sint_t& val) const
 {
-  const map<string,string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
   return ((it != values.end()) && (sscanf(it->second.c_str(), "%d", &val) > 0));
 }
 
-bool ParameterSet::Get(const string& name, uint_t& val) const
+bool ParameterSet::Get(const std::string& name, uint_t& val) const
 {
-  const map<string,string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
   return ((it != values.end()) && (sscanf(it->second.c_str(), "%u", &val) > 0));
 }
 
-bool ParameterSet::Get(const string& name, slong_t& val) const
+bool ParameterSet::Get(const std::string& name, slong_t& val) const
 {
-  const map<string,string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
   return ((it != values.end()) && (sscanf(it->second.c_str(), "%ld", &val) > 0));
 }
 
-bool ParameterSet::Get(const string& name, ulong_t& val) const
+bool ParameterSet::Get(const std::string& name, ulong_t& val) const
 {
-  const map<string,string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
   return ((it != values.end()) && (sscanf(it->second.c_str(), "%lu", &val) > 0));
 }
 
-bool ParameterSet::Get(const string& name, double& val) const
+bool ParameterSet::Get(const std::string& name, double& val) const
 {
-  const map<string,string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
   return ((it != values.end()) && (sscanf(it->second.c_str(), "%lf", &val) > 0));
 }
 
 std::string ParameterSet::Raw(const std::string& name, const std::string& defval) const
 {
-  const map<string,string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
   return (it != values.end()) ? it->second : defval; 
 }
 
