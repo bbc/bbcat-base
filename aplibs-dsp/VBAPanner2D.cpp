@@ -159,10 +159,11 @@ bool VBAPanner2D::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) co
 
         DEBUG3(("VB2D Speaker %u: index %u channel %u gain (%0.3le * %0.3le * %0.3le (=power(%0.3le, (1.0 - %0.3le))) = %0.3le) delay %0.3lfs", i, group.speakers[i], speaker.channel, bestgains[i], speaker.gain, src_gain, decay_power, src_dist, bestgains[i] * speaker.gain * src_gain, speaker.delay_compensation + src_delay));
 
-        speakerset.speakers[i].index   = group.speakers[i];
-        speakerset.speakers[i].channel = speaker.channel;
-        speakerset.speakers[i].gain    = bestgains[i] * speaker.gain * src_gain;    // apply gain due to source position
-        speakerset.speakers[i].delay   = speaker.delay_compensation + src_delay;    // add delay due to source position
+        speakerset.speakers[i].index    = group.speakers[i];
+        speakerset.speakers[i].channel  = speaker.channel;
+        speakerset.speakers[i].usergain = speaker.gain;                                 // user supplied gain
+        speakerset.speakers[i].gain     = bestgains[i] * src_gain;                      // apply gain due to source position
+        speakerset.speakers[i].delay    = speaker.delay_compensation + src_delay;       // add delay due to source position
       }
     }
     else {
@@ -173,10 +174,11 @@ bool VBAPanner2D::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) co
       for (i = 0; (i < MaxSpeakersPerSet) && (i < Dimensions); i++) {//for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < speakers.size()); i++) {
         const Speaker_t& speaker = speakers[i];
 
-        speakerset.speakers[i].index   = i;
-        speakerset.speakers[i].channel = speaker.channel;
-        speakerset.speakers[i].gain    = speaker.gain * src_gain;                   // apply gain due to source position
-        speakerset.speakers[i].delay   = speaker.delay_compensation + src_delay;    // add delay due to source position
+        speakerset.speakers[i].index    = i;
+        speakerset.speakers[i].channel  = speaker.channel;
+        speakerset.speakers[i].usergain = speaker.gain;                                 // user supplied gain
+        speakerset.speakers[i].gain     = src_gain;                                     // apply gain due to source position
+        speakerset.speakers[i].delay    = speaker.delay_compensation + src_delay;       // add delay due to source position
       }
 
       speakerset.valid = true;

@@ -78,22 +78,24 @@ public:
 
   // structure describing a set of speakers with individual gains to combine to create a virtual source
   typedef struct {
-    bool   valid;           // true if group found
-    uint_t group;           // speaker group
-    double error;           // speaker group error
-    double x, y, z;         // last test position
+    bool   valid;               // true if group found
+    uint_t group;               // speaker group
+    double error;               // speaker group error
+    double x, y, z;             // last test position
     struct {
-      uint_t index;       // speaker index
-      sint_t channel;     // output channel (< 0 == ignored) 
-      double gain;        // gain of this speaker
-      double delay;       // delay in s to delay this speaker by
+      uint_t index;             // speaker index
+      sint_t channel;           // output channel (< 0 == ignored) 
+      double usergain;          // user supplied gain of this speaker
+      double gain;              // gain of this speaker due to distance
+      double delay;             // delay in s to delay this speaker by
     } speakers[MaxSpeakersPerSet];
   } SpeakerSet_t;
 
   typedef struct {
-    sint_t channel;     // output channel (< 0 == ignored) 
-    double gain;        // gain of this speaker
-    double delay;       // delay in s to delay this speaker by
+    sint_t channel;             // output channel (< 0 == ignored) 
+    double usergain;            // user supplied gain of this speaker
+    double gain;                // gain of this speaker due to distance
+    double delay;               // delay in s to delay this speaker by
   } SpeakerOutput_t;
 
   /*--------------------------------------------------------------------------------*/
@@ -113,7 +115,7 @@ protected:
     Position vec;                           // unit vector of speaker position
     double   dist;                          // distance of speaker
     double   usergain;                      // user supplied gain of speaker
-    double   gain;                          // compensating gain of speaker (due to distance from origin) INCLUDE usergain
+    double   gain;                          // compensating gain of speaker (due to distance from origin)
     double   delay;                         // delay in s of speaker (due to distance from origin)
     double   delay_compensation;            // delay compensation (= maximum delay of all speakers - delay of this speaker)
   } Speaker_t;
