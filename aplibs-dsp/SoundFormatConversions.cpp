@@ -108,11 +108,11 @@ void TransferSamples(const void *vsrc,       SampleFormat_t srctype, bool src_be
     sint_t        dstlen = GetBytesPerSample(dsttype); // (signed so that the direction of operation can be backwards as well as forwards)
 
     // restrict input data to sensible values
-    src_channel    = MIN(src_channel, src_channels - 1);
-    dst_channel    = MIN(dst_channel, dst_channels - 1);
+    src_channel = MIN(src_channel, src_channels - 1);
+    dst_channel = MIN(dst_channel, dst_channels - 1);
 
-    nchannels      = MIN(nchannels,   src_channels - src_channel);
-    nchannels      = MIN(nchannels,   dst_channels - dst_channel);
+    nchannels   = MIN(nchannels,   src_channels - src_channel);
+    nchannels   = MIN(nchannels,   dst_channels - dst_channel);
 
     // final sanity check
     if (!nchannels) return;
@@ -124,8 +124,8 @@ void TransferSamples(const void *vsrc,       SampleFormat_t srctype, bool src_be
       nframes    = 1;
     }
 
-    sint_t srcflen = src_channels * srclen; // source frame    length (signed so that the direction of operation can be backwards as well as forwards)
-    sint_t dstflen = dst_channels * dstlen; // dest   frame    length (signed so that the direction of operation can be backwards as well as forwards)
+    sint_t srcflen = src_channels * srclen; // source frame length (signed so that the direction of operation can be backwards as well as forwards)
+    sint_t dstflen = dst_channels * dstlen; // dest   frame length (signed so that the direction of operation can be backwards as well as forwards)
 
     // move to desired offsets (starting channel)
     src += src_channel * srclen;

@@ -447,4 +447,32 @@ void debug_err(DebugStream& str)
     str.clear();
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Prevent value becoming denormalized (bad for performance!)
+ */
+/*--------------------------------------------------------------------------------*/
+float fix_denormal(float val)
+{
+  volatile float res = val;     // volatile here means 'don't optimize me!'
+
+  // by adding and subtracting a small value, if the value is significantly less than the small value
+  // the result will become zero instead of being a denormalized number
+  res += 1.0e-31;
+  res -= 1.0e-31;
+
+  return res;
+}
+
+double fix_denormal(double val)
+{
+  volatile double res = val;    // volatile here means 'don't optimize me!'
+
+  // by adding and subtracting a small value, if the value is significantly less than the small value
+  // the result will become zero instead of being a denormalized number
+  res += 1.0e-291;
+  res -= 1.0e-291;
+
+  return res;
+}
+
 BBC_AUDIOTOOLBOX_END

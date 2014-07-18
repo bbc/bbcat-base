@@ -267,6 +267,13 @@ bool map_compare (Map const &lhs, Map const &rhs) {
           std::equal(lhs.begin(), lhs.end(), rhs.begin()));
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Prevent value becoming denormalized (bad for performance!)
+ */
+/*--------------------------------------------------------------------------------*/
+extern float  fix_denormal(float val);
+extern double fix_denormal(double val);
+
 BBC_AUDIOTOOLBOX_END
 
 #endif
