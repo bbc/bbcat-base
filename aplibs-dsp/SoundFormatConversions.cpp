@@ -98,13 +98,14 @@ void TransferSamples(const void *vsrc,       SampleFormat_t srctype, bool src_be
 {
   // sanity checks
   if (src_channels && dst_channels &&
-      nframes && nchannels &&
+      nframes      && nchannels    &&
       (srctype != SampleFormat_Unknown) && (srctype < SampleFormat_Count) &&
-      (dsttype != SampleFormat_Unknown) && (dsttype < SampleFormat_Count)) {
-    const uint8_t *src = (const uint8_t *)vsrc;
-    uint8_t       *dst = (uint8_t       *)vdst;
-    sint_t srclen  = GetBytesPerSample(srctype); // (signed so that the direction of operation can be backwards as well as forwards)
-    sint_t dstlen  = GetBytesPerSample(dsttype); // (signed so that the direction of operation can be backwards as well as forwards)
+      (dsttype != SampleFormat_Unknown) && (dsttype < SampleFormat_Count))
+  {
+    const uint8_t *src   = (const uint8_t *)vsrc;
+    uint8_t       *dst   = (uint8_t       *)vdst;
+    sint_t        srclen = GetBytesPerSample(srctype); // (signed so that the direction of operation can be backwards as well as forwards)
+    sint_t        dstlen = GetBytesPerSample(dsttype); // (signed so that the direction of operation can be backwards as well as forwards)
 
     // restrict input data to sensible values
     src_channel    = MIN(src_channel, src_channels - 1);
@@ -116,7 +117,8 @@ void TransferSamples(const void *vsrc,       SampleFormat_t srctype, bool src_be
     // final sanity check
     if (!nchannels) return;
 
-    if ((nchannels == src_channels) && (nchannels == dst_channels)) {
+    if ((nchannels == src_channels) && (nchannels == dst_channels))
+    {
       // optimization: if source and destination samples are all contiguous, reduce the process to a single frame of many channels
       nchannels *= nframes;
       nframes    = 1;
@@ -129,7 +131,8 @@ void TransferSamples(const void *vsrc,       SampleFormat_t srctype, bool src_be
     src += src_channel * srclen;
     dst += dst_channel * dstlen;
 
-    if (dstflen > srcflen) {
+    if (dstflen > srcflen)
+    {
       // destination rectangle is BIGGER than source rectangle, switch to running backwards from the end of the buffers
       src += (nframes - 1) * srcflen;
       dst += (nframes - 1) * dstflen;
@@ -139,7 +142,8 @@ void TransferSamples(const void *vsrc,       SampleFormat_t srctype, bool src_be
 
     // look up correct function for conversion/copy
     CONVERTSAMPLES fn = SoundFormatConversions[(uint_t)src_be][(uint_t)dst_be][srctype][dsttype];
-    if (!fn) {
+    if (!fn)
+    {
       ERROR("Unknown copying routine for (%u/%u/%u/%u)", (uint_t)src_be, (uint_t)dst_be, srctype, dsttype);
       return;
     }
