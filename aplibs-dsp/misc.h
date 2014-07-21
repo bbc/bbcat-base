@@ -131,6 +131,9 @@ extern void FreeStrings();
 #define DEBUG9(x) (void)0
 #endif
 
+// fundamental audio processing unit - don't change without careful consideration!
+typedef float Sample_t;
+
 typedef PACKEDSTRUCT {
   uint8_t b[10];
 } IEEEEXTENDED;

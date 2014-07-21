@@ -156,10 +156,11 @@ uint_t SoundDelayBuffer::ReadSamples(uint8_t *dst, SampleFormat_t dstformat, uin
   return frames;
 }
 
-double SoundDelayBuffer::ReadSample(uint_t channel, uint_t delay) const
+Sample_t SoundDelayBuffer::ReadSample(uint_t channel, uint_t delay) const
 {
-  uint_t srclen = GetBytesPerSample(format);
-  double res;
+  uint_t   srclen = GetBytesPerSample(format);
+  Sample_t res;
+
   TransferSamples(buf + ((writepos + buflen - delay) % buflen) * channels * srclen,
                   format, MACHINE_IS_BIG_ENDIAN,
                   channel, channels,

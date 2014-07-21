@@ -28,6 +28,7 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
 	SoundDelayBuffer.cpp						\
 	SoundFormatConversions.cpp					\
 	SoundFormatRawConversions.cpp				\
+	SoundMixing.cpp								\
 	ThreadLock.cpp								\
 	VBAPanner.cpp								\
 	VBAPanner2D.cpp
@@ -45,6 +46,7 @@ pkginclude_HEADERS =							\
 	SoundDelayBuffer.h							\
 	SoundFormatConversions.h					\
 	SoundFormatRawConversions.h					\
+	SoundMixing.h								\
 	ThreadLock.h								\
 	VBAPanner.h									\
 	VBAPanner2D.h

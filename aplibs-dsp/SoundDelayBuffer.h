@@ -83,7 +83,7 @@ public:
   /** Simple single sample reading
    */
   /*--------------------------------------------------------------------------------*/
-  virtual double ReadSample(uint_t channel, uint_t delay) const;
+  virtual Sample_t ReadSample(uint_t channel, uint_t delay) const;
 
 protected:
   uint8_t        *buf;
