@@ -20,6 +20,7 @@
 #include "Convolver.h"
 #include "SoundFormatConversions.h"
 #include "FractionalSample.h"
+#include "PerformanceMonitor.h"
 
 BBC_AUDIOTOOLBOX_START
 
@@ -514,6 +515,7 @@ void ConvolverManager::UpdateConvolverParameters(uint_t convolver)
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::Convolve(const float *input, float *output, uint_t inputchannels, uint_t outputchannels)
 {
+  PERFMON("Convolve");
   uint_t i;
 
   // ASSUMES output is clear before being called
@@ -789,7 +791,7 @@ void *Convolver::Process()
     // detect quit request
     if (quitthread) break;
 
-    // call APF Convolver or StaticConvolver
+    // call DynamicConvolver or StaticConvolver
     Convolve(delay + delaypos);
 
     // process delay memory using specified delay

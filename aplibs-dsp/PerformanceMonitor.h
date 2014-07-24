@@ -1,124 +1,175 @@
 #ifndef __PERFORMANCE_MONITOR__
 #define __PERFORMANCE_MONITOR__
 
+#include <stdarg.h>
+
+#include <string>
+#include <map>
+
 #include "misc.h"
+#include "ThreadLock.h"
 
 BBC_AUDIOTOOLBOX_START
+
+// unless specified as enabled or disabled before this include, allow use of PERFMON() macro
+#ifndef PERFORMANCE_MONITORING_ENABLED
+#define PERFORMANCE_MONITORING_ENABLED 1
+#endif
 
 /*--------------------------------------------------------------------------------*/
 /** Simple averaging performance monitor
  *
- * Call 'Start()' at the start of the activity to be measured and 'Stop()' at the end
- *
- * GetSecondsTaken() will give the averaged time taken for the activity
- * GetSecondsElapsed() will give the averaged time between the start of each activity
- *
- * GetUsage() gives taken / elapsed which gives usage
- *
- * When NeedsReport() returns true, the results can be reported (and then Reported() called)
- * The rate of reporting is dictated from the 'report' parameter in the constructor and defaults to 1s
+ * Not to be used directly but instead used by PerformanceMonitorMarker class and PERFMON macro
  */
 /*--------------------------------------------------------------------------------*/
 class PerformanceMonitor {
 public:
-  PerformanceMonitor(uint_t avglen = 10, uint32_t report = 1000);
-  ~PerformanceMonitor();
-
   /*--------------------------------------------------------------------------------*/
-  /** Reset the monitor
+  /** Get access to Performance Monitor singleton
    */
   /*--------------------------------------------------------------------------------*/
-  void Reset();
+  static PerformanceMonitor& Get();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Enable measuring
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void StartMeasuring();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Disable measuring
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void StopMeasuring();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Start logging to file
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void StartLogging();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Stop logging to file
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void StopLogging();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Start logging to individual files
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void StartIndividualLogging();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Stop logging to individual files
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void StopIndividualLogging();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Enable performance report at destruction
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void EnablePerformanceReport(bool enable = true);
 
   /*--------------------------------------------------------------------------------*/
   /** Start performance measurement
    */
   /*--------------------------------------------------------------------------------*/
-  void Start();
+  void Start(const std::string& id);
 
   /*--------------------------------------------------------------------------------*/
   /** Stop performance measurement
    */
   /*--------------------------------------------------------------------------------*/
-  void Stop();
+  void Stop(const std::string& id);
 
   /*--------------------------------------------------------------------------------*/
-  /** Return the averaged time taken for the activity
+  /** Return textual performance report
    */
   /*--------------------------------------------------------------------------------*/
-  double GetSecondsTaken()   const {return taken_sec;}
+  static std::string GetReport();
 
-  /*--------------------------------------------------------------------------------*/
-  /** Return the averaged time between the start of each activity
-   */
-  /*--------------------------------------------------------------------------------*/
-  double GetSecondsElapsed() const {return elapsed_sec;}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Return averaged taken / elapsed
-   */
-  /*--------------------------------------------------------------------------------*/
-  double GetUsage() const {return GetSecondsTaken() / GetSecondsElapsed();}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Return averaged taken / elapsed as an integer percent
-   */
-  /*--------------------------------------------------------------------------------*/
-  uint_t GetUsagePercent() const {return usage;}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Return whether a report of results should be made
-   */
-  /*--------------------------------------------------------------------------------*/
-  bool NeedsReport() const {return ((GetTickCount() - reporttick) >= reportinterval);}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Reset the report time
-   */
-  /*--------------------------------------------------------------------------------*/
-  void Reported() {reporttick = GetTickCount();}
+private:
+  PerformanceMonitor(uint_t _avglen = 10);
+  ~PerformanceMonitor();
 
 protected:
   typedef uint64_t perftime_t;
 
-  perftime_t GetCurrent() const;
+  perftime_t GetCurrent();
 
   typedef struct {
-    perftime_t start;
-    perftime_t stop;
-    perftime_t taken;
-    uint_t     usage;
+    perftime_t  start;
+    perftime_t  stop;
+    perftime_t  elapsed;
+    perftime_t  taken;
   } TIMING;
 
+  typedef struct {
+    FILE        *fp;
+    uint_t      instance;
+    TIMING      *timings;
+    uint_t      ntimings, index;
+    bool        wrapped;
+
+    perftime_t  elapsed;
+    perftime_t  taken;
+    perftime_t  total_elapsed;
+    perftime_t  total_taken;
+    perftime_t  max_elapsed;
+    perftime_t  max_taken;
+    perftime_t  min_elapsed;
+    perftime_t  min_taken;
+    double      utilization;
+    double      max_utilization;
+    double      min_utilization;
+  } TIMING_DATA;
+
+  void LogToFile(FILE *fp, perftime_t t, const TIMING_DATA& data, const std::string& id, bool start) const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return textual performance report
+   */
+  /*--------------------------------------------------------------------------------*/
+  std::string GetReportEx();
+
 protected:
-  TIMING     *timings;
-  uint_t     ntimings, index;
-  bool       wrapped;
+  ThreadLockObject tlock;
+  perftime_t       t0;
+  uint_t           avglen;
+  std::map<std::string,TIMING_DATA> timings;
 
-  perftime_t elapsed;
-  perftime_t taken;
-  uint_t     usage;
-
-  double     taken_sec;
-  double     elapsed_sec;
-
-  uint32_t   reporttick;
-  uint32_t   reportinterval;
+  FILE *fp;
+  bool measure;
+  bool logtofile;
+  bool logtofiles;
+  bool reportatend;
 };
 
 /*--------------------------------------------------------------------------------*/
 /** Simple class wrapper for performance start/stop
- *
  */
 /*--------------------------------------------------------------------------------*/
-class MonitorPerformance {
+class PerformanceMonitorMarker {
 public:
-  MonitorPerformance(PerformanceMonitor& _perfmon) : perfmon(_perfmon) {perfmon.Start();}
-  ~MonitorPerformance() {perfmon.Stop();}
+  PerformanceMonitorMarker(const char *_id) : id(_id) {PerformanceMonitor::Get().Start(id);}
+  ~PerformanceMonitorMarker() {PerformanceMonitor::Get().Stop(id);}
 
 protected:
-  PerformanceMonitor& perfmon;
+  std::string id;
 };
+
+#if PERFORMANCE_MONITORING_ENABLED
+/*--------------------------------------------------------------------------------*/
+/** Macro for monitoring which allows flexible naming
+ */
+/*--------------------------------------------------------------------------------*/
+#define PERFMON(id) PerformanceMonitorMarker _mon(DebugStream() << id)
+#else
+// disable macro -> disable monitoring
+#define PERFMON(id) (void)0
+#endif
 
 BBC_AUDIOTOOLBOX_END
 
