@@ -27,7 +27,7 @@ LT_INIT(disable-static win32-dll)
 AC_PROG_CXX
 AM_PROG_CC_C_O
 
-AC_CONFIG_SRCDIR([aplibs-dsp])
+AC_CONFIG_SRCDIR([src])
 
 AC_CONFIG_MACRO_DIR([m4])
 ACLOCAL_AMFLAGS="-I m4 $ACLOCAL_AMFLAGS"
@@ -159,7 +159,7 @@ fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
-AX_CREATE_STDINT_H([aplibs-dsp/aplibs-dsp-stdint.h])
+AX_CREATE_STDINT_H([src/aplibs-dsp-stdint.h])
 
 AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Wall])
 #AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Werror])
@@ -177,7 +177,7 @@ APLIBS_DSP_LDFLAGS=""
 AC_APPEND_SUPPORTED_LDFLAGS(APLIBS_DSP_LDFLAGS, [-Wl,--no-undefined])
 AC_SUBST(APLIBS_DSP_LDFLAGS)
 
-APLIBS_DSP_LIBS="\$(top_builddir)/aplibs-dsp/libap-dsp-$APLIBS_DSP_MAJORMINOR.la"
+APLIBS_DSP_LIBS="\$(top_builddir)/src/libap-dsp-$APLIBS_DSP_MAJORMINOR.la"
 AC_SUBST(APLIBS_DSP_LIBS)
 
 AC_SUBST(APLIBS_DSP_PKG_DEPS)
@@ -192,6 +192,6 @@ AC_CONFIG_FILES([
 Makefile
 aplibs-dsp-uninstalled.pc
 aplibs-dsp.pc
-aplibs-dsp/Makefile
+src/Makefile
 ])
 AC_OUTPUT

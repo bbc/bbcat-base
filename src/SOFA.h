@@ -11,8 +11,8 @@
 #include <vector>
 #include <string>
 
-#include <aplibs-dsp/misc.h>
-#include <aplibs-dsp/3DPosition.h>
+#include "misc.h"
+#include "3DPosition.h"
 
 namespace netCDF {
   class NcFile;
