@@ -1,6 +1,80 @@
-Some of the code in this distribution is either copied from or a modified version of code from the SoundScapeRenderer project.
-That project was written by staff at the Technical University of Berlin and released under GPLv3. It is currently hosted here: <http://soundscaperenderer.github.io/>
+Purpose
 
-This library includes the configuration option: --enable-gpl [default: yes] which allows this code to be removed if necessary.
+aplibs-dsp is a general purpose DSP library which forms the basis of the Audio Toolbox software and is also integrated into IP Studio
 
-The FractionalDelay class uses libsamplerate. If you want to distribute this with libsamplerate, see <http://www.mega-nerd.com/SRC/license.html>.
+Dependencies
+
+apf - git@git0.rd.bbc.co.uk:apf/apf.git
+netcdf-bbc - git@git0.rd.bbc.co.uk:aplibs/netcdf-bbc.git (for SOFA file support)
+netcdf-cxx4-bbc - git@git0.rd.bbc.co.uk:aplibs/netcdf-cxx4-bbc.git (for SOFA file support)
+
+Files
+
+autogen.sh - simple autotools script
+configure.ac - configure configuration for autotools
+COPYING - information on copying this library
+debian/ - Debian control and version information
+doxygen.am - Doxygen automake file
+doxygen.cfg - Doxygen configuration
+m4 - folder for autotools
+Makefile.am - makefile for automake
+README - this file
+src/ - source folder containing C/C++ source and header files
+
+src/3DPosition.cpp                      | 3D position and transformation classes
+src/3DPosition.h                        |
+
+src/ByteSwap.cpp                        | Byte swapping for endianness control
+src/ByteSwap.h                          |
+
+src/Convolver.cpp                       | Multi-channel parallelized and partitioned convolution using APF
+src/Convolver.h                         |
+
+src/Crossfader.cpp                      | Various kinds of aduio crossfades
+src/Crossfader.hpp                      |
+
+src/FractionalSample.cpp                | Fractional delay line for floating point samples
+src/FractionalSample.h
+
+src/genconversions.php                  | PHP script to GENERATE SoundFormatRawConverisons.cpp
+
+src/Logging.hpp                         | Logging functionality
+
+src/Makefile.am                         | Makefile for automake
+
+src/misc.cpp                            | Miscelleanous functions and definitions, especially debugging functions
+src/misc.h                              |
+
+src/ParameterSet.cpp                    | A generic key=value handler with operators and comparators
+src/ParameterSet.h                      |
+
+src/PerformanceMonitor.cpp              | A multi-point logging runtime performance monitor (with outputs suitable for gnuplot)
+src/PerformanceMonitor.h                |
+
+src/PositionCursor.h                    | Interface for a 3D position cursor (i.e. tying positions to time)
+
+src/readme.txt                          | Small readme file
+
+src/SOFA.cpp                            | SOFA file support via the netcdf-bbc libraries
+src/SOFA.h                              |
+
+src/SoundDelayBuffer.cpp                | Delay/ring audio buffer 
+src/SoundDelayBuffer.h                  |
+
+src/SoundFormatConversions.cpp          | Sound sample format conversion/transfer routines
+src/SoundFormatConversions.h            |
+
+src/SoundFormatRawConversions.cpp       | AUTO-GENERATED (by genconversions.php) implementation of efficient sound format conversions
+src/SoundFormatRawConversions.h         | (.h file not auto-generated)
+
+src/SoundMixing.cpp                     | Sound summing functions
+src/SoundMixing.h                       |
+
+src/ThreadLock.cpp                      | Thread locking classes
+src/ThreadLock.h                        |
+
+src/VBAPanner2D.cpp                     | VBAP panner (2D version) 
+src/VBAPanner2D.h                       |
+
+src/VBAPanner.cpp                       | VBAP pannel (3D version)
+src/VBAPanner.h                         |
