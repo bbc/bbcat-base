@@ -73,6 +73,28 @@ extern void FreeStrings();
 #define ERROR debug_err
 #define DEBUG debug_msg
 
+/*--------------------------------------------------------------------------------*/
+/** Debug output control
+ *
+ * Before including any include files from aplibs-*, #define DEBUG_LEVEL to a value
+ *
+ * The value dictates which debug informatin (in that file) is output:
+ * DEBUG_LEVEL  Debug output
+ * 0            ERROR() and DEBUG() ONLY
+ * 1            As above plus DEBUG1(())
+ * 2            As above plus DEBUG2(())
+ * 3            As above plus DEBUG3(())
+ * 4            As above plus DEBUG4(())
+ * 5            As above plus DEBUG5(())
+ *
+ * Note: the double-parentheses are required because they allow debug lines that are
+ *       NOT going to be outputted to be converted to (void)0 statements (unlike
+ *       lower level controls which will evaluate the entrie string and arguments
+ *       and then throw it away)
+ *
+ * If DEBUG_LEVEL is not defined, it is set to 0
+ */
+/*--------------------------------------------------------------------------------*/
 #ifndef DEBUG_LEVEL
 #define DEBUG_LEVEL 0
 #endif
