@@ -40,7 +40,8 @@ void VBAPanner::SetDecayPower(double n)
 
   decay_power = n;
 
-  for (i = 0; i < speakers.size(); i++) {
+  for (i = 0; i < speakers.size(); i++)
+  {
     SetGainAndDelay(speakers[i]);
   }
 }
@@ -56,7 +57,8 @@ void VBAPanner::SetSpeedOfSound(double speed)
   speed_of_sound = speed;
   max_delay      = 0.0;
 
-  for (i = 0; i < speakers.size(); i++) {
+  for (i = 0; i < speakers.size(); i++)
+  {
     SetGainAndDelay(speakers[i]);
   }
 }
@@ -67,12 +69,14 @@ void VBAPanner::SetSpeedOfSound(double speed)
 /*--------------------------------------------------------------------------------*/
 void VBAPanner::SetGainAndDelay(Speaker_t& speaker)
 {
-  if (speaker.dist > max_dist) {
+  if (speaker.dist > max_dist)
+  {
     // maximum distance has changed -> re-evaluate all speaker levels
     max_dist = speaker.dist;
 
     uint_t i;
-    for (i = 0; i < speakers.size(); i++) {
+    for (i = 0; i < speakers.size(); i++)
+    {
       speakers[i].gain = pow(decay_power, speakers[i].dist - max_dist);
     }
   }
@@ -83,12 +87,14 @@ void VBAPanner::SetGainAndDelay(Speaker_t& speaker)
   // set delay as absolute delay from origin
   speaker.delay = speaker.dist / speed_of_sound;
 
-  if (speaker.delay > max_delay) {
+  if (speaker.delay > max_delay)
+  {
     // speaker delay is more than previous maximum -> recalculate all delay compensations
     max_delay = speaker.delay;
 
     uint_t i;
-    for (i = 0; i < speakers.size(); i++) {
+    for (i = 0; i < speakers.size(); i++)
+    {
       speakers[i].delay_compensation = max_delay - speakers[i].delay;
     }
   }
@@ -102,7 +108,8 @@ void VBAPanner::SetGainAndDelay(Speaker_t& speaker)
 /*--------------------------------------------------------------------------------*/
 void VBAPanner::AddSpeaker(sint_t channel, const Position& pos, double gain)
 {
-  Speaker_t sp = {
+  Speaker_t sp =
+  {
     .channel  = channel,
     .vec      = pos.Cart().Unit(),
     .dist     = pos.Mod(),
@@ -129,12 +136,14 @@ void VBAPanner::Read(const char *filename)
 {
   FILE *fp;
 
-  if ((fp = fopen(filename, "r")) != NULL) {
+  if ((fp = fopen(filename, "r")) != NULL)
+  {
     static char line[256];
     bool readingspeakers = true;
     int l;
 
-    while ((l = ReadLine(fp, line, sizeof(line))) != EOF) {
+    while ((l = ReadLine(fp, line, sizeof(line))) != EOF)
+    {
       Position pos;
       sint_t   channel;
       uint_t   spn[3];
@@ -143,22 +152,26 @@ void VBAPanner::Read(const char *filename)
       if ((l == 0) || (line[0] == '#')) continue;
 
       // attempt to interpret data as speaker positions or speaker indices
-      if (readingspeakers && (sscanf(line, "%d %lf,%lf,%lf %lf", &channel, &pos.pos.x, &pos.pos.y, &pos.pos.z, &gain) >= 4)) {
+      if (readingspeakers && (sscanf(line, "%d %lf,%lf,%lf %lf", &channel, &pos.pos.x, &pos.pos.y, &pos.pos.z, &gain) >= 4))
+      {
         pos.polar   = false;
         
         DEBUG3(("Adding %s as speaker (channel %u, gain %0.2lfdB)", pos.ToString().c_str(), channel, gain));
 
         AddSpeaker(channel, pos, pow(10.0, .05 * gain));
       }
-      else if (!readingspeakers && (sscanf(line, "%u,%u,%u", spn, spn + 1, spn + 2) == 3)) {
+      else if (!readingspeakers && (sscanf(line, "%u,%u,%u", spn, spn + 1, spn + 2) == 3))
+      {
         AddSpeakerGroup(spn);
       }
       // else detect section
-      else if (strncmp(line, "speakers", 8) == 0) {
+      else if (strncmp(line, "speakers", 8) == 0)
+      {
         DEBUG3(("Reading speaker locations..."));
         readingspeakers = true;
       }
-      else if (strncmp(line, "groups", 6) == 0) {
+      else if (strncmp(line, "groups", 6) == 0)
+      {
         DEBUG3(("Reading speaker groups..."));
         readingspeakers = false;
       }
@@ -170,13 +183,15 @@ void VBAPanner::Read(const char *filename)
     {
       uint_t i;
 
-      for (i = 0; i < speakers.size(); i++) {
+      for (i = 0; i < speakers.size(); i++)
+      {
         DEBUG("Speaker %u/%u: gain %0.2lfdB delay %0.3lfs (full delay %0.3lfs)", i + 1, (uint_t)speakers.size(), 20.0 * log10(speakers[i].gain), speakers[i].delay_compensation, speakers[i].delay);
       }
     }
 #endif
         
-    if (groups.size() == 0) {
+    if (groups.size() == 0)
+    {
       FindSpeakerGroups();
 
       sort(groups.begin(), groups.end(), SortGroups);
@@ -185,7 +200,8 @@ void VBAPanner::Read(const char *filename)
       {
         uint_t i;
 
-        for (i = 0; i < groups.size(); i++) {
+        for (i = 0; i < groups.size(); i++)
+        {
           DEBUG("Speaker group %u/%u: %u, %u, %u", i + 1, (uint_t)groups.size(), groups[i].speakers[0], groups[i].speakers[1], groups[i].speakers[2]);
         }
       }
@@ -194,38 +210,46 @@ void VBAPanner::Read(const char *filename)
 #if OUTPUT_GROUPS
       // output data in GNUPlot format...
       FILE *fp1, *fp2, *fp3;
-      if ((fp1 = fopen("plot.gnp", "w")) != NULL) {
+      if ((fp1 = fopen("plot.gnp", "w")) != NULL)
+      {
         uint_t i, j;
 
-        if ((fp2 = fopen("speakers.dat", "w")) != NULL) {
-          for (i = 0; i < speakers.size(); i++) {
+        if ((fp2 = fopen("speakers.dat", "w")) != NULL)
+        {
+          for (i = 0; i < speakers.size(); i++)
+          {
             DebugSpeaker(fp2, i);
           }
                 
           fclose(fp2);
         }
 
-        if ((fp2 = fopen("speaker-groups.dat", "w")) != NULL) {
-          for (i = 0; i < groups.size(); i++) {
+        if ((fp2 = fopen("speaker-groups.dat", "w")) != NULL)
+        {
+          for (i = 0; i < groups.size(); i++)
+          {
             DebugGroup(fp2, groups[i]);
           }
                 
           fclose(fp2);
         }
 
-        for (i = 0; i < groups.size(); i++) {
+        for (i = 0; i < groups.size(); i++)
+        {
           string filename;
 
           Printf(filename, "speaker-group-%u.dat", i + 1);
 
-          if ((fp3 = fopen(filename.c_str(), "w")) != NULL) {
+          if ((fp3 = fopen(filename.c_str(), "w")) != NULL)
+          {
             fprintf(fp1, "splot ");
             fprintf(fp1, "'speaker-groups.dat' using 1:2:3 with points lt 0 pt 1, ");
             fprintf(fp1, "'%s' using 1:2:3 with lines lt 0,", filename.c_str());
             fprintf(fp1, "'%s' using 5:6:7 with point lt 1", filename.c_str());
             fprintf(fp1, "\npause -1\n");
 
-            for (j = 0; j <= i; j++) {
+            for (j = 0; j <= i; j++)
+            {
               DebugGroup(fp2, groups[j]);
             }
                         
@@ -254,7 +278,8 @@ void VBAPanner::DebugGroup(FILE *fp, const SpeakerGroup_t& group, const char *st
   Position pos;
   uint_t i;
 
-  for (i = 0; i < NUMBEROF(group.speakers); i++) {
+  for (i = 0; i < NUMBEROF(group.speakers); i++)
+  {
     pos += speakers[group.speakers[i]].vec;
   }
 
@@ -262,7 +287,8 @@ void VBAPanner::DebugGroup(FILE *fp, const SpeakerGroup_t& group, const char *st
 
   Printf(str2, "%0.16le %0.16le %0.16le %s", pos.pos.x, pos.pos.y, pos.pos.z, str ? str : "");
 
-  for (i = 0; i <= NUMBEROF(group.speakers); i++) {
+  for (i = 0; i <= NUMBEROF(group.speakers); i++)
+  {
     DebugSpeaker(fp, group.speakers[i % NUMBEROF(group.speakers)], str2.c_str());
   }
     
@@ -283,18 +309,23 @@ void VBAPanner::AddSpeakerGroup(const uint_t spn[Dimensions])
 
   memset(&group, 0, sizeof(group));
 
-  for (i = 0; i < NUMBEROF(group.speakers); i++) {
-    if (spn[i] < speakers.size()) {
+  for (i = 0; i < NUMBEROF(group.speakers); i++)
+  {
+    if (spn[i] < speakers.size())
+    {
       group.speakers[i] = spn[i];
     }
-    else {
+    else
+    {
       ERROR("Invalid speaker index specified (speaker %u, number of speakers %u)", spn[i], (uint_t)speakers.size());
       break;
     }
   }
     
-  if (i == NUMBEROF(group.speakers)) {
-    if (Invert(group)) {
+  if (i == NUMBEROF(group.speakers))
+  {
+    if (Invert(group))
+    {
       groups.push_back(group);
     }
     else ERROR("Cannot invert matrix formed by speaker group (%u, %u, %u)", spn[0], spn[1], spn[2]);
@@ -321,7 +352,8 @@ double VBAPanner::TestSpeakers(const Position& pos, const SpeakerGroup_t& group,
   // clear all gains
   memset(gains, 0, MaxSpeakersPerSet * sizeof(*gains));
 
-  for (i = 0; (i < MaxSpeakersPerSet) && (i < NUMBEROF(group.inv)); i++) {
+  for (i = 0; (i < MaxSpeakersPerSet) && (i < NUMBEROF(group.inv)); i++)
+  {
     // calculate gain of this speaker
     double gain   = DotProduct(pos, group.inv[i]);
 
@@ -359,7 +391,8 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
   if (!speakerset.valid ||
       (cpos.pos.x != speakerset.x) ||
       (cpos.pos.y != speakerset.y) ||
-      (cpos.pos.z != speakerset.z)) {
+      (cpos.pos.z != speakerset.z))
+  {
     double bestgains[MaxSpeakersPerSet];
     double besterror = 1.0e30;
     double src_dist  = cpos.Mod();                          // source distance away from origin
@@ -368,17 +401,20 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
     uint_t bestgroup = ~0;
 
     // try to use old speaker group and see if it's still valid
-    if (speakerset.valid && (speakerset.group < groups.size())) {
+    if (speakerset.valid && (speakerset.group < groups.size()))
+    {
       bestgroup = speakerset.group;
       besterror = TestSpeakers(cupos, groups[bestgroup], bestgains);
     }
 
     // cycle through speaker sets and look for minimal error (and stop if error = 0.0)
-    for (i = 0; (i < groups.size()) && (besterror > 0.0); i++) {
+    for (i = 0; (i < groups.size()) && (besterror > 0.0); i++)
+    {
       double gains[MaxSpeakersPerSet];
       double error;
 
-      if ((error = TestSpeakers(cupos, groups[i], gains)) < besterror) {
+      if ((error = TestSpeakers(cupos, groups[i], gains)) < besterror)
+      {
         // this speaker set is better than current best set
         bestgroup = i;
         besterror = error;
@@ -387,7 +423,8 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
     }
 
     // a solution (possibly inexact) found
-    if (bestgroup < groups.size()) {
+    if (bestgroup < groups.size())
+    {
       const SpeakerGroup_t& group = groups[bestgroup];
 
       // found a solution
@@ -396,7 +433,8 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
       speakerset.error = besterror;
 
       // grab speaker data
-      for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < NUMBEROF(group.speakers)); i++) {
+      for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < NUMBEROF(group.speakers)); i++)
+      {
         const Speaker_t& speaker = speakers[group.speakers[i]];
 
         DEBUG3(("Speaker %u: index %u channel %u gain (%0.3le * %0.3le * %0.3le (=power(%0.3le, (1.0 - %0.3le))) = %0.3le) delay %0.3lfs", i, group.speakers[i], speaker.channel, bestgains[i], speaker.gain, src_gain, decay_power, src_dist, bestgains[i] * speaker.gain * src_gain, speaker.delay_compensation + src_delay));
@@ -408,12 +446,14 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
         speakerset.speakers[i].delay    = speaker.delay_compensation + src_delay;       // add delay due to source position
       }
     }
-    else {
+    else
+    {
       // no solution found -> collapse to first speakers
       DEBUG3(("VBAPanner - No panning solution found?!"));
       memset(speakerset.speakers, 0, sizeof(speakerset.speakers));
 
-      for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < speakers.size()); i++) {
+      for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < speakers.size()); i++)
+      {
         const Speaker_t& speaker = speakers[i];
 
         speakerset.speakers[i].index    = i;
@@ -428,7 +468,8 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
       speakerset.error = 0.0;
     }
 
-    if (speakerset.valid) {
+    if (speakerset.valid)
+    {
       speakerset.x = cpos.pos.x;
       speakerset.y = cpos.pos.y;
       speakerset.z = cpos.pos.z;
@@ -450,7 +491,8 @@ bool VBAPanner::Invert(SpeakerGroup_t& group)
   memset(group.inv, 0, sizeof(group.inv));
 
   // create matrix from positions of speakers
-  for (i = 0; i < NUMBEROF(group.speakers); i++) {
+  for (i = 0; i < NUMBEROF(group.speakers); i++)
+  {
     const Position& pos = speakers[group.speakers[i]].vec;  // use unit vector of position
     mat[0][i] = pos.pos.x;
     mat[1][i] = pos.pos.y;
@@ -464,14 +506,17 @@ bool VBAPanner::Invert(SpeakerGroup_t& group)
   double det = a - b + c;
 
   // can't invert
-  if (det == 0.0) {
+  if (det == 0.0)
+  {
     ERROR("Cannot invert matrix because determinant is zero (speakers %u, %u, %u)", group.speakers[0], group.speakers[1], group.speakers[2]);
     return false;
   }
 
   /* Find the transpose matrix of mat[][] */
-  for (i = 0; i < Dimensions; i++) {
-    for (j = 0; j < Dimensions; j++) {
+  for (i = 0; i < Dimensions; i++)
+  {
+    for (j = 0; j < Dimensions; j++)
+    {
       trans[i][j] = mat[j][i];
     }
   }
@@ -488,36 +533,41 @@ bool VBAPanner::Invert(SpeakerGroup_t& group)
   adjoint[2][2] =   trans[0][0] * trans[1][1] - trans[1][0] * trans[0][1];
 
   /* Calculate the inverse matrix of mat[][] */
-  for (i = 0; i < Dimensions; i++) {
-    for (j = 0; j < Dimensions; j++) {
+  for (i = 0; i < Dimensions; i++)
+  {
+    for (j = 0; j < Dimensions; j++)
+    {
       group.inv[i][j] = adjoint[i][j] / det;
     }
   }
 
 #if DEBUG_LEVEL >= 4
   // test
-  for (i = 0; i < NUMBEROF(group.speakers); i++) {
+  for (i = 0; i < NUMBEROF(group.speakers); i++)
+  {
     const Position& pos = speakers[group.speakers[i]].vec;  // use unit vector of position
     double gains[MaxSpeakersPerSet];
     double error;
 
-    if ((error = TestSpeakers(pos, group, set)) == 0.0) {
+    if ((error = TestSpeakers(pos, group, set)) == 0.0)
+    {
       DEBUG5(("Group (%u, %u, %u) speaker %u : %0.4lf, %0.4lf, %0.4lf",
               group.speakers[0], group.speakers[1], group.speakers[2],
               group.speakers[i],
               gains[0], gains[1], gains[2]));
     }
-    else {
+    else
+    {
       ERROR("Group (%u, %u, %u) speaker %u : error %0.4le : %0.4lf, %0.4lf, %0.4lf",
             group.speakers[0], group.speakers[1], group.speakers[2],
             group.speakers[i],
             error,
-            gains[0], gains[1], gains[2]));
+            gains[0], gains[1], gains[2]);
+    }
   }
-}
 #endif
 
-return true;
+  return true;
 }
 
 /*----------------------------------------------------------------------------------------------------*/
@@ -655,9 +705,12 @@ void VBAPannerPulkki::FindSpeakerGroups()
   uint_t i, j;
 
   // create a list of [angular] distances between pairs of speakers
-  for (i = 0; i < speakers.size(); i++) {
-    for (j = i + 1; j < speakers.size(); j++) {
-      Pair_t pair = {
+  for (i = 0; i < speakers.size(); i++)
+  {
+    for (j = i + 1; j < speakers.size(); j++)
+    {
+      Pair_t pair =
+      {
         .sp1  = i,
         .sp2  = j,
         .dist = AbsAngle(speakers[i].vec, speakers[j].vec),
@@ -681,17 +734,20 @@ void VBAPannerPulkki::FindSpeakerGroups()
 
   // remove further apart pairs that cross nearer pairs
   std::vector<Pair_t>::iterator it1, it2, it3;
-  for (it1 = pairs.begin(); it1 != pairs.end(); ++it1) {
+  for (it1 = pairs.begin(); it1 != pairs.end(); ++it1)
+  {
     const Pair_t& pair1 = *it1;
 
-    for (it2 = it1 + 1; it2 != pairs.end();) {
+    for (it2 = it1 + 1; it2 != pairs.end();)
+    {
       const Pair_t& pair2 = *it2;
 
       // don't check pairs with common speaker(s)
       if ((pair2.sp1 != pair1.sp1) &&
           (pair2.sp1 != pair1.sp2) &&
           (pair2.sp2 != pair1.sp1) &&
-          (pair2.sp2 != pair1.sp2)) {
+          (pair2.sp2 != pair1.sp2))
+      {
         DEBUG5(("Testing pairs %u->%u/%u->%u",
                 pair1.sp1, pair1.sp2,
                 pair2.sp1, pair2.sp2));
@@ -703,12 +759,14 @@ void VBAPannerPulkki::FindSpeakerGroups()
         if (SpeakerOfIntereset(pair1.sp1) &&
             SpeakerOfIntereset(pair1.sp2) &&
             SpeakerOfIntereset(pair2.sp1) &&
-            SpeakerOfIntereset(pair2.sp2)) {
+            SpeakerOfIntereset(pair2.sp2))
+        {
           string filename;
 
           Printf(filename, "intersections_%u_%u-%u_%u-%u.dat", index++, pair1.sp1, pair1.sp2, pair2.sp1, pair2.sp2);
 
-          if ((fp = fopen(filename.c_str(), "w")) != NULL) {
+          if ((fp = fopen(filename.c_str(), "w")) != NULL)
+          {
 #if SHOW_INTERSECTION_LINES_TO_ORIGIN
             fprintf(fp, "0 0 0 0 0 0\n");
 #endif
@@ -731,7 +789,8 @@ void VBAPannerPulkki::FindSpeakerGroups()
 
             fclose(fp);
 
-            if (scriptfp) {
+            if (scriptfp)
+            {
               fprintf(scriptfp, "splot ");
               fprintf(scriptfp, "'speakers.dat' using 1:2:3 with points, ");
               //fprintf(scriptfp, "'speakers.dat' using 1:2:3 with points, ");
@@ -742,7 +801,8 @@ void VBAPannerPulkki::FindSpeakerGroups()
         }
 #endif
 
-        if (intersects) {
+        if (intersects)
+        {
           // speaker lines cross over, delete longer one
           DEBUG4(("Pair (%u->%u) and pair (%u->%u) intersect!",
                   pair1.sp1, pair1.sp2,
@@ -750,7 +810,8 @@ void VBAPannerPulkki::FindSpeakerGroups()
 
           it2 = pairs.erase(it2);
         }
-        else {
+        else
+        {
           DEBUG5(("Pair (%u->%u) and pair (%u->%u) don't intersect",
                   pair1.sp1, pair1.sp2,
                   pair2.sp1, pair2.sp2));
@@ -775,17 +836,21 @@ void VBAPannerPulkki::FindSpeakerGroups()
   // form triplets from pairs of pairs (with common speaker) and then
   // check that no OTHER speakers lie within the triangle, if any do,
   // discard the triangle
-  for (it1 = pairs.begin(); it1 != pairs.end(); ++it1) {
+  for (it1 = pairs.begin(); it1 != pairs.end(); ++it1)
+  {
     const Pair_t& pair1 = *it1;
 
-    for (it2 = it1 + 1; it2 != pairs.end(); ++it2) {
+    for (it2 = it1 + 1; it2 != pairs.end(); ++it2)
+    {
       const Pair_t& pair2 = *it2;
 
-      if (pair2.sp1 == pair1.sp2) {
+      if (pair2.sp1 == pair1.sp2)
+      {
         SpeakerGroup_t group;
 
 #if DEBUG_REJECTED
-        if (!rejfp) {
+        if (!rejfp)
+        {
           string filename;
 
           Printf(filename, "rejected-group-%u.dat", rejindex++);
@@ -799,13 +864,15 @@ void VBAPannerPulkki::FindSpeakerGroups()
         group.speakers[2] = pair2.sp2;
 
         // test third pair is valid
-        for (it3 = pairs.begin(); it3 != pairs.end(); ++it3) {
+        for (it3 = pairs.begin(); it3 != pairs.end(); ++it3)
+        {
           const Pair_t& pair3 = *it3;
 
           if ((pair3.sp1 == pair1.sp1) && (pair3.sp2 == pair2.sp2)) break;
         }
 
-        if (it3 != pairs.end()) {
+        if (it3 != pairs.end())
+        {
           // if both pairs share a common speaker, test group made up from them
 
           DEBUG4(("Testing group made up from pair (%u->%u) and pair (%u->%u)",
@@ -813,34 +880,40 @@ void VBAPannerPulkki::FindSpeakerGroups()
                   pair2.sp1, pair2.sp2));
 
           // invert matrix formed by the points of the group, this can be used to test if any other speaker is within the polygon formed by the group
-          if (Invert(group)) {
+          if (Invert(group))
+          {
             double gains[MaxSpeakersPerSet];
 
-            for (i = 0; i < speakers.size(); i++) {
+            for (i = 0; i < speakers.size(); i++)
+            {
               // don't test the speakers which form the group!
               if ((i != group.speakers[0]) &&
                   (i != group.speakers[1]) &&
                   (i != group.speakers[2]) &&
-                  (TestSpeakers(speakers[i].vec, group, gains) == 0.0)) {
+                  (TestSpeakers(speakers[i].vec, group, gains) == 0.0))
+              {
                 // speaker is within polygon formed by group, reject the group
                 DEBUG4(("Cannot use because of speaker %u (%0.6le, %0.6le, %0.6le)", i, gain[0], gain[1], gain[2]));
                 break;
               }
             }
 
-            if (i == speakers.size()) {
+            if (i == speakers.size())
+            {
               uint_t sp[] = {pair1.sp1, pair1.sp2, pair2.sp2};
 
               AddSpeakerGroup(sp);
             }
 #if DEBUG_REJECTED
-            else if (rejfp) {
+            else if (rejfp)
+            {
               const Position& pos = speakers[i].vec;
               Position vector;
               string str;
               uint_t j;
 
-              for (j = 0; j < NUMBEROF(set.speakers); j++) {
+              for (j = 0; j < NUMBEROF(set.speakers); j++)
+              {
                 vector += speakers[set.speakers[j].index].vec * gains[j];
               }
 
@@ -856,13 +929,15 @@ void VBAPannerPulkki::FindSpeakerGroups()
 #endif
           }
 #if DEBUG_REJECTED
-          else if (rejfp) {
+          else if (rejfp)
+          {
             DebugGroup(rejfp, group, "Cannot invert matrix");
           }
 #endif
         }
 #if DEBUG_REJECTED
-        else if (rejfp) {
+        else if (rejfp)
+        {
           string str;
                     
           Printf(str, "3rd pair (%u->%u invalid)", pair1.sp1, pair2.sp2);
@@ -870,7 +945,8 @@ void VBAPannerPulkki::FindSpeakerGroups()
           DebugGroup(rejfp, group, str.c_str());
         }
 
-        if (rejfp && (ftell(rejfp) > 0)) {
+        if (rejfp && (ftell(rejfp) > 0))
+        {
           fclose(rejfp);
           rejfp = NULL;
         }

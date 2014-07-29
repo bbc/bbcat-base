@@ -23,13 +23,16 @@ void ByteSwap(void *data, uint8_t itemsize, uint_t nitems, uint8_t type)
   if ((itemsize > 1) &&
       ((type == SWAP_ALWAYS) ||
        ((type == SWAP_FOR_LE) &&  MACHINE_IS_BIG_ENDIAN) ||
-       ((type == SWAP_FOR_BE) && !MACHINE_IS_BIG_ENDIAN))) {
+       ((type == SWAP_FOR_BE) && !MACHINE_IS_BIG_ENDIAN)))
+  {
     uint8_t *p = (uint8_t *)data;
     uint8_t nb = itemsize >> 1;
     uint8_t i, j;
 
-    do {
-      for (i = 0, j = itemsize - 1; i < nb; i++, j--) {
+    do
+    {
+      for (i = 0, j = itemsize - 1; i < nb; i++, j--)
+      {
         uint8_t t = p[i];
         p[i] = p[j];
         p[j] = t;

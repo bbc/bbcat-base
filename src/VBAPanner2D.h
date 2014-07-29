@@ -15,12 +15,14 @@
 
 BBC_AUDIOTOOLBOX_START
 
-class VBAPanner2D : public VBAPanner {
+class VBAPanner2D : public VBAPanner
+{
 public:
   VBAPanner2D();
   virtual ~VBAPanner2D();
 
-  enum {
+  enum
+  {
     // to avoid hardcoded 2s everywhere!
     Dimensions = 2,
     MaxSpeakersPerSet = 2,
@@ -52,12 +54,14 @@ public:
   void AddSpeakerGroup(const uint_t spn[Dimensions]) { UNUSED_PARAMETER(spn); ERROR("Can't manually specify speaker groups for VBAP2D"); };
 
   // structure describing a set of speakers with individual gains to combine to create a virtual source
-  //  typedef struct {
+  //  typedef struct
+  //  {
   //      bool   valid;           // true if group found
   //      uint_t group;           // speaker group (index of lowest speaker in pair)
   //      double error;           // speaker group error
   //      double x, y, z;         // last test position
-  //      struct {
+  //      struct
+  //      {
   //          uint_t index;       // speaker index
   //          uint_t channel;     // output channel
   //          double gain;        // gain of this speaker
@@ -65,7 +69,8 @@ public:
   //      } speakers[MaxSpeakersPerSet];
   //  } SpeakerSet_t;
   //
-  //  typedef struct {
+  //  typedef struct
+  //  {
   //      uint_t speakers[Dimensions];            // index of speaker in this group
   //      double inv[Dimensions][Dimensions];     // inverse matrix of speaker positions
   //  } SpeakerGroup_t;

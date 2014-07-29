@@ -86,13 +86,15 @@ PositionTransform& PositionTransform::operator -= (const PositionTransform& obj)
 
 void PositionTransform::Transform(Position& pos) const
 {
-  if (pos.polar) {
+  if (pos.polar)
+  {
     // convert to cartesian, transform and then convert back
     pos = pos.Cart();
     Transform(pos);
     pos = pos.Polar();
   }
-  else {
+  else
+  {
     pos += pretranslation;
     Rotate(pos.pos.y, pos.pos.z, xrotation); 
     Rotate(pos.pos.x, pos.pos.z, yrotation); 
@@ -103,7 +105,8 @@ void PositionTransform::Transform(Position& pos) const
 
 void PositionTransform::Rotate(double& x, double& y, double angle) const
 {
-  if (angle != 0.0) {
+  if (angle != 0.0)
+  {
     angle *= M_PI / 180.0;
     double x1 = x * cos(angle) - y * sin(angle);
     double y1 = x * sin(angle) + y * cos(angle);
@@ -119,8 +122,8 @@ void PositionTransform::Rotate(double& x, double& y, double angle) const
 /*--------------------------------------------------------------------------------*/
 Position::Position(double x, double y, double z) : polar(false)
 {
-	memset(&pos, 0, sizeof(pos));
-	pos.x = x; pos.y = y; pos.z = z;
+  memset(&pos, 0, sizeof(pos));
+  pos.x = x; pos.y = y; pos.z = z;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -131,11 +134,13 @@ Position Position::Polar() const
 {
   Position newpos = *this;
         
-  if (!polar) {
+  if (!polar)
+  {
     newpos.polar = true;
     newpos.pos.d = sqrt(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
         
-    if (newpos.pos.d > 0.0) {
+    if (newpos.pos.d > 0.0)
+    {
       // el = asin(z)
       // az = atan(-x / y)
 
@@ -149,7 +154,8 @@ Position Position::Polar() const
       //   and y =  cos(az) * cos(el)
       //     x/y = -sin(az) / cos(az) = -tan(az)
       // =>   az = atan(-x / y) = atan2(-x, y)
-      if ((x != 0.0) || (y != 0.0)) {
+      if ((x != 0.0) || (y != 0.0))
+      {
         // can do atan2
         newpos.pos.az = atan2(-x, y) * 180.0 / M_PI;
       }
@@ -167,7 +173,8 @@ Position Position::Cart() const
 {
   Position newpos = *this;
         
-  if (polar) {
+  if (polar)
+  {
     // x = -sin(az) * cos(el)
     // y =  cos(az) * cos(el)
     // z =  sin(el)
@@ -206,13 +213,15 @@ void Position::LimitAngles()
 /*--------------------------------------------------------------------------------*/
 Position& Position::operator += (const Position& obj)
 {
-  if (polar || obj.polar) {
+  if (polar || obj.polar)
+  {
     // translating polar co-ordinates requires changing both to cartesian, translating
     // and then converting this object back to polar
     Position pos = Cart() + obj.Cart();
     *this = polar ? pos.Polar() : pos;
   }
-  else {
+  else
+  {
     pos.x += obj.pos.x;
     pos.y += obj.pos.y;
     pos.z += obj.pos.z;
@@ -229,13 +238,15 @@ Position& Position::operator += (const Position& obj)
 /*--------------------------------------------------------------------------------*/
 Position& Position::operator -= (const Position& obj)
 {
-  if (polar || obj.polar) {
+  if (polar || obj.polar)
+  {
     // translating polar co-ordinates requires changing both to cartesian, translating
     // and then converting this object back to polar
     Position pos = Cart() - obj.Cart();
     *this = polar ? pos.Polar() : pos;
   }
-  else {
+  else
+  {
     pos.x -= obj.pos.x;
     pos.y -= obj.pos.y;
     pos.z -= obj.pos.z;
@@ -251,7 +262,8 @@ Position& Position::operator -= (const Position& obj)
 Position& Position::operator *= (double val)
 {
   if (polar) pos.d *= val;
-  else {
+  else
+  {
     pos.x *= val;
     pos.y *= val;
     pos.z *= val;
@@ -261,7 +273,8 @@ Position& Position::operator *= (double val)
 
 Position& Position::operator *= (const double vals[3])
 {
-  if (polar) {
+  if (polar)
+  {
     // translating polar co-ordinates requires changing both to cartesian, translating
     // and then converting this object back to polar
     *this = Cart();
@@ -271,7 +284,8 @@ Position& Position::operator *= (const double vals[3])
 
     *this = Polar();
   }
-  else {
+  else
+  {
     pos.x *= vals[0];
     pos.y *= vals[1];
     pos.z *= vals[2];
@@ -282,7 +296,8 @@ Position& Position::operator *= (const double vals[3])
 
 Position& Position::operator *= (const double vals[3][3])
 {
-  if (polar) {
+  if (polar)
+  {
     // translating polar co-ordinates requires changing both to cartesian, translating
     // and then converting this object back to polar
     *this = Cart();
@@ -292,7 +307,8 @@ Position& Position::operator *= (const double vals[3][3])
 
     *this = Polar();
   }
-  else {
+  else
+  {
     double x = pos.x * vals[0][0] + pos.y * vals[0][1] + pos.z * vals[0][2];
     double y = pos.x * vals[1][0] + pos.y * vals[1][1] + pos.z * vals[1][2];
     double z = pos.x * vals[2][0] + pos.y * vals[2][1] + pos.z * vals[2][2];
@@ -359,7 +375,8 @@ Position Position::operator - () const
 {
   Position res = *this;
 
-  if (res.polar) {
+  if (res.polar)
+  {
     // move azimuth by 180 degrees (wrapping if necessary)
     res.pos.az += 180.0;
     if (res.pos.az >= 180.0) res.pos.az -= 360.0;
@@ -367,7 +384,8 @@ Position Position::operator - () const
     // flip elevation
     res.pos.el  = -res.pos.el;
   }
-  else {
+  else
+  {
     res.pos.x = -res.pos.x;
     res.pos.y = -res.pos.y;
     res.pos.z = -res.pos.z;
@@ -429,7 +447,8 @@ double Angle(const Position& obj1, const Position& obj2)
   Position pos1 = obj1.Unit();
   Position pos2 = obj2.Unit();
   double   dot  = DotProduct(pos1, obj2.Unit());
-  if ((dot < -1.01) || (dot > 1.01)) {
+  if ((dot < -1.01) || (dot > 1.01))
+  {
     ERROR("Dot product of (%0.3lf, %0.3lf, %0.3lf) and (%0.3lf, %0.3lf, %0.3lf) = %0.6lf",
           pos1.pos.x, pos1.pos.y, pos1.pos.z,
           pos2.pos.x, pos2.pos.y, pos2.pos.z,
@@ -443,10 +462,12 @@ std::string Position::ToString() const
 {
   std::string str;
 
-  if (polar) {
+  if (polar)
+  {
     Printf(str, "polar (%0.3lf, %0.3lf) x %0.3lfm", pos.az, pos.el, pos.d);
   }
-  else {
+  else
+  {
     Printf(str, "cart (%0.3lfm, %0.3lfm, %0.3lfm)", pos.x, pos.y, pos.z);
   }
     

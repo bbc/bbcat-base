@@ -7,7 +7,8 @@
 
 BBC_AUDIOTOOLBOX_START
 
-class ThreadLockObject {
+class ThreadLockObject
+{
 public:
   ThreadLockObject();
   virtual ~ThreadLockObject();
@@ -22,7 +23,8 @@ protected:
   pthread_mutex_t mutex;
 };
 
-class ThreadSignalObject : public ThreadLockObject {
+class ThreadSignalObject : public ThreadLockObject
+{
 public:
   ThreadSignalObject();
   virtual ~ThreadSignalObject();
@@ -35,7 +37,8 @@ protected:
   pthread_cond_t cond;
 };
 
-class ThreadBoolSignalObject : public ThreadSignalObject {
+class ThreadBoolSignalObject : public ThreadSignalObject
+{
 public:
   ThreadBoolSignalObject(bool initial_condition = false);
   virtual ~ThreadBoolSignalObject();
@@ -48,7 +51,8 @@ protected:
   volatile bool condition;
 };
 
-class ThreadLock {
+class ThreadLock
+{
 public:
   ThreadLock(ThreadLockObject& lockobj) : obj(lockobj) {obj.Lock();}
   ~ThreadLock() {obj.Unlock();}

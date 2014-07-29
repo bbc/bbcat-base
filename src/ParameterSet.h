@@ -13,7 +13,8 @@ BBC_AUDIOTOOLBOX_START
  *
  */
 /*--------------------------------------------------------------------------------*/
-class ParameterSet {
+class ParameterSet
+{
 public:
   ParameterSet() {}
   ParameterSet(const ParameterSet& obj);

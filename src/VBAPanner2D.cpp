@@ -32,7 +32,8 @@ VBAPanner2D::~VBAPanner2D()
 /*--------------------------------------------------------------------------------*/
 void VBAPanner2D::AddSpeaker(sint_t channel, const Position& pos, double gain)
 {
-  Speaker_t sp = {
+  Speaker_t sp =
+  {
     .channel  = channel,
     .vec      = pos.Cart().Unit(),
     .dist     = pos.Mod(),
@@ -57,12 +58,14 @@ void VBAPanner2D::Read(const char *filename)
 {
   FILE *fp;
 
-  if ((fp = fopen(filename, "r")) != NULL) {
+  if ((fp = fopen(filename, "r")) != NULL)
+  {
     static char line[256];
     bool readingspeakers = true;
     int l;
 
-    while ((l = ReadLine(fp, line, sizeof(line))) != EOF) {
+    while ((l = ReadLine(fp, line, sizeof(line))) != EOF)
+    {
       Position pos;
       uint_t   channel, spn[3];
       double   gain = 0.0;
@@ -70,22 +73,26 @@ void VBAPanner2D::Read(const char *filename)
       if ((l == 0) || (line[0] == '#')) continue;
 
       // attempt to interpret data as speaker positions or speaker indices
-      if (readingspeakers && (sscanf(line, "%u %lf,%lf,%lf %lf", &channel, &pos.pos.x, &pos.pos.y, &pos.pos.z, &gain) >= 4)) {
+      if (readingspeakers && (sscanf(line, "%u %lf,%lf,%lf %lf", &channel, &pos.pos.x, &pos.pos.y, &pos.pos.z, &gain) >= 4))
+      {
         pos.polar   = false;
 
         DEBUG3(("Adding %s as speaker (channel %u, gain %0.2lfdB)", pos.ToString().c_str(), channel, gain));
 
         AddSpeaker(channel, pos, pow(10.0, .05 * gain));
       }
-      else if (!readingspeakers && (sscanf(line, "%u,%u,%u", spn, spn + 1, spn + 2) == 3)) {
+      else if (!readingspeakers && (sscanf(line, "%u,%u,%u", spn, spn + 1, spn + 2) == 3))
+      {
         DEBUG2(("2D panner doesn't use speaker groups"));
       }
       // else detect section
-      else if (strncmp(line, "speakers", 8) == 0) {
+      else if (strncmp(line, "speakers", 8) == 0)
+      {
         DEBUG3(("Reading speaker locations..."));
         readingspeakers = true;
       }
-      else if (strncmp(line, "groups", 6) == 0) {
+      else if (strncmp(line, "groups", 6) == 0)
+      {
         DEBUG2(("2D panner doesn't use speaker groups"));
       }
     }
@@ -117,7 +124,8 @@ bool VBAPanner2D::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) co
   if (!speakerset.valid ||
       (cpos.pos.x != speakerset.x) ||
       (cpos.pos.y != speakerset.y) ||
-      (cpos.pos.z != speakerset.z)) {
+      (cpos.pos.z != speakerset.z))
+  {
     double bestgains[MaxSpeakersPerSet];
     double besterror = 1.0e30;
     double src_dist  = cpos.Mod();                          // source distance away from origin
@@ -126,17 +134,20 @@ bool VBAPanner2D::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) co
     uint_t bestgroup = ~0;
 
     // try to use old speaker group and see if it's still valid
-    if (speakerset.valid && (speakerset.group < groups.size())) {
+    if (speakerset.valid && (speakerset.group < groups.size()))
+    {
       bestgroup = speakerset.group;
       besterror = TestSpeakers(cupos, groups[bestgroup], bestgains);
     }
 
     // cycle through speaker sets and look for minimal error (and stop if error = 0.0)
-    for (i = 0; (i < groups.size()) && (besterror > 0.0); i++) {
+    for (i = 0; (i < groups.size()) && (besterror > 0.0); i++)
+    {
       double gains[MaxSpeakersPerSet];
       double error;
 
-      if ((error = TestSpeakers(cupos, groups[i], gains)) < besterror) {
+      if ((error = TestSpeakers(cupos, groups[i], gains)) < besterror)
+      {
         // this speaker set is better than current best set
         bestgroup = i;
         besterror = error;
@@ -145,7 +156,8 @@ bool VBAPanner2D::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) co
     }
 
     // a solution (possibly inexact) found
-    if (bestgroup < groups.size()) {
+    if (bestgroup < groups.size())
+    {
       const SpeakerGroup_t& group = groups[bestgroup];
 
       // found a solution
@@ -154,7 +166,8 @@ bool VBAPanner2D::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) co
       speakerset.error = besterror;
 
       // grab speaker data
-      for (i = 0; (i < MaxSpeakersPerSet) && (i < Dimensions); i++) {//NUMBEROF(speakerset.speakers)) && (i < NUMBEROF(group.speakers)); i++) {
+      for (i = 0; (i < MaxSpeakersPerSet) && (i < Dimensions); i++)
+      {
         const Speaker_t& speaker = speakers[group.speakers[i]];
 
         DEBUG3(("VB2D Speaker %u: index %u channel %u gain (%0.3le * %0.3le * %0.3le (=power(%0.3le, (1.0 - %0.3le))) = %0.3le) delay %0.3lfs", i, group.speakers[i], speaker.channel, bestgains[i], speaker.gain, src_gain, decay_power, src_dist, bestgains[i] * speaker.gain * src_gain, speaker.delay_compensation + src_delay));
@@ -166,12 +179,14 @@ bool VBAPanner2D::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) co
         speakerset.speakers[i].delay    = speaker.delay_compensation + src_delay;       // add delay due to source position
       }
     }
-    else {
+    else
+    {
       // no solution found -> collapse to first speakers
       DEBUG3(("No panning solution found?!"));
       memset(speakerset.speakers, 0, sizeof(speakerset.speakers));
 
-      for (i = 0; (i < MaxSpeakersPerSet) && (i < Dimensions); i++) {//for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < speakers.size()); i++) {
+      for (i = 0; (i < MaxSpeakersPerSet) && (i < Dimensions); i++)
+      {
         const Speaker_t& speaker = speakers[i];
 
         speakerset.speakers[i].index    = i;
@@ -186,7 +201,8 @@ bool VBAPanner2D::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) co
       speakerset.error = 0.0;
     }
 
-    if (speakerset.valid) {
+    if (speakerset.valid)
+    {
       speakerset.x = cpos.pos.x;
       speakerset.y = cpos.pos.y;
       speakerset.z = cpos.pos.z;
@@ -233,7 +249,8 @@ void VBAPanner2D::SortSpeakers()
   {
     uint_t i;
 
-    for (i = 0; i < speakers.size(); i++) {
+    for (i = 0; i < speakers.size(); i++)
+    {
       DEBUG("Speaker %u/%u: gain %0.2lfdB delay %0.3lfs (full delay %0.3lfs)", i + 1, (uint_t)speakers.size(), 20.0 * log10(speakers[i].gain), speakers[i].delay_compensation, speakers[i].delay);
     }
   }
@@ -252,7 +269,8 @@ bool VBAPanner2D::Invert(SpeakerGroup_t& group)
   memset(group.inv, 0, sizeof(group.inv));
 
   // create matrix from positions of speakers
-  for (i = 0; i < Dimensions; i++) {//NUMBEROF(group.speakers); i++) {
+  for (i = 0; i < Dimensions; i++)
+  {
     const Position& pos = speakers[group.speakers[i]].vec;  // use unit vector of position
     mat[0][i] = pos.pos.x;
     mat[1][i] = pos.pos.y;
@@ -262,7 +280,8 @@ bool VBAPanner2D::Invert(SpeakerGroup_t& group)
   double det = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
 
   // can't invert
-  if (det == 0.0) {
+  if (det == 0.0)
+  {
     ERROR("Cannot invert matrix because determinant is zero (speakers %u, %u)", group.speakers[0], group.speakers[1]);
     return false;
   }
@@ -275,23 +294,27 @@ bool VBAPanner2D::Invert(SpeakerGroup_t& group)
 
 #if DEBUG_LEVEL >= 4
   // test
-  for (i = 0; i < Dimensions; i++) {//NUMBEROF(group.speakers); i++) {
+  for (i = 0; i < Dimensions; i++)
+  {
     const Position& pos = speakers[group.speakers[i]].vec;  // use unit vector of position
     double gains[MaxSpeakersPerSet];
     double error;
 
-    if ((error = TestSpeakers(pos, group, set)) == 0.0) {
+    if ((error = TestSpeakers(pos, group, set)) == 0.0)
+    {
       DEBUG5(("Group (%u, %u) speaker %u : %0.4lf, %0.4lf",
               group.speakers[0], group.speakers[1],
               group.speakers[i],
               gains[0], gains[1]));
     }
-    else {
+    else
+    {
       ERROR("Group (%u, %u) speaker %u : error %0.4le : %0.4lf, %0.4lf",
             group.speakers[0], group.speakers[1],
             group.speakers[i],
             error,
-            gains[0], gains[1]));
+            gains[0], gains[1]);
+    }
   }
 }
 #endif
@@ -319,7 +342,8 @@ double VBAPanner2D::TestSpeakers(const Position& pos, const SpeakerGroup_t& grou
   // clear all gains
   memset(gains, 0, MaxSpeakersPerSet * sizeof(*gains));
 
-  for (i = 0; (i < MaxSpeakersPerSet) && (i < NUMBEROF(group.inv)); i++) {
+  for (i = 0; (i < MaxSpeakersPerSet) && (i < NUMBEROF(group.inv)); i++)
+  {
     // calculate gain of this speaker
     double gain   = DotProduct(pos, group.inv[i]);
 

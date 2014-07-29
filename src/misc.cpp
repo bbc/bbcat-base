@@ -73,10 +73,12 @@ void debug_msg(const char *fmt, ...)
 
   {
     ThreadLock lock(debuglock);
-    if (debughandler) {
+    if (debughandler)
+    {
       (*debughandler)(str.c_str(), debughandler_context);
     }
-    else {
+    else
+    {
       printf("%s\n", str.c_str());
       fflush(stdout);
     }
@@ -97,10 +99,12 @@ void debug_err(const char *fmt, ...)
 
   {
     ThreadLock lock(debuglock);
-    if (errorhandler) {
+    if (errorhandler)
+    {
       (*errorhandler)(str.c_str(), errorhandler_context);
     }
-    else {
+    else
+    {
       fprintf(errstr, "%s\n", str.c_str());
       fflush(errstr);
     }
@@ -113,7 +117,8 @@ const char *CreateString(const char *data, uint_t len)
 {
   char *str;
 
-  if ((str = new char[len + 1]) != NULL) {
+  if ((str = new char[len + 1]) != NULL)
+  {
     memcpy(str, data, len);
     str[len] = 0;
 
@@ -127,7 +132,8 @@ void FreeStrings()
 {
   uint_t i;
 
-  for (i = 0; i < AllocatedStrings.size(); i++) {
+  for (i = 0; i < AllocatedStrings.size(); i++)
+  {
     delete[] AllocatedStrings[i];
   }
 
@@ -140,7 +146,8 @@ uint32_t GetTickCount()
   static mach_timebase_info_data_t timebase;
   static bool inited = false;
 
-  if (!inited) {
+  if (!inited)
+  {
     mach_timebase_info(&timebase);
     inited = true;
   }
@@ -208,7 +215,8 @@ void INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num)
 
   memset(num, 0, sizeof(*num));
 
-  while (!(val & 0x80000000)) {
+  while (!(val & 0x80000000))
+  {
     val <<= 1;
     expo--;
   }
@@ -216,7 +224,8 @@ void INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num)
   mant  = (uint64_t)val << 32;
   expo += 31 + 16383;
 
-  if (!MACHINE_IS_BIG_ENDIAN) {
+  if (!MACHINE_IS_BIG_ENDIAN)
+  {
     BYTESWAP_VAR(expo);
     BYTESWAP_VAR(mant);
   }
@@ -232,13 +241,16 @@ std::string CreateIndent(const std::string& indent, uint_t count)
   std::string str;
   char *buf;
 
-  if ((count * len) > 0) {
-    if ((buf = new char[count * len]) != NULL) {
+  if ((count * len) > 0)
+  {
+    if ((buf = new char[count * len]) != NULL)
+    {
       uint_t pos = 0, endpos = count * len;
 
       memcpy(buf, indent.c_str(), len);
 
-      for (pos = len; pos < endpos;) {
+      for (pos = len; pos < endpos;)
+      {
         uint_t n = MIN(endpos - pos, pos);
 
         memcpy(buf + pos, buf, n);
@@ -266,7 +278,8 @@ void Printf(std::string& str, const char *fmt, ...)
   va_start(ap,fmt);
 
   char *buf = NULL;
-  if (vasprintf(&buf, fmt, ap) > 0) {
+  if (vasprintf(&buf, fmt, ap) > 0)
+  {
     str += buf;
     free(buf);
   }
@@ -286,7 +299,8 @@ void Printf(std::string& str, const char *fmt, ...)
 void VPrintf(std::string& str, const char *fmt, va_list ap)
 {
   char *buf = NULL;
-  if (vasprintf(&buf, fmt, ap) > 0) {
+  if (vasprintf(&buf, fmt, ap) > 0)
+  {
     str += buf;
     free(buf);
   }
@@ -311,7 +325,8 @@ int ReadLine(FILE *fp, char *line, uint_t maxlen)
   maxlen--;
 
   // loop reading characters until EOF or no more space or linefeed character read
-  for (i = 0; (i < maxlen) && ((c = fgetc(fp)) != EOF) && (c != '\n');) {
+  for (i = 0; (i < maxlen) && ((c = fgetc(fp)) != EOF) && (c != '\n');)
+  {
     // ignore carriage-returns 
     if (c != '\r') line[i++] = c;
   }
@@ -417,34 +432,38 @@ DebugStream dbg;
 
 void debug_msg(DebugStream& str)
 {
-    ThreadLock lock(debuglock);
-    const char *p = str.get();
-    if (debughandler) {
-      (*debughandler)(p, debughandler_context);
-    }
-    else {
-      printf("%s\n", p);
-      fflush(stdout);
-    }
+  ThreadLock lock(debuglock);
+  const char *p = str.get();
+  if (debughandler)
+  {
+    (*debughandler)(p, debughandler_context);
+  }
+  else
+  {
+    printf("%s\n", p);
+    fflush(stdout);
+  }
 
-    FreeStrings();
-    str.clear();
+  FreeStrings();
+  str.clear();
 }
 
 void debug_err(DebugStream& str)
 {
-    ThreadLock lock(debuglock);
-    const char *p = str.get();
-    if (errorhandler) {
-      (*errorhandler)(p, errorhandler_context);
-    }
-    else {
-      printf("%s\n", p);
-      fflush(stdout);
-    }
+  ThreadLock lock(debuglock);
+  const char *p = str.get();
+  if (errorhandler)
+  {
+    (*errorhandler)(p, errorhandler_context);
+  }
+  else
+  {
+    printf("%s\n", p);
+    fflush(stdout);
+  }
 
-    FreeStrings();
-    str.clear();
+  FreeStrings();
+  str.clear();
 }
 
 /*--------------------------------------------------------------------------------*/

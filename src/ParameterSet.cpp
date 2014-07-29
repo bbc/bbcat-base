@@ -137,7 +137,8 @@ bool ParameterSet::Get(const std::string& name, bool& val) const
   uint_t n;
   bool   success = false;
 
-  if ((it != values.end()) && (sscanf(it->second.c_str(), "%u", &n) > 0)) {
+  if ((it != values.end()) && (sscanf(it->second.c_str(), "%u", &n) > 0))
+  {
     val = (n != 0);
     success = true;
   }

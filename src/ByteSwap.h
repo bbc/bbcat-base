@@ -5,7 +5,8 @@
 
 BBC_AUDIOTOOLBOX_START
 
-enum {
+enum
+{
   SWAP_NEVER = 0,
   SWAP_ALWAYS,
   SWAP_FOR_LE,

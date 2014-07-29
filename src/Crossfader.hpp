@@ -10,7 +10,8 @@
 
 #include <stdint.h>
 
-class Crossfader {
+class Crossfader
+{
 public:
   // interleavedChannels: Set to one for non-interleaved
   Crossfader(uint32_t windowSize, uint32_t interleavedChannels);

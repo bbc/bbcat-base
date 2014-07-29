@@ -17,7 +17,8 @@ ThreadLockObject::ThreadLockObject()
   /* or PTHREAD_MUTEX_RECURSIVE_NP */
   pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
 
-  if (pthread_mutex_init(&mutex, &mta) != 0) {
+  if (pthread_mutex_init(&mutex, &mta) != 0)
+  {
     ERROR("Failed to initialise mutex<%016lx>: %s", (ulong_t)&mutex, strerror(errno));
   }
 }
@@ -49,7 +50,8 @@ bool ThreadLockObject::Unlock()
 
 ThreadSignalObject::ThreadSignalObject() : ThreadLockObject()
 {
-  if (pthread_cond_init(&cond, NULL) != 0) {
+  if (pthread_cond_init(&cond, NULL) != 0)
+  {
     ERROR("Failed to initialise cond<%016lx>: %s", (ulong_t)&cond, strerror(errno));
   }
 }
@@ -103,7 +105,8 @@ ThreadBoolSignalObject::~ThreadBoolSignalObject()
 bool ThreadBoolSignalObject::Wait()
 {
   ThreadLock lock(*this);
-  while (!condition) {
+  while (!condition)
+  {
     if (!ThreadSignalObject::Wait()) return false;
   }
   condition = false;

@@ -22,7 +22,8 @@ BBC_AUDIOTOOLBOX_START
  * Not to be used directly but instead used by PerformanceMonitorMarker class and PERFMON macro
  */
 /*--------------------------------------------------------------------------------*/
-class PerformanceMonitor {
+class PerformanceMonitor
+{
 public:
   /*--------------------------------------------------------------------------------*/
   /** Get access to Performance Monitor singleton
@@ -99,14 +100,16 @@ protected:
 
   perftime_t GetCurrent();
 
-  typedef struct {
+  typedef struct
+  {
     perftime_t  start;
     perftime_t  stop;
     perftime_t  elapsed;
     perftime_t  taken;
   } TIMING;
 
-  typedef struct {
+  typedef struct
+  {
     FILE        *fp;
     uint_t      instance;
     TIMING      *timings;
@@ -151,7 +154,8 @@ protected:
 /** Simple class wrapper for performance start/stop
  */
 /*--------------------------------------------------------------------------------*/
-class PerformanceMonitorMarker {
+class PerformanceMonitorMarker
+{
 public:
   PerformanceMonitorMarker(const char *_id) : id(_id) {PerformanceMonitor::Get().Start(id);}
   ~PerformanceMonitorMarker() {PerformanceMonitor::Get().Stop(id);}

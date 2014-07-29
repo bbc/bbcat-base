@@ -28,17 +28,20 @@ void SoundDelayBuffer::SetSize(uint_t chans, uint_t length, SampleFormat_t type)
   chans  = MAX(chans, 1);
   length = MAX(length, 1);
 
-  if ((chans != channels) || (length != buflen) || (type != format)) {
+  if ((chans != channels) || (length != buflen) || (type != format))
+  {
     uint8_t *newbuf;
     uint_t  bps = GetBytesPerSample(type);
 
     // add space for an extra double at the end of the buffer (irrespective of the format of the buffer) 
     // to allow space for conversion
-    if ((newbuf = new uint8_t[chans * length * bps]) != NULL) {
+    if ((newbuf = new uint8_t[chans * length * bps]) != NULL)
+    {
       // clear new allocation
       memset(newbuf, 0, chans * length * bps);
 
-      if (buf) {
+      if (buf)
+      {
         // map existing delay data into new buffer
         TransferSamples(buf, format, MACHINE_IS_BIG_ENDIAN, 0, channels,
                         newbuf,   format, MACHINE_IS_BIG_ENDIAN, 0, chans,
@@ -74,7 +77,8 @@ uint_t SoundDelayBuffer::WriteSamples(const uint8_t *src, SampleFormat_t srcform
 {
   uint_t frames = 0;
 
-  if (buf) {
+  if (buf)
+  {
     uint_t srclen = GetBytesPerSample(srcformat);
     uint_t dstlen = GetBytesPerSample(format);
     uint_t pos    = writepos;
@@ -83,7 +87,8 @@ uint_t SoundDelayBuffer::WriteSamples(const uint8_t *src, SampleFormat_t srcform
     channel   = MIN(channel,   channels - 1);
     nchannels = MIN(nchannels, channels - channel);
 
-    while (nframes) {
+    while (nframes)
+    {
       uint8_t *dst = buf + pos * channels * dstlen;   // destination for copy
       uint_t n = MIN(nframes, buflen - pos);          // maximum number of frames that can be stored this time
 
@@ -123,7 +128,8 @@ uint_t SoundDelayBuffer::ReadSamples(uint8_t *dst, SampleFormat_t dstformat, uin
 {
   uint_t frames = 0;
 
-  if (buf) {
+  if (buf)
+  {
     uint_t srclen = GetBytesPerSample(format);
     uint_t dstlen = GetBytesPerSample(dstformat);
     uint_t pos    = (writepos + buflen - delay) % buflen;
@@ -136,7 +142,8 @@ uint_t SoundDelayBuffer::ReadSamples(uint8_t *dst, SampleFormat_t dstformat, uin
     // that can be safely read
     nframes   = MIN(nframes, delay);
 
-    while (nframes) {
+    while (nframes)
+    {
       const uint8_t *src = buf + pos * channels * srclen; // source for copy
       uint_t n = MIN(nframes, buflen - pos);                  // maximum number of frames that can be stored this time
 

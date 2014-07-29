@@ -18,7 +18,8 @@ class PositionTransform;
  *
  */
 /*--------------------------------------------------------------------------------*/
-class Position {
+class Position
+{
 public:
   // Polar:
   // For azimuth:   0 == straight ahead, +ve az travels anti-clockwise when viewed from above
@@ -177,11 +178,14 @@ public:
   friend Position CrossProduct(const Position& obj1, const Position& obj2);
 
   bool polar;                 // true if co-ordinates are polar
-  union {
-    struct {
+  union
+  {
+    struct
+    {
       double az, el, d;   // azimuth (degrees), elevation (degrees) and distance (m)
     };
-    struct {
+    struct
+    {
       double x, y, z;     // co-ordinates in m
     };
   } pos;
@@ -197,7 +201,8 @@ public:
  */
 /*--------------------------------------------------------------------------------*/
 
-class PositionTransform {
+class PositionTransform
+{
 public:
   PositionTransform();
   PositionTransform(const PositionTransform& obj);
@@ -214,7 +219,8 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   PositionTransform& operator += (const PositionTransform& obj);
-  friend PositionTransform operator + (const PositionTransform& obj1, const PositionTransform& obj2) {
+  friend PositionTransform operator + (const PositionTransform& obj1, const PositionTransform& obj2)
+  {
     PositionTransform res = obj1;
     res += obj2;
     return res;
@@ -225,7 +231,8 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   PositionTransform& operator -= (const PositionTransform& obj);
-  friend PositionTransform operator - (const PositionTransform& obj1, const PositionTransform& obj2) {
+  friend PositionTransform operator - (const PositionTransform& obj1, const PositionTransform& obj2)
+  {
     PositionTransform res = obj1;
     res -= obj2;
     return res;

@@ -86,7 +86,8 @@ ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, 
 ConvolverManager::~ConvolverManager()
 {
   // delete all convolvers
-  while (convolvers.size()) {
+  while (convolvers.size())
+  {
     Convolver *conv = convolvers.back();
     delete conv;
     convolvers.pop_back();
@@ -108,7 +109,8 @@ void ConvolverManager::SetIRLength(ulong_t irlength)
 
   if (convolvers.size()) DEBUG1(("Warning: removing existing static convolvers."));
 
-  while (convolvers.size()) {
+  while (convolvers.size())
+  {
     Convolver *conv = convolvers.back();
     delete conv;
     convolvers.pop_back();
@@ -179,7 +181,8 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::LoadIRs(const char *filename)
 {
-  if (filename) {
+  if (filename)
+  {
 #if ENABLE_SOFA
     // only attempt to load file as SOFA if suffix is .sofa (otherwise app bombs out on non-SOFA files)
     if ((strlen(filename) >= 5) && (strcasecmp(filename + strlen(filename) - 5, ".sofa") == 0) && LoadSOFA(filename))
@@ -188,9 +191,11 @@ void ConvolverManager::LoadIRs(const char *filename)
     }
     else
 #endif
-      if (LoadIRsSndFile(filename)) {
+      if (LoadIRsSndFile(filename))
+      {
         DEBUG3(("Loaded IRs from WAV file (%s).", filename));
-      } else {
+      } else
+      {
         ERROR("Failed to load IRs from file (%s).", filename);
       }
   }
@@ -213,10 +218,12 @@ bool ConvolverManager::LoadSOFA(const char *filename)
 {
   filters.clear();
 
-  if (filename) {
+  if (filename)
+  {
     SOFA file(filename);
 
-    if (file) {
+    if (file)
+    {
       DEBUG3(("Opened '%s' okay, %u measurements from %u sources at %luHz", filename, file.get_num_measurements(), file.get_num_emitters(), (ulong_t)file.get_samplerate()));
       LoadIRsSOFA(file);
       LoadDelaysSOFA(file);
@@ -245,10 +252,12 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
 {
   filters.clear();
 
-  if (filename) {
+  if (filename)
+  {
     SndfileHandle file(filename);
 
-    if (file && file.frames() && file.channels()) {
+    if (file && file.frames() && file.channels())
+    {
       ulong_t len = file.frames();
       uint_t i, n = file.channels();
 
@@ -267,13 +276,15 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
 
       DEBUG2(("Reading sample data..."));
 
-      if ((res = file.read(sampledata, blocksize * partitions * n)) < 0) {
+      if ((res = file.read(sampledata, blocksize * partitions * n)) < 0)
+      {
         ERROR("Read of %u frames result: %ld", blocksize * partitions, res);
       }
 
       DEBUG2(("Creating %u filters...", n));
       uint32_t tick = GetTickCount();
-      for (i = 0; i < n; i++) {
+      for (i = 0; i < n; i++)
+      {
         DEBUG5(("Creating filter for IR %u", i));
 
         filters.push_back(APFFilter(blocksize, partitions));
@@ -314,18 +325,21 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 {
   irdelays.clear();
 
-  if (filename) {
+  if (filename)
+  {
     FILE *fp;
 
     DEBUG2(("Reading IR delays from '%s'", filename));
 
-    if ((fp = fopen(filename, "r")) != NULL) {
+    if ((fp = fopen(filename, "r")) != NULL)
+    {
       double mindelay = 0.0;  // used to reduce delays to minimum
       double delay = 0.0;
       uint_t i;
       bool   initialreading = true;
 
-      while (fscanf(fp, "%lf", &delay) > 0) {
+      while (fscanf(fp, "%lf", &delay) > 0)
+      {
         irdelays.push_back(delay);
 
         // update minimum delay if necessary
@@ -336,7 +350,8 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 
       // reduce each delay by mindelay to reduce overall delay
       // TODO: this isn't always acceptable behaviour
-      for (i = 0; i < irdelays.size(); i++) {
+      for (i = 0; i < irdelays.size(); i++)
+      {
         irdelays[i] -= mindelay;
       }
 
@@ -364,7 +379,8 @@ void ConvolverManager::SetIRDelays(const double *delays, const uint_t num_delays
     irdelays.resize(num_delays);
 
     // reduce each delay by mindelay to reduce overall delay
-    for (i = 0; i < irdelays.size(); i++) {
+    for (i = 0; i < irdelays.size(); i++)
+    {
       irdelays[i] = delays[i];
     }
   }
@@ -389,7 +405,8 @@ void ConvolverManager::CreateStaticConvolver(const float *irdata, const ulong_t 
   parameters.push_back(params);
 
   // set up new convolver
-  if ((conv = new StaticConvolver(convolvers.size(), blocksize, new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength), audioscale, delay)) != NULL) {
+  if ((conv = new StaticConvolver(convolvers.size(), blocksize, new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength), audioscale, delay)) != NULL)
+  {
     conv->SetParameters(params.level, params.delay, hqproc);
     convolvers.push_back(conv);
   }
@@ -405,24 +422,28 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
   parameters.resize(nconvolvers);
 
   // create convolvers if necessary
-  while (convolvers.size() < nconvolvers) {
+  while (convolvers.size() < nconvolvers)
+  {
     Convolver *conv;
 
     // set up new convolver
-    if ((conv = new DynamicConvolver(convolvers.size(), blocksize, new apf::conv::Convolver(blocksize, partitions), audioscale)) != NULL) {
+    if ((conv = new DynamicConvolver(convolvers.size(), blocksize, new apf::conv::Convolver(blocksize, partitions), audioscale)) != NULL)
+    {
       convolvers.push_back(conv);
 
       // set default IR
       SelectIR(convolvers.size() - 1, 0);
     }
-    else {
+    else
+    {
       ERROR("Failed to create new convolver!");
       break;
     }
   }
 
   // delete excessive convolvers
-  while (convolvers.size() > nconvolvers) {
+  while (convolvers.size() > nconvolvers)
+  {
     Convolver *conv = convolvers.back();
     delete conv;
     convolvers.pop_back();
@@ -662,7 +683,8 @@ Convolver::Convolver(uint_t _convindex, uint_t _blocksize, float _scale, double 
   quitthread(false)
 {
   // create thread
-  if (pthread_create(&thread, NULL, &__Process, (void *)this) != 0) {
+  if (pthread_create(&thread, NULL, &__Process, (void *)this) != 0)
+  {
     ERROR("Failed to create thread (%s)", strerror(errno));
     thread = 0;
   }
@@ -696,7 +718,8 @@ std::string Convolver::DebugHeader() const
 /*--------------------------------------------------------------------------------*/
 void Convolver::StopThread()
 {
-  if (thread) {
+  if (thread)
+  {
     quitthread = true;
 
     // release thread
@@ -721,7 +744,8 @@ void Convolver::StartConvolution(const float *_input, uint_t inputchannels)
   uint_t i;
 
   // copy input (de-interleaving)
-  for (i = 0; i < blocksize; i++) {
+  for (i = 0; i < blocksize; i++)
+  {
     input[i] = _input[i * inputchannels];
   }
 
@@ -752,7 +776,8 @@ void Convolver::EndConvolution(float *_output, uint_t outputchannels)
 
   // mix locally generated output into supplied output buffer
   uint_t i;
-  for (i = 0; i < blocksize; i++) {
+  for (i = 0; i < blocksize; i++)
+  {
     _output[i * outputchannels] += output[i];
   }
 }
@@ -867,7 +892,7 @@ void Convolver::SetParameters(double level, double delay, bool hqproc)
 DynamicConvolver::DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale) : Convolver(_convindex, _blocksize, _scale),
                                                                                                                    convolver(_convolver),
                                                                                                                    convfilter(NULL),
-                                                                                                                   filter(NULL)
+  filter(NULL)
 {
 }
 
@@ -884,7 +909,8 @@ DynamicConvolver::~DynamicConvolver()
 /*--------------------------------------------------------------------------------*/
 void DynamicConvolver::SetFilter(const APFFilter& newfilter)
 {
-  if (&newfilter != filter) {
+  if (&newfilter != filter)
+  {
     DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
     // set convolver filter
     filter = &newfilter;
@@ -910,14 +936,16 @@ void DynamicConvolver::Convolve(float *dest)
   memcpy(dest, result, blocksize * sizeof(*dest));
 
   // if filter needs updating, update it now
-  if (filter && (filter != convfilter)) {
+  if (filter && (filter != convfilter))
+  {
     convfilter = (const APFFilter *)filter;
     convolver->set_filter(*convfilter);
     DEBUG3(("[%010lu]: Selected new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
   }
 
   // if queues_empty() returns false, must cross fade between convolutions
-  if (!convolver->queues_empty()) {
+  if (!convolver->queues_empty())
+  {
     uint_t i;
 
     // rotate queues within convolver
@@ -927,7 +955,8 @@ void DynamicConvolver::Convolve(float *dest)
     result = convolver->convolve(scale);
 
     // crossfade new convolution result into buffer
-    for (i = 0; i < blocksize; i++) {
+    for (i = 0; i < blocksize; i++)
+    {
       double b = (double)i / (double)blocksize, a = 1.0 - b;
 
       dest[i] = dest[i] * a + b * result[i];

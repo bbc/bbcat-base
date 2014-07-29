@@ -17,7 +17,8 @@
 
 BBC_AUDIOTOOLBOX_START
 
-typedef enum {
+typedef enum
+{
   SampleFormat_Unknown = 0,
 
   SampleFormat_16bit,         // 2 bytes per sample
@@ -35,7 +36,8 @@ typedef enum {
   _SampleFormat_Float_Last    = SampleFormat_Double,
 } SampleFormat_t;
 
-class Ditherer {
+class Ditherer
+{
 public:
   Ditherer() {}
   virtual ~Ditherer() {}
@@ -45,7 +47,8 @@ public:
   virtual void Dither(uint_t channel, double&   data, uint_t bits) {UNUSED_PARAMETER(channel); UNUSED_PARAMETER(data); UNUSED_PARAMETER(bits);}
 };
 
-typedef enum {
+typedef enum
+{
   Dither_None = 0,
   Dither_TPDF,
 } Dither_t;

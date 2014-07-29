@@ -16,12 +16,14 @@ BBC_AUDIOTOOLBOX_START
  *
  */
 /*--------------------------------------------------------------------------------*/
-class VBAPanner {
+class VBAPanner
+{
 public:
   VBAPanner();
   virtual ~VBAPanner();
 
-  enum {
+  enum
+  {
     // to avoid hardcoded 3's everywhere!
     Dimensions = 3,
     MaxSpeakersPerSet = 4,
@@ -77,12 +79,14 @@ public:
   virtual void FindSpeakerGroups() {}
 
   // structure describing a set of speakers with individual gains to combine to create a virtual source
-  typedef struct {
+  typedef struct
+  {
     bool   valid;               // true if group found
     uint_t group;               // speaker group
     double error;               // speaker group error
     double x, y, z;             // last test position
-    struct {
+    struct
+    {
       uint_t index;             // speaker index
       sint_t channel;           // output channel (< 0 == ignored) 
       double usergain;          // user supplied gain of this speaker
@@ -91,7 +95,8 @@ public:
     } speakers[MaxSpeakersPerSet];
   } SpeakerSet_t;
 
-  typedef struct {
+  typedef struct
+  {
     sint_t channel;             // output channel (< 0 == ignored) 
     double usergain;            // user supplied gain of this speaker
     double gain;                // gain of this speaker due to distance
@@ -110,7 +115,8 @@ public:
   virtual bool FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) const;
 
 protected:
-  typedef struct {
+  typedef struct
+  {
     sint_t   channel;                       // channel on which this speaker appears (< 0 == ignored)
     Position vec;                           // unit vector of speaker position
     double   dist;                          // distance of speaker
@@ -119,13 +125,15 @@ protected:
     double   delay;                         // delay in s of speaker (due to distance from origin)
     double   delay_compensation;            // delay compensation (= maximum delay of all speakers - delay of this speaker)
   } Speaker_t;
-  typedef struct {
+  typedef struct
+  {
     uint_t speakers[Dimensions];            // index of speaker in this group
     double inv[Dimensions][Dimensions];     // inverse matrix of speaker positions
   } SpeakerGroup_t;
 
   // TODO: should this be public or called from the FindSpeakerGroups method
-  static bool SortGroups(const SpeakerGroup_t& a, const SpeakerGroup_t& b) {
+  static bool SortGroups(const SpeakerGroup_t& a, const SpeakerGroup_t& b)
+  {
     uint_t na = ((1000 * a.speakers[0]) + a.speakers[1]) * 1000 + a.speakers[2];
     uint_t nb = ((1000 * b.speakers[0]) + b.speakers[1]) * 1000 + b.speakers[2];
     return (na < nb);
@@ -167,7 +175,8 @@ protected:
 
 /*----------------------------------------------------------------------------------------------------*/
 
-class VBAPannerPulkki : public VBAPanner {
+class VBAPannerPulkki : public VBAPanner
+{
 public:
   VBAPannerPulkki();
   virtual ~VBAPannerPulkki();
@@ -181,11 +190,13 @@ public:
   virtual void FindSpeakerGroups();
 
 protected:
-  typedef struct {
+  typedef struct
+  {
     uint_t sp1, sp2;
     double dist;
   } Pair_t;
-  typedef struct {
+  typedef struct
+  {
     uint_t sp1, sp2, sp3;
     double dist;
   } Triplet_t;

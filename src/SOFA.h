@@ -14,7 +14,8 @@
 #include "misc.h"
 #include "3DPosition.h"
 
-namespace netCDF {
+namespace netCDF
+{
   class NcFile;
   class NcVar;
   class NcDim;
@@ -24,7 +25,8 @@ namespace netCDF {
 
 BBC_AUDIOTOOLBOX_START
 
-class SOFA {
+class SOFA
+{
 public:
   SOFA(const std::string& filename);
   virtual ~SOFA();

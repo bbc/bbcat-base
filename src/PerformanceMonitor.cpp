@@ -183,7 +183,8 @@ PerformanceMonitor::perftime_t PerformanceMonitor::GetCurrent()
   static mach_timebase_info_data_t timebase;
   static bool inited = false;
 
-  if (!inited) {
+  if (!inited)
+  {
     mach_timebase_info(&timebase);
     inited = true;
   }
@@ -308,7 +309,8 @@ void PerformanceMonitor::Start(const std::string& id)
 
     if (logtofiles)
     {
-      if (!data.fp) {
+      if (!data.fp)
+      {
         std::string filename;
 
         Printf(filename, "perf-%u.dat", data.instance);

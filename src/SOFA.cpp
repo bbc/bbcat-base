@@ -12,7 +12,8 @@
 
 BBC_AUDIOTOOLBOX_START
 
-typedef struct SOFA::_sofa_dims_t {
+typedef struct SOFA::_sofa_dims_t
+{
   netCDF::NcDim N,M,R,E,C,I;
 } sofa_dims_t;
 
@@ -193,7 +194,8 @@ bool SOFA::get_ir(float *ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE)
   {
     ERROR("Index out of range.");
     return false;
-  } else {
+  } else
+  {
     // set start and count indices
     start[0] = indexM;
     start[1] = indexR;
@@ -441,7 +443,8 @@ SOFA::positions_array_t SOFA::get_position_var_data(const std::string position_v
     {
       pos_var_data[ii].polar = (coord_type == "spherical");
       // SOFA uses different cartesian system to aplibs and ADM
-      if (!pos_var_data[ii].polar) {
+      if (!pos_var_data[ii].polar)
+      {
         pos_var_data[ii].pos.x = -pos_raw[ii*count[1] + 1];
         pos_var_data[ii].pos.y =  pos_raw[ii*count[1]];
         pos_var_data[ii].pos.z =  pos_raw[ii*count[1] + 2];

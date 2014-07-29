@@ -22,8 +22,10 @@
 // APF convolver header files cannot be included in header files because of function implementations in the header files
 // which lead to multiple definitions when linking!
 // So this acts as a prototype for the required objects from convolver.h
-namespace apf {
-  namespace conv {
+namespace apf
+{
+  namespace conv
+  {
     struct Convolver;
     struct StaticConvolver;
     struct Filter;
@@ -39,7 +41,8 @@ BBC_AUDIOTOOLBOX_START
  */
 /*--------------------------------------------------------------------------------*/
 class Convolver;
-class ConvolverManager {
+class ConvolverManager
+{
 public:
   /*--------------------------------------------------------------------------------*/
   /** Constructor for convolver manager
@@ -192,7 +195,8 @@ public:
   /*--------------------------------------------------------------------------------*/
   uint_t NumIRs() const;
 
-  typedef struct {
+  typedef struct
+  {
     apf::conv::Convolver       *dynamicconvolver;
     apf::conv::StaticConvolver *staticconvolver;
   } APFConvolver;
@@ -210,7 +214,8 @@ protected:
   /*--------------------------------------------------------------------------------*/
   virtual void UpdateConvolverParameters(uint_t convolver);
 
-  typedef struct {
+  typedef struct
+  {
     uint_t irindex;
     double delay;
     double level;
@@ -249,7 +254,8 @@ protected:
   bool                     updateparameters;
 };
 
-class Convolver {
+class Convolver
+{
 public:
   // no public constructor
   virtual ~Convolver();
@@ -338,7 +344,8 @@ protected:
 
 /*----------------------------------------------------------------------------------------------------*/
 
-class DynamicConvolver : public Convolver {
+class DynamicConvolver : public Convolver
+{
 public:
   // no public constructor
   virtual ~DynamicConvolver();
@@ -381,7 +388,8 @@ protected:
 
 /*----------------------------------------------------------------------------------------------------*/
 
-class StaticConvolver : public Convolver {
+class StaticConvolver : public Convolver
+{
 public:
   // no public constructor
   virtual ~StaticConvolver();

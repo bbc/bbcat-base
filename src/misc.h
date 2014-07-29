@@ -156,7 +156,8 @@ extern void FreeStrings();
 // fundamental audio processing unit - don't change without careful consideration!
 typedef float Sample_t;
 
-typedef PACKEDSTRUCT {
+typedef PACKEDSTRUCT
+{
   uint8_t b[10];
 } IEEEEXTENDED;
 
@@ -256,7 +257,8 @@ extern void Interpolate(double& current, double target, double coeff, double lim
  *
  */
 /*--------------------------------------------------------------------------------*/
-class DebugStream {
+class DebugStream
+{
 public:
   DebugStream();
   ~DebugStream();
@@ -286,7 +288,8 @@ extern void debug_msg(DebugStream& str);
 extern void debug_err(DebugStream& str);
 
 template <typename Map>
-bool map_compare (Map const &lhs, Map const &rhs) {
+bool map_compare (Map const &lhs, Map const &rhs)
+{
   // No predicate needed because there is operator== for pairs already.
   return ((lhs.size() == rhs.size()) &&
           std::equal(lhs.begin(), lhs.end(), rhs.begin()));

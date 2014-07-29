@@ -24,7 +24,8 @@ static void __CopyMemory_2(const uint8_t *src, uint8_t *dst, uint_t nchannels, u
   uint_t i;
 
   (void)ditherer;
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     if (dst != src) memcpy(dst, src, nchannels * 2);
   }
 }
@@ -34,7 +35,8 @@ static void __CopyMemory_3(const uint8_t *src, uint8_t *dst, uint_t nchannels, u
   uint_t i;
 
   (void)ditherer;
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     if (dst != src) memcpy(dst, src, nchannels * 3);
   }
 }
@@ -44,7 +46,8 @@ static void __CopyMemory_4(const uint8_t *src, uint8_t *dst, uint_t nchannels, u
   uint_t i;
 
   (void)ditherer;
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     if (dst != src) memcpy(dst, src, nchannels * 4);
   }
 }
@@ -54,7 +57,8 @@ static void __CopyMemory_8(const uint8_t *src, uint8_t *dst, uint_t nchannels, u
   uint_t i;
 
   (void)ditherer;
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     if (dst != src) memcpy(dst, src, nchannels * 8);
   }
 }
@@ -84,9 +88,11 @@ static void __Convert_16bitLE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 3) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -127,9 +133,11 @@ static void __Convert_16bitLE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -177,9 +185,11 @@ static void __Convert_16bitLE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -229,9 +239,11 @@ static void __Convert_16bitLE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -280,9 +292,11 @@ static void __Convert_24bitLE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 3, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 3, dst += 2)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
       // apply dither
@@ -324,9 +338,11 @@ static void __Convert_24bitLE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -369,9 +385,11 @@ static void __Convert_24bitLE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
       // convert integer sample to floating point sample (scale)
@@ -416,9 +434,11 @@ static void __Convert_24bitLE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 8)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
       // convert integer sample to floating point sample (scale)
@@ -462,9 +482,11 @@ static void __Convert_32bitLE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -507,9 +529,11 @@ static void __Convert_32bitLE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -553,9 +577,11 @@ static void __Convert_32bitLE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -605,9 +631,11 @@ static void __Convert_32bitLE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -657,9 +685,11 @@ static void __Convert_FloatLE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -705,9 +735,11 @@ static void __Convert_FloatLE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -749,9 +781,11 @@ static void __Convert_FloatLE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -800,9 +834,11 @@ static void __Convert_FloatLE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -852,9 +888,11 @@ static void __Convert_DoubleLE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -900,9 +938,11 @@ static void __Convert_DoubleLE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -944,9 +984,11 @@ static void __Convert_DoubleLE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -993,9 +1035,11 @@ static void __Convert_DoubleLE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -1040,9 +1084,11 @@ static void __Convert_16bitLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 2, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 2, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -1087,9 +1133,11 @@ static void __Convert_16bitLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 3) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -1130,9 +1178,11 @@ static void __Convert_16bitLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -1180,9 +1230,11 @@ static void __Convert_16bitLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -1232,9 +1284,11 @@ static void __Convert_16bitLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -1283,9 +1337,11 @@ static void __Convert_24bitLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 3, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 3, dst += 2)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
       // apply dither
@@ -1323,9 +1379,11 @@ static void __Convert_24bitLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 3, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 3, dst += 3)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
       // write sample bytes to destination
@@ -1361,9 +1419,11 @@ static void __Convert_24bitLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -1406,9 +1466,11 @@ static void __Convert_24bitLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
       // convert integer sample to floating point sample (scale)
@@ -1453,9 +1515,11 @@ static void __Convert_24bitLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 8)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[2]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[0]) << 8);
       // convert integer sample to floating point sample (scale)
@@ -1499,9 +1563,11 @@ static void __Convert_32bitLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -1544,9 +1610,11 @@ static void __Convert_32bitLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -1585,9 +1653,11 @@ static void __Convert_32bitLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -1635,9 +1705,11 @@ static void __Convert_32bitLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -1687,9 +1759,11 @@ static void __Convert_32bitLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -1739,9 +1813,11 @@ static void __Convert_FloatLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -1787,9 +1863,11 @@ static void __Convert_FloatLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -1831,9 +1909,11 @@ static void __Convert_FloatLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -1878,9 +1958,11 @@ static void __Convert_FloatLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -1927,9 +2009,11 @@ static void __Convert_FloatLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -1979,9 +2063,11 @@ static void __Convert_DoubleLE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -2027,9 +2113,11 @@ static void __Convert_DoubleLE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -2071,9 +2159,11 @@ static void __Convert_DoubleLE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -2120,9 +2210,11 @@ static void __Convert_DoubleLE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -2167,9 +2259,11 @@ static void __Convert_DoubleLE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uin
   dstflen -= nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 8) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -2216,9 +2310,11 @@ static void __Convert_16bitBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 2, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 2, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -2263,9 +2359,11 @@ static void __Convert_16bitBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 3) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -2306,9 +2404,11 @@ static void __Convert_16bitBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -2356,9 +2456,11 @@ static void __Convert_16bitBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -2408,9 +2510,11 @@ static void __Convert_16bitBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -2459,9 +2563,11 @@ static void __Convert_24bitBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 3, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 3, dst += 2)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
       // apply dither
@@ -2499,9 +2605,11 @@ static void __Convert_24bitBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 3, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 3, dst += 3)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
       // write sample bytes to destination
@@ -2537,9 +2645,11 @@ static void __Convert_24bitBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -2582,9 +2692,11 @@ static void __Convert_24bitBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
       // convert integer sample to floating point sample (scale)
@@ -2629,9 +2741,11 @@ static void __Convert_24bitBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 8)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
       // convert integer sample to floating point sample (scale)
@@ -2675,9 +2789,11 @@ static void __Convert_32bitBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -2720,9 +2836,11 @@ static void __Convert_32bitBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -2761,9 +2879,11 @@ static void __Convert_32bitBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -2811,9 +2931,11 @@ static void __Convert_32bitBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -2863,9 +2985,11 @@ static void __Convert_32bitBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -2915,9 +3039,11 @@ static void __Convert_FloatBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -2963,9 +3089,11 @@ static void __Convert_FloatBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -3007,9 +3135,11 @@ static void __Convert_FloatBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -3054,9 +3184,11 @@ static void __Convert_FloatBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -3103,9 +3235,11 @@ static void __Convert_FloatBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -3155,9 +3289,11 @@ static void __Convert_DoubleBE_to_16bitLE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -3203,9 +3339,11 @@ static void __Convert_DoubleBE_to_24bitLE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -3247,9 +3385,11 @@ static void __Convert_DoubleBE_to_32bitLE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -3296,9 +3436,11 @@ static void __Convert_DoubleBE_to_FloatLE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -3343,9 +3485,11 @@ static void __Convert_DoubleBE_to_DoubleLE(const uint8_t *src, uint8_t *dst, uin
   dstflen -= nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 8) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -3396,9 +3540,11 @@ static void __Convert_16bitBE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 3) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -3439,9 +3585,11 @@ static void __Convert_16bitBE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -3489,9 +3637,11 @@ static void __Convert_16bitBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -3541,9 +3691,11 @@ static void __Convert_16bitBE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 2, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 2, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read 16-bit sample and convert to 32-bit sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = cast(uint32_t, const_mem(sint16_t, src) << 16);
@@ -3592,9 +3744,11 @@ static void __Convert_24bitBE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 3, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 3, dst += 2)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
       // apply dither
@@ -3636,9 +3790,11 @@ static void __Convert_24bitBE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -3681,9 +3837,11 @@ static void __Convert_24bitBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 4)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
       // convert integer sample to floating point sample (scale)
@@ -3728,9 +3886,11 @@ static void __Convert_24bitBE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 3, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 3, dst -= 8)
+    {
       // read integer bytes representing integer sample (note use of unsigned arithmetic to avoid problems with left shift)
       sval = (cast(uint32_t, src[0]) << 24) + (cast(uint32_t, src[1]) << 16) + (cast(uint32_t, src[2]) << 8);
       // convert integer sample to floating point sample (scale)
@@ -3774,9 +3934,11 @@ static void __Convert_32bitBE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -3819,9 +3981,11 @@ static void __Convert_32bitBE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -3865,9 +4029,11 @@ static void __Convert_32bitBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen += nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 4) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -3917,9 +4083,11 @@ static void __Convert_32bitBE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read integer sample directly
       sval = const_mem(sint32_t, src);
@@ -3969,9 +4137,11 @@ static void __Convert_FloatBE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -4017,9 +4187,11 @@ static void __Convert_FloatBE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -4061,9 +4233,11 @@ static void __Convert_FloatBE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint_
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 4, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 4, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -4112,9 +4286,11 @@ static void __Convert_FloatBE_to_DoubleBE(const uint8_t *src, uint8_t *dst, uint
   dstflen += nchannels * 8;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8) {
+    for (j = 0; j < nchannels; j++, src -= 4, dst -= 8)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(float, src);
@@ -4164,9 +4340,11 @@ static void __Convert_DoubleBE_to_16bitBE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 2;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 2) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 2)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -4212,9 +4390,11 @@ static void __Convert_DoubleBE_to_24bitBE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 3;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 3) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 3)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -4256,9 +4436,11 @@ static void __Convert_DoubleBE_to_32bitBE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -4305,9 +4487,11 @@ static void __Convert_DoubleBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint
   dstflen -= nchannels * 4;
 
   // process each frame
-  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen) {
+  for (i = 0; i < nframes; i++, src += srcflen, dst += dstflen)
+  {
     // process each channel
-    for (j = 0; j < nchannels; j++, src += 8, dst += 4) {
+    for (j = 0; j < nchannels; j++, src += 8, dst += 4)
+    {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
       // read floating point sample directly
       sval = const_mem(double, src);
@@ -4331,7 +4515,8 @@ static void __Convert_DoubleBE_to_FloatBE(const uint8_t *src, uint8_t *dst, uint
   }
 }
 
-const CONVERTSAMPLES SoundFormatConversions[2][2][SampleFormat_Count][SampleFormat_Count] = {
+const CONVERTSAMPLES SoundFormatConversions[2][2][SampleFormat_Count][SampleFormat_Count] =
+{
   {
     {
       // LE -> LE

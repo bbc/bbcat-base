@@ -14,7 +14,8 @@ BBC_AUDIOTOOLBOX_START
 /** Array of number of bytes for each format
  */
 /*--------------------------------------------------------------------------------*/
-const uint8_t SoundFormatBytes[SampleFormat_Count] = {
+const uint8_t SoundFormatBytes[SampleFormat_Count] =
+{
   1, // SampleFormat_Unknown
   2, // SampleFormat_16bit
   3, // SampleFormat_24bit

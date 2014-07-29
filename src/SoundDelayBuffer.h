@@ -5,7 +5,8 @@
 
 BBC_AUDIOTOOLBOX_START
 
-class SoundDelayBuffer {
+class SoundDelayBuffer
+{
 public:
   SoundDelayBuffer();
   virtual ~SoundDelayBuffer();
@@ -92,7 +93,8 @@ protected:
   uint_t         buflen, writepos;
 };
 
-class SoundRingBuffer : public SoundDelayBuffer {
+class SoundRingBuffer : public SoundDelayBuffer
+{
 public:
   SoundRingBuffer();
   virtual ~SoundRingBuffer();

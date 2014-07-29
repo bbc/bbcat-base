@@ -11,7 +11,8 @@ BBC_AUDIOTOOLBOX_START
  * Typically, an instance of a derived version of this class would be used for each track
  */
 /*--------------------------------------------------------------------------------*/
-class PositionCursor {
+class PositionCursor
+{
 public:
   PositionCursor() {}
   virtual ~PositionCursor() {}

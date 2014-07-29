@@ -20,15 +20,15 @@
 #define __POS__ "(" __FILE__ ":" __XSTR__(__LINE__) ")"
 
 /// Write a warning message to stderr.
-#define APLIBS_DSP_INFO(msg) \
-		std::cerr << "aplibs-dsp Info: " << msg << " " __POS__ << std::endl
+#define APLIBS_DSP_INFO(msg)                                            \
+  std::cerr << "aplibs-dsp Info: " << msg << " " __POS__ << std::endl
 
 /// Write a warning message to stderr.
-#define APLIBS_DSP_WARNING(msg) \
-		std::cerr << "aplibs-dsp Warning: " << msg << " " __POS__ << std::endl
+#define APLIBS_DSP_WARNING(msg)                                         \
+  std::cerr << "aplibs-dsp Warning: " << msg << " " __POS__ << std::endl
 /// Write an error message to stderr.
-#define APLIBS_DSP_ERROR(msg) \
-		std::cerr << "aplibs-dsp Error: " << msg << " " __POS__ << std::endl
+#define APLIBS_DSP_ERROR(msg)                                           \
+  std::cerr << "aplibs-dsp Error: " << msg << " " __POS__ << std::endl
 
 
 #endif /* LOGGING_HPP_ */
