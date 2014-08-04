@@ -53,28 +53,6 @@ public:
   /*--------------------------------------------------------------------------------*/
   void AddSpeakerGroup(const uint_t spn[Dimensions]) { UNUSED_PARAMETER(spn); ERROR("Can't manually specify speaker groups for VBAP2D"); };
 
-  // structure describing a set of speakers with individual gains to combine to create a virtual source
-  //  typedef struct
-  //  {
-  //      bool   valid;           // true if group found
-  //      uint_t group;           // speaker group (index of lowest speaker in pair)
-  //      double error;           // speaker group error
-  //      double x, y, z;         // last test position
-  //      struct
-  //      {
-  //          uint_t index;       // speaker index
-  //          uint_t channel;     // output channel
-  //          double gain;        // gain of this speaker
-  //          double delay;       // delay in s to delay this speaker by
-  //      } speakers[MaxSpeakersPerSet];
-  //  } SpeakerSet_t;
-  //
-  //  typedef struct
-  //  {
-  //      uint_t speakers[Dimensions];            // index of speaker in this group
-  //      double inv[Dimensions][Dimensions];     // inverse matrix of speaker positions
-  //  } SpeakerGroup_t;
-
   /*--------------------------------------------------------------------------------*/
   /** Find speaker with lowest azimuth.
    */
@@ -83,17 +61,6 @@ public:
   {
     return (i.vec.Polar().pos.az < j.vec.Polar().pos.az);
   }
-
-  /*--------------------------------------------------------------------------------*/
-  /** Find gain factors for a sound source using a set of speakers from a list of speaker sets
-   *
-   * @param pos sound source position
-   * @param speakerset structure populated by this function
-   *
-   * @return true if speaker set found
-   */
-  /*--------------------------------------------------------------------------------*/
-  virtual bool FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) const;
 
   /*--------------------------------------------------------------------------------*/
   /** Find groups of speakers from existing speakers

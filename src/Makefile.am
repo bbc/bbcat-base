@@ -21,6 +21,7 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
 	3DPosition.cpp								\
 	ByteSwap.cpp								\
 	Crossfader.cpp								\
+	DistanceModel.cpp							\
 	FractionalSample.cpp						\
 	misc.cpp									\
 	ParameterSet.cpp							\
@@ -37,6 +38,7 @@ pkginclude_HEADERS =							\
 	3DPosition.h								\
 	ByteSwap.h									\
 	Crossfader.hpp								\
+	DistanceModel.h								\
 	FractionalSample.h							\
 	Logging.hpp									\
 	misc.h										\

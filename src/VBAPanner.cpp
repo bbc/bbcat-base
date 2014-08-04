@@ -9,6 +9,7 @@
 
 #define DEBUG_LEVEL 1
 #include "VBAPanner.h"
+#include "DistanceModel.h"
 
 #if DEBUG_LEVEL >= 5
 #define OUTPUT_GROUPS 1
@@ -18,9 +19,7 @@
 
 BBC_AUDIOTOOLBOX_START
 
-VBAPanner::VBAPanner() : decay_power(1.4),
-                         speed_of_sound(330.0),
-                         max_dist(0.0),
+VBAPanner::VBAPanner() : max_dist(0.0),
                          max_delay(0.0),
                          max_outputs(0)
 {
@@ -31,44 +30,13 @@ VBAPanner::~VBAPanner()
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Set decay power due to distance (==2 for inverse square law)
- */
-/*--------------------------------------------------------------------------------*/
-void VBAPanner::SetDecayPower(double n)
-{
-  uint_t i;
-
-  decay_power = n;
-
-  for (i = 0; i < speakers.size(); i++)
-  {
-    SetGainAndDelay(speakers[i]);
-  }
-}
-
-/*--------------------------------------------------------------------------------*/
-/** Set speed of sound in m/s
- */
-/*--------------------------------------------------------------------------------*/
-void VBAPanner::SetSpeedOfSound(double speed)
-{
-  uint_t i;
-
-  speed_of_sound = speed;
-  max_delay      = 0.0;
-
-  for (i = 0; i < speakers.size(); i++)
-  {
-    SetGainAndDelay(speakers[i]);
-  }
-}
-
-/*--------------------------------------------------------------------------------*/
 /** Calculate gain and delay due to distance of speaker from origin
  */
 /*--------------------------------------------------------------------------------*/
 void VBAPanner::SetGainAndDelay(Speaker_t& speaker)
 {
+  const DistanceModel& dmodel = DistanceModel::Get();
+
   if (speaker.dist > max_dist)
   {
     // maximum distance has changed -> re-evaluate all speaker levels
@@ -77,15 +45,15 @@ void VBAPanner::SetGainAndDelay(Speaker_t& speaker)
     uint_t i;
     for (i = 0; i < speakers.size(); i++)
     {
-      speakers[i].gain = pow(decay_power, speakers[i].dist - max_dist);
+      speakers[i].gain = dmodel.GetLevel(max_dist - speakers[i].dist);
     }
   }
 
   // set compensating gain relative to that on the unit sphere
-  speaker.gain  = pow(decay_power, speaker.dist - max_dist);
+  speaker.gain  = dmodel.GetLevel(max_dist - speaker.dist);
 
   // set delay as absolute delay from origin
-  speaker.delay = speaker.dist / speed_of_sound;
+  speaker.delay = dmodel.GetDelay(speaker.dist);
 
   if (speaker.delay > max_delay)
   {
@@ -383,6 +351,7 @@ double VBAPanner::TestSpeakers(const Position& pos, const SpeakerGroup_t& group,
 /*--------------------------------------------------------------------------------*/
 bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) const
 {
+  const DistanceModel& dmodel = DistanceModel::Get();
   Position cpos  = pos.Cart();                                // cartesian version of position
   Position cupos = cpos.Unit();                               // use unit vector version of cartesian position
   uint_t   i;
@@ -395,10 +364,10 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
   {
     double bestgains[MaxSpeakersPerSet];
     double besterror = 1.0e30;
-    double src_dist  = cpos.Mod();                          // source distance away from origin
-    double src_delay = src_dist / speed_of_sound;           // source delay due to distance
-    double src_gain  = pow(decay_power, 1.0 - src_dist);    // source gain compensation due to distance, note that gain gets larger as source moves closer to origin (assuming 1m == 1.0)
+    double src_gain, src_delay;           // source gain and delay due to distance
     uint_t bestgroup = ~0;
+
+    dmodel.GetLevelAndDelay(pos, src_gain, src_delay);
 
     // try to use old speaker group and see if it's still valid
     if (speakerset.valid && (speakerset.group < groups.size()))
@@ -433,17 +402,19 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
       speakerset.error = besterror;
 
       // grab speaker data
-      for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < NUMBEROF(group.speakers)); i++)
+      for (i = 0; (i < MaxSpeakersPerSet) && (i < Dimensions); i++)
       {
         const Speaker_t& speaker = speakers[group.speakers[i]];
 
         DEBUG3(("Speaker %u: index %u channel %u gain (%0.3le * %0.3le * %0.3le (=power(%0.3le, (1.0 - %0.3le))) = %0.3le) delay %0.3lfs", i, group.speakers[i], speaker.channel, bestgains[i], speaker.gain, src_gain, decay_power, src_dist, bestgains[i] * speaker.gain * src_gain, speaker.delay_compensation + src_delay));
 
-        speakerset.speakers[i].index    = group.speakers[i];
-        speakerset.speakers[i].channel  = speaker.channel;
-        speakerset.speakers[i].usergain = speaker.gain;                                 // user supplied gain
-        speakerset.speakers[i].gain     = bestgains[i] * src_gain;                      // apply gain due to source position
-        speakerset.speakers[i].delay    = speaker.delay_compensation + src_delay;       // add delay due to source position
+        speakerset.speakers[i].index        = group.speakers[i];
+        speakerset.speakers[i].channel      = speaker.channel;
+        speakerset.speakers[i].usergain     = speaker.gain;                             // user supplied gain
+        speakerset.speakers[i].speakergain  = bestgains[i];                             // gain of this speaker due to its position                      
+        speakerset.speakers[i].speakerdelay = speaker.delay_compensation;               // delay of this speaker due to its position             
+        speakerset.speakers[i].sourcegain   = src_gain;                                 // gain of this speaker due to the source's position (s) 
+        speakerset.speakers[i].sourcedelay  = src_delay;                                // delay of this speaker due to the source's position (s)
       }
     }
     else
@@ -452,15 +423,17 @@ bool VBAPanner::FindSpeakers(const Position& pos, SpeakerSet_t& speakerset) cons
       DEBUG3(("VBAPanner - No panning solution found?!"));
       memset(speakerset.speakers, 0, sizeof(speakerset.speakers));
 
-      for (i = 0; (i < NUMBEROF(speakerset.speakers)) && (i < speakers.size()); i++)
+      for (i = 0; (i < MaxSpeakersPerSet) && (i < Dimensions) && (i < speakers.size()); i++)
       {
         const Speaker_t& speaker = speakers[i];
 
-        speakerset.speakers[i].index    = i;
-        speakerset.speakers[i].channel  = speaker.channel;
-        speakerset.speakers[i].usergain = speaker.gain;                                 // user supplied gain
-        speakerset.speakers[i].gain     = src_gain;                                     // apply gain due to source position
-        speakerset.speakers[i].delay    = speaker.delay_compensation + src_delay;       // add delay due to source position
+        speakerset.speakers[i].index        = i;
+        speakerset.speakers[i].channel      = speaker.channel;
+        speakerset.speakers[i].usergain     = speaker.gain;                             // user supplied gain
+        speakerset.speakers[i].speakergain  = 1.0;                                      // gain of this speaker due to its position                      
+        speakerset.speakers[i].speakerdelay = speaker.delay_compensation;               // delay of this speaker due to its position             
+        speakerset.speakers[i].sourcegain   = src_gain;                                 // gain of this speaker due to the source's position (s) 
+        speakerset.speakers[i].sourcedelay  = src_delay;                                // delay of this speaker due to the source's position (s)
       }
 
       speakerset.valid = true;

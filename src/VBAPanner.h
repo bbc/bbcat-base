@@ -30,18 +30,6 @@ public:
   };
 
   /*--------------------------------------------------------------------------------*/
-  /** Set decay power due to distance (==2 for inverse square law)
-   */
-  /*--------------------------------------------------------------------------------*/
-  void SetDecayPower(double n);
-
-  /*--------------------------------------------------------------------------------*/
-  /** Set speed of sound in m/s
-   */
-  /*--------------------------------------------------------------------------------*/
-  void SetSpeedOfSound(double speed);
-
-  /*--------------------------------------------------------------------------------*/
   /** Read back speaker positions (and possibly groups) from text file
    */
   /*--------------------------------------------------------------------------------*/
@@ -90,17 +78,18 @@ public:
       uint_t index;             // speaker index
       sint_t channel;           // output channel (< 0 == ignored) 
       double usergain;          // user supplied gain of this speaker
-      double gain;              // gain of this speaker due to distance
-      double delay;             // delay in s to delay this speaker by
+      double speakergain;       // gain of this speaker due to its position              
+      double speakerdelay;      // delay of this speaker due to its position             
+      double sourcegain;        // gain of this speaker due to the source's position (s) 
+      double sourcedelay;       // delay of this speaker due to the source's position (s)
     } speakers[MaxSpeakersPerSet];
   } SpeakerSet_t;
 
   typedef struct
   {
     sint_t channel;             // output channel (< 0 == ignored) 
-    double usergain;            // user supplied gain of this speaker
-    double gain;                // gain of this speaker due to distance
-    double delay;               // delay in s to delay this speaker by
+    double gain;                // gain of this speaker due to its position and/or source's position and user supplied gain
+    double delay;               // delay of this speaker due to its position and/or source's position
   } SpeakerOutput_t;
 
   /*--------------------------------------------------------------------------------*/
@@ -166,8 +155,6 @@ protected:
 protected:
   std::vector<Speaker_t>      speakers;
   std::vector<SpeakerGroup_t> groups;
-  double decay_power;
-  double speed_of_sound;
   double max_dist;
   double max_delay;
   uint_t max_outputs;
