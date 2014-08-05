@@ -195,6 +195,12 @@ public:
   /*--------------------------------------------------------------------------------*/
   uint_t NumIRs() const;
 
+  /*--------------------------------------------------------------------------------*/
+  /** Return approximate number of seconds worth of audio this renderer 'holds'
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual uint_t SamplesBuffered() const;
+
   typedef struct
   {
     apf::conv::Convolver       *dynamicconvolver;
@@ -249,6 +255,7 @@ protected:
   std::vector<double>      irdelays;
   std::vector<PARAMETERS>  parameters;
   double                   delayscale;
+  double                   maxdelay;
   float                    audioscale;
   bool                     hqproc;
   bool                     updateparameters;
@@ -309,6 +316,8 @@ protected:
   /*--------------------------------------------------------------------------------*/
   void StopThread();
 
+  static uint_t GetMaxAdditionalDelay() {return maxadditionaldelay;}
+
 protected:
   /*--------------------------------------------------------------------------------*/
   /** Processing thread entry point
@@ -337,9 +346,10 @@ protected:
   volatile float           *output;
   volatile double          outputdelay;
   volatile double          outputlevel;
-  volatile uint_t          maxadditionaldelay;
   volatile bool            hqproc;
   volatile bool            quitthread;
+
+  static   uint_t          maxadditionaldelay;
 };
 
 /*----------------------------------------------------------------------------------------------------*/

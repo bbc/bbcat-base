@@ -324,6 +324,7 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
 void ConvolverManager::LoadIRDelays(const char *filename)
 {
   irdelays.clear();
+  maxdelay = 0.0;
 
   if (filename)
   {
@@ -353,6 +354,8 @@ void ConvolverManager::LoadIRDelays(const char *filename)
       for (i = 0; i < irdelays.size(); i++)
       {
         irdelays[i] -= mindelay;
+        
+        maxdelay = MAX(maxdelay, irdelays[i]);
       }
 
       fclose(fp);
@@ -371,6 +374,7 @@ void ConvolverManager::LoadIRDelays(const char *filename)
 void ConvolverManager::SetIRDelays(const double *delays, const uint_t num_delays)
 {
   irdelays.clear();
+  maxdelay = 0.0;
 
   if (num_delays)
   {
@@ -382,6 +386,7 @@ void ConvolverManager::SetIRDelays(const double *delays, const uint_t num_delays
     for (i = 0; i < irdelays.size(); i++)
     {
       irdelays[i] = delays[i];
+      maxdelay = MAX(maxdelay, irdelays[i]);
     }
   }
 }
@@ -637,6 +642,7 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
 void ConvolverManager::LoadDelaysSOFA(SOFA& file)
 {
   irdelays.clear();
+  maxdelay = 0.0;
 
   // get number of measurements and receivers
   uint_t i, j, k, m = file.get_num_measurements(), r = file.get_num_receivers(), e = file.get_num_emitters(), n = m*r*e;
@@ -655,6 +661,7 @@ void ConvolverManager::LoadDelaysSOFA(SOFA& file)
       {
         if (delays_recv.size() == 1) irdelays[k*m*r + i*r + j] = delays_recv[0]*sr;
         else                         irdelays[k*m*r + i*r + j] = delays_recv[i]*sr;
+        maxdelay = MAX(maxdelay, irdelays[k*m*r + i*r + j]);
       }
     }
   }
@@ -664,7 +671,18 @@ void ConvolverManager::LoadDelaysSOFA(SOFA& file)
 }
 #endif
 
+/*--------------------------------------------------------------------------------*/
+/** Return approximate number of seconds worth of audio this renderer 'holds'
+ */
+/*--------------------------------------------------------------------------------*/
+uint_t ConvolverManager::SamplesBuffered() const
+{
+  return blocksize * partitions + Convolver::GetMaxAdditionalDelay();
+}
+
 /*----------------------------------------------------------------------------------------------------*/
+
+uint_t Convolver::maxadditionaldelay = 2400;
 
 /*--------------------------------------------------------------------------------*/
 /** Protected constructor so that only ConvolverManager can create convolvers
@@ -679,7 +697,6 @@ Convolver::Convolver(uint_t _convindex, uint_t _blocksize, float _scale, double 
   output(new float[blocksize]),
   outputdelay(_delay),
   outputlevel(1.0),
-  maxadditionaldelay(2400),
   quitthread(false)
 {
   // create thread
