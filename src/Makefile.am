@@ -40,6 +40,7 @@ pkginclude_HEADERS =							\
 	Crossfader.hpp								\
 	DistanceModel.h								\
 	FractionalSample.h							\
+	Interpolator.h								\
 	Logging.hpp									\
 	misc.h										\
 	ParameterSet.h								\
