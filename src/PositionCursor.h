@@ -34,6 +34,21 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   virtual const ParameterSet *GetPositionSupplement() const {return NULL;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Set position for current time
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void SetPosition(const Position& pos, const ParameterSet *supplement = NULL) {
+    UNUSED_PARAMETER(pos);
+    UNUSED_PARAMETER(supplement);
+  }
+
+  /*--------------------------------------------------------------------------------*/
+  /** End position updates by marking the end of the last block
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void EndPositionChanges() {}
 };
 
 BBC_AUDIOTOOLBOX_END
