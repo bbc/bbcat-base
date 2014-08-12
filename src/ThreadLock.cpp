@@ -15,7 +15,7 @@ ThreadLockObject::ThreadLockObject()
 
   pthread_mutexattr_init(&mta);
   /* or PTHREAD_MUTEX_RECURSIVE_NP */
-  pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
+  pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);     // MUST be recursive!
 
   if (pthread_mutex_init(&mutex, &mta) != 0)
   {
