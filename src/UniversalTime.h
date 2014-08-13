@@ -74,7 +74,7 @@ public:
   operator uint64_t() const {return time_current;}
 
 protected:
-  void UpdateTime() {time_current = time_offset + (uint64_t)((1000000000ULL * (ulonglong_t)time_numerator) / time_denominator);}
+  void UpdateTime() {time_current = time_offset + (uint64_t)((1000000000ULL * (ullong_t)time_numerator) / time_denominator);}
 
 protected:
   uint64_t time_current;
