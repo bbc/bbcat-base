@@ -42,7 +42,6 @@ pkginclude_HEADERS =							\
 	FractionalSample.h							\
 	Interpolator.h								\
 	Logging.hpp									\
-	misc.h										\
 	ParameterSet.h								\
 	PerformanceMonitor.h						\
 	PositionCursor.h							\
@@ -51,8 +50,10 @@ pkginclude_HEADERS =							\
 	SoundFormatRawConversions.h					\
 	SoundMixing.h								\
 	ThreadLock.h								\
+	UniversalTime.h								\
 	VBAPanner.h									\
-	VBAPanner2D.h
+	VBAPanner2D.h								\
+	misc.h
 
 if ENABLE_GPL
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS += $(APF_CFLAGS) $(SNDFILE_CFLAGS) $(FFTW_CFLAGS)
