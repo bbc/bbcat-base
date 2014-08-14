@@ -22,10 +22,10 @@ BBC_AUDIOTOOLBOX_START
 class UniversalTime
 {
 public:
-  UniversalTime() : time_current(0),
-                    time_offset(0),
-                    time_numerator(0),
-                    time_denominator(1) {}
+  UniversalTime(uint64_t den = 1) : time_current(0),
+                                    time_offset(0),
+                                    time_numerator(0),
+                                    time_denominator(den) {}
   UniversalTime(const UniversalTime& obj) : time_current(obj.time_current),
                                             time_offset(obj.time_offset),
                                             time_numerator(obj.time_numerator),
@@ -100,13 +100,19 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   virtual UniversalTime& operator += (const UniversalTime& obj) {time_offset    += obj.GetTime(); UpdateTime(); return *this;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return calculated time in raw values 
+   */
+  /*--------------------------------------------------------------------------------*/
+  uint64_t GetRawTime() const {return time_numerator;}
   
   /*--------------------------------------------------------------------------------*/
   /** Return calculated time in ns
    */
   /*--------------------------------------------------------------------------------*/
-  uint64_t GetTime()  const {return time_current;}
-  operator uint64_t() const {return time_current;}
+  uint64_t GetTime()    const {return time_current;}
+  operator uint64_t()   const {return time_current;}
 
   /*--------------------------------------------------------------------------------*/
   /** Return calculated time in s
@@ -118,7 +124,8 @@ public:
   /** Perform explicit calculation using denominator
    */
   /*--------------------------------------------------------------------------------*/
-  uint64_t Calc(uint64_t num) const {return (uint64_t)((1000000000ULL * (ullong_t)num) / time_denominator);}
+  uint64_t Calc(uint64_t num)        const {return (uint64_t)((1000000000ULL * (ullong_t)num) / time_denominator);}
+  double   CalcSeconds(uint64_t num) const {return 1.0e-9 * (double)Calc(num);}
 
   friend uint64_t operator * (const UniversalTime& timebase, uint64_t time) {return timebase.Calc(time);}
 
