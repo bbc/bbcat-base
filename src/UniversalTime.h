@@ -26,7 +26,24 @@ public:
                     time_offset(0),
                     time_numerator(0),
                     time_denominator(1) {}
+  UniversalTime(const UniversalTime& obj) : time_current(obj.time_current),
+                                            time_offset(obj.time_offset),
+                                            time_numerator(obj.numerator),
+                                            time_denominator(obj.denominator) {}
   virtual ~UniversalTime() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Assignment operator
+   */
+  /*--------------------------------------------------------------------------------*/
+  UniversalTime& operator = (const UniversalTime& obj)
+  {
+    time_current     = obj.time_current;
+    time_offset      = obj.time_offset;
+    time_numerator   = obj.numerator;
+    time_denominator = obj.denominator;
+    return *this;
+  }
 
   /*--------------------------------------------------------------------------------*/
   /** Change denominator -> use offset to save current ns time and reset numerator to 0
@@ -102,6 +119,8 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   uint64_t Calc(uint64_t num) const {return (uint64_t)((1000000000ULL * (ullong_t)num) / time_denominator);}
+
+  friend uint64_t operator * (const UniversalTime& timebase, uint64_t time) {return timebase.Calc(num);}
 
 protected:
   void UpdateTime() {time_current = time_offset + (uint64_t)((1000000000ULL * (ullong_t)time_numerator) / time_denominator);}
