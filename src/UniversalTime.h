@@ -43,6 +43,18 @@ public:
   }
 
   /*--------------------------------------------------------------------------------*/
+  /** Reset time to zero
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void Reset() {time_offset = 0; time_numerator = 0;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Set numerator
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void Set(uint64_t num)                                {time_numerator = num; UpdateTime();}
+
+  /*--------------------------------------------------------------------------------*/
   /** Add to numerator
    */
   /*--------------------------------------------------------------------------------*/
@@ -55,16 +67,22 @@ public:
   virtual void AddNanoSeconds(uint64_t ns)                      {time_offset    += ns;  UpdateTime();}
 
   /*--------------------------------------------------------------------------------*/
+  /** Set numerator
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual UniversalTime& operator = (uint64_t num)              {time_numerator  = num; UpdateTime(); return *this;}
+
+  /*--------------------------------------------------------------------------------*/
   /** Add to numerator
    */
   /*--------------------------------------------------------------------------------*/
-  virtual UniversalTime& operator += (uint64_t inc)             {time_numerator += inc; UpdateTime();}
+  virtual UniversalTime& operator += (uint64_t inc)             {time_numerator += inc; UpdateTime(); return *this;}
 
   /*--------------------------------------------------------------------------------*/
   /** Add one object to another using offset
    */
   /*--------------------------------------------------------------------------------*/
-  virtual UniversalTime& operator += (const UniversalTime& obj) {time_offset    += obj.GetTime(); UpdateTime();}
+  virtual UniversalTime& operator += (const UniversalTime& obj) {time_offset    += obj.GetTime(); UpdateTime(); return *this;}
   
   /*--------------------------------------------------------------------------------*/
   /** Return calculated time in ns
@@ -72,6 +90,18 @@ public:
   /*--------------------------------------------------------------------------------*/
   uint64_t GetTime()  const {return time_current;}
   operator uint64_t() const {return time_current;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return calculated time in s
+   */
+  /*--------------------------------------------------------------------------------*/
+  double GetTimeSeconds() const {return 1.0e-9 * (double)time_current;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Perform explicit calculation using denominator
+   */
+  /*--------------------------------------------------------------------------------*/
+  uint64_t Calc(uint64_t num) const {return (uint64_t)((1000000000ULL * (ullong_t)num) / time_denominator);}
 
 protected:
   void UpdateTime() {time_current = time_offset + (uint64_t)((1000000000ULL * (ullong_t)time_numerator) / time_denominator);}
