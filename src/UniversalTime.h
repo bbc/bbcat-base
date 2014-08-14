@@ -28,8 +28,8 @@ public:
                     time_denominator(1) {}
   UniversalTime(const UniversalTime& obj) : time_current(obj.time_current),
                                             time_offset(obj.time_offset),
-                                            time_numerator(obj.numerator),
-                                            time_denominator(obj.denominator) {}
+                                            time_numerator(obj.time_numerator),
+                                            time_denominator(obj.time_denominator) {}
   virtual ~UniversalTime() {}
 
   /*--------------------------------------------------------------------------------*/
@@ -40,8 +40,8 @@ public:
   {
     time_current     = obj.time_current;
     time_offset      = obj.time_offset;
-    time_numerator   = obj.numerator;
-    time_denominator = obj.denominator;
+    time_numerator   = obj.time_numerator;
+    time_denominator = obj.time_denominator;
     return *this;
   }
 
@@ -120,7 +120,7 @@ public:
   /*--------------------------------------------------------------------------------*/
   uint64_t Calc(uint64_t num) const {return (uint64_t)((1000000000ULL * (ullong_t)num) / time_denominator);}
 
-  friend uint64_t operator * (const UniversalTime& timebase, uint64_t time) {return timebase.Calc(num);}
+  friend uint64_t operator * (const UniversalTime& timebase, uint64_t time) {return timebase.Calc(time);}
 
 protected:
   void UpdateTime() {time_current = time_offset + (uint64_t)((1000000000ULL * (ullong_t)time_numerator) / time_denominator);}
