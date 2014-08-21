@@ -285,7 +285,7 @@ protected:
   /** Protected constructor so that only ConvolverManager can create convolvers
    */
   /*--------------------------------------------------------------------------------*/
-  Convolver(uint_t _convindex, uint_t _blocksize, double _delay = 0.0);
+  Convolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, double _delay = 0.0);
 
   /*--------------------------------------------------------------------------------*/
   /** Start convolution thread
@@ -347,6 +347,8 @@ protected:
   ThreadBoolSignalObject   donesignal;
   pthread_t                thread;
   uint_t                   blocksize;
+  uint_t                   partitions;
+  volatile uint_t          zeroblocks;
   uint_t                   convindex;
 
   volatile float           *input;
@@ -377,7 +379,7 @@ protected:
   /** Protected constructor so that only ConvolverManager can create convolvers
    */
   /*--------------------------------------------------------------------------------*/
-  DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver);
+  DynamicConvolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, APFConvolver *_convolver);
   
   /*--------------------------------------------------------------------------------*/
   /** Set IR filter for convolution
@@ -421,7 +423,7 @@ protected:
   /** Protected constructor so that only ConvolverManager can create convolvers
    */
   /*--------------------------------------------------------------------------------*/
-  StaticConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, double _delay);
+  StaticConvolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, APFConvolver *_convolver, double _delay);
 
   /*--------------------------------------------------------------------------------*/
   /** Actually perform convolution on the input and store it in the provided buffer

@@ -35,7 +35,7 @@ ConvolverManager::ConvolverManager(uint_t partitionsize) :
   blocksize(partitionsize),
   partitions(0),
   delayscale(1.0),
-  audioscale(1.f),
+  audioscale(1.0),
   hqproc(true),
   updateparameters(true)
 {
@@ -420,7 +420,7 @@ void ConvolverManager::CreateStaticConvolver(const float *irdata, const ulong_t 
   parameters.push_back(params);
 
   // set up new convolver
-  if ((conv = new StaticConvolver(convolvers.size(), blocksize, new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength), delay)) != NULL)
+  if ((conv = new StaticConvolver(convolvers.size(), blocksize, partitions, new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength), delay)) != NULL)
   {
     conv->SetParameters(params.level, params.delay, hqproc);
     convolvers.push_back(conv);
@@ -442,7 +442,7 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
     Convolver *conv;
 
     // set up new convolver
-    if ((conv = new DynamicConvolver(convolvers.size(), blocksize, new apf::conv::Convolver(blocksize, partitions))) != NULL)
+    if ((conv = new DynamicConvolver(convolvers.size(), blocksize, partitions, new apf::conv::Convolver(blocksize, partitions))) != NULL)
     {
       convolvers.push_back(conv);
 
@@ -709,14 +709,11 @@ uint_t ConvolverManager::SamplesBuffered() const
 float ConvolverManager::CalculateLevel(const float *data, uint_t n)
 {
   float max = 0.f;
-  float sum = 0.f;
-  uint_t i, dist = 40;  // use running sum of 40 samples, taking the max sum over the entire array
+  uint_t i;
   
   for (i = 0; i < n; i++)
   {
-    sum += data[i];
-    if (i >= dist) sum -= data[i - dist];
-    max  = MAX(max, sum);
+    max = MAX(max, data[i]);
   }
 
   return max;
@@ -730,9 +727,11 @@ uint_t Convolver::maxadditionaldelay = 2400;
 /** Protected constructor so that only ConvolverManager can create convolvers
  */
 /*--------------------------------------------------------------------------------*/
-Convolver::Convolver(uint_t _convindex, uint_t _blocksize, double _delay) :
+Convolver::Convolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, double _delay) :
   thread(0),
   blocksize(_blocksize),
+  partitions(_partitions),
+  zeroblocks(0),
   convindex(_convindex),
   input(new float[blocksize]),
   output(new float[blocksize]),
@@ -800,14 +799,19 @@ void Convolver::StopThread()
 void Convolver::StartConvolution(const float *_input, uint_t inputchannels)
 {
   uint_t i;
+  bool   nonzero = false;
 
   // copy input (de-interleaving)
   for (i = 0; i < blocksize; i++)
   {
     input[i] = _input[i * inputchannels];
+    nonzero |= (input[i] != 0.0); 
   }
 
-  memcpy((float *)output, (const float *)input, blocksize * sizeof(*input));
+  if      (nonzero)                 zeroblocks = 0;
+  else if (zeroblocks < partitions) zeroblocks++;
+
+  //memcpy((float *)output, (const float *)input, blocksize * sizeof(*input));
 
   DEBUG4(("%smain signal", DebugHeader().c_str()));
 
@@ -833,11 +837,14 @@ void Convolver::EndConvolution(float *_output, uint_t outputchannels, float leve
 
   DEBUG4(("%smain done", DebugHeader().c_str()));
 
-  // mix locally generated output into supplied output buffer
-  uint_t i;
-  for (i = 0; i < blocksize; i++)
+  if (zeroblocks < partitions)
   {
-    _output[i * outputchannels] += output[i] * level;
+    // mix locally generated output into supplied output buffer
+    uint_t i;
+    for (i = 0; i < blocksize; i++)
+    {
+      _output[i * outputchannels] += output[i] * level;
+    }
   }
 }
 
@@ -854,6 +861,9 @@ void *Convolver::Process()
   float  *delay   = new float[delaylen];      // delay memory
   double level1   = 1.0;
   double delay1   = 0.0;
+#if DEBUG_LEVEL >= 3
+  bool   doingnothing = false;
+#endif
 
   // maxdelay can be extended now because of the rounding up of delaylen
   maxdelay = delaylen - blocksize - 1 - FractionalSampleAdditionalDelayRequired();
@@ -875,8 +885,32 @@ void *Convolver::Process()
     // detect quit request
     if (quitthread) break;
 
-    // call DynamicConvolver or StaticConvolver
-    Convolve(delay + delaypos);
+    if (zeroblocks < partitions)
+    {
+#if DEBUG_LEVEL >= 3
+      if (doingnothing)
+      {
+        DEBUG1(("Convolver %u resuming processing", convindex));
+        doingnothing = false;
+      }
+#endif
+
+      // call DynamicConvolver or StaticConvolver
+      Convolve(delay + delaypos);
+    }
+    else
+    {
+      // no audio in -> simply zero input
+      memset(delay + delaypos, 0, blocksize * sizeof(*delay));
+
+#if DEBUG_LEVEL >= 3
+      if (!doingnothing)
+      {
+        DEBUG1(("Convolver %u pausing processing", convindex));
+        doingnothing = true;
+      }
+#endif
+    }
 
     // process delay memory using specified delay
     uint_t pos1   = delaypos + delaylen;
@@ -948,9 +982,9 @@ void Convolver::SetParameters(double level, double delay, bool hqproc)
 /** Protected constructor so that only ConvolverManager can create convolvers
  */
 /*--------------------------------------------------------------------------------*/
-DynamicConvolver::DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver) : Convolver(_convindex, _blocksize),
-                                                                                                     convolver(_convolver),
-                                                                                                     convfilter(NULL),
+DynamicConvolver::DynamicConvolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, APFConvolver *_convolver) : Convolver(_convindex, _blocksize, _partitions),
+                                                                                                                         convolver(_convolver),
+                                                                                                                         convfilter(NULL),
   filter(NULL)
 {
 }
@@ -1034,8 +1068,8 @@ void DynamicConvolver::Convolve(float *dest)
 /** Protected constructor so that only ConvolverManager can create convolvers
  */
 /*--------------------------------------------------------------------------------*/
-StaticConvolver::StaticConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, double _delay) : Convolver(_convindex, _blocksize, _delay),
-                                                                                                                  convolver(_convolver)
+StaticConvolver::StaticConvolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, APFConvolver *_convolver, double _delay) : Convolver(_convindex, _blocksize, _partitions, _delay),
+                                                                                                                                      convolver(_convolver)
 {
 }
 
