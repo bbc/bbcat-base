@@ -248,6 +248,13 @@ protected:
   void LoadDelaysSOFA(SOFA& file);
 #endif
 
+  /*--------------------------------------------------------------------------------*/
+  /** Calculate reasonnable level value for filter
+   */
+  /*--------------------------------------------------------------------------------*/
+  static float CalculateLevel(const float *data, uint_t n);
+
+protected:
   uint_t                   blocksize;
   uint_t                   partitions;
   std::vector<Convolver *> convolvers;
@@ -278,7 +285,7 @@ protected:
   /** Protected constructor so that only ConvolverManager can create convolvers
    */
   /*--------------------------------------------------------------------------------*/
-  Convolver(uint_t _convindex, uint_t _blocksize, float _scale, double _delay = 0.0);
+  Convolver(uint_t _convindex, uint_t _blocksize, double _delay = 0.0);
 
   /*--------------------------------------------------------------------------------*/
   /** Start convolution thread
@@ -295,10 +302,11 @@ protected:
    *
    * @param _output buffer to mix locally generated output to (assumed to by blocksize * outputchannels long)
    * @param outputchannels number of channels in _output
+   * @param level mix level
    *
    */
   /*--------------------------------------------------------------------------------*/
-  virtual void EndConvolution(float *_output, uint_t outputchannels);
+  virtual void EndConvolution(float *_output, uint_t outputchannels, float level);
 
   /*--------------------------------------------------------------------------------*/
   /** Set parameters and options for convolution
@@ -340,7 +348,6 @@ protected:
   pthread_t                thread;
   uint_t                   blocksize;
   uint_t                   convindex;
-  float                    scale;
 
   volatile float           *input;
   volatile float           *output;
@@ -370,7 +377,7 @@ protected:
   /** Protected constructor so that only ConvolverManager can create convolvers
    */
   /*--------------------------------------------------------------------------------*/
-  DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale);
+  DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver);
   
   /*--------------------------------------------------------------------------------*/
   /** Set IR filter for convolution
@@ -414,7 +421,7 @@ protected:
   /** Protected constructor so that only ConvolverManager can create convolvers
    */
   /*--------------------------------------------------------------------------------*/
-  StaticConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale, double _delay);
+  StaticConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, double _delay);
 
   /*--------------------------------------------------------------------------------*/
   /** Actually perform convolution on the input and store it in the provided buffer

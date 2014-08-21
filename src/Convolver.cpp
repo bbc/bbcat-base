@@ -138,34 +138,35 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
   {
     partitions = (uint_t)((irlength + blocksize - 1) / blocksize);
 
-    DEBUG2(("File '%s' is %lu samples long, therefore %u partitions are needed", filename, irlength, partitions));
+    DEBUG2(("IRs are %lu samples, therefore %u partitions are needed", irlength, partitions));
 
     apf::conv::Convolver convolver(blocksize, partitions);
     uint32_t tick = GetTickCount();
-
-    DEBUG2(("Creating %u filters...", n));
+    float    maxlevel = 0.f;
 
     // create array to take an IR (which won't be full length because we've rounded up to a whole number of partitions)
-    float *ir;
-    if ((ir = new float[blocksize * partitions]) != NULL)
+    DEBUG2(("Creating %u filters...", numirs));
+
+    for (i = 0; i < numirs; i++)
     {
-      memset(ir, 0, blocksize * partitions * sizeof(*ir));
+      DEBUG5(("Creating filter for IR %u", i));
 
-      for (i = 0; i < numirs; i++)
-      {
-        DEBUG5(("Creating filter for IR %u", i));
+      filters.push_back(APFFilter(blocksize, partitions));
+      convolver.prepare_filter(irdata + i * irlength, irdata + (i + 1) * irlength, filters[i]);
 
-        filters.push_back(APFFilter(blocksize, partitions));
-        memcpy(ir, (irdata + i * irlength), irlength * sizeof(*ir));
-        convolver.prepare_filter(ir, (ir+irlength), filters[i]);
-      }
+      float filterlevel = CalculateLevel(irdata + i * irlength, irlength);
+      maxlevel = MAX(maxlevel, filterlevel);
+    }
 
-      DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+    DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
 #if DEBUG_LEVEL < 2
-      UNUSED_PARAMETER(tick);
+    UNUSED_PARAMETER(tick);
 #endif
 
-      delete[] ir;
+    if (maxlevel > 0.f)
+    {
+      audioscale = 1.f / maxlevel;
+      DEBUG2(("Max level = %0.1lfdB, scale = %0.1lfdB", 20.0 * log10(maxlevel), 20.0 * log10(audioscale)));
     }
 
     // force update of parameters
@@ -282,7 +283,8 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
       }
 
       DEBUG2(("Creating %u filters...", n));
-      uint32_t tick = GetTickCount();
+      uint32_t tick     = GetTickCount();
+      float    maxlevel = 0.f;
       for (i = 0; i < n; i++)
       {
         DEBUG5(("Creating filter for IR %u", i));
@@ -290,8 +292,10 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
         filters.push_back(APFFilter(blocksize, partitions));
 
         TransferSamples(sampledata, i, n, response, 0, 1, 1, blocksize * partitions);
-
         convolver.prepare_filter(response, response + blocksize * partitions, filters[i]);
+
+        float filterlevel = CalculateLevel(response, blocksize * partitions);
+        maxlevel = MAX(maxlevel, filterlevel);
       }
       DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
 #if DEBUG_LEVEL < 2
@@ -300,6 +304,12 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
 
       delete[] sampledata;
       delete[] response;
+
+      if (maxlevel > 0.f)
+      {
+        audioscale = 1.f / maxlevel;
+        DEBUG2(("Max level = %0.1lfdB, scale = %0.1lfdB", 20.0 * log10(maxlevel), 20.0 * log10(audioscale)));
+      }
 
       // force update of parameters
       updateparameters = true;
@@ -410,7 +420,7 @@ void ConvolverManager::CreateStaticConvolver(const float *irdata, const ulong_t 
   parameters.push_back(params);
 
   // set up new convolver
-  if ((conv = new StaticConvolver(convolvers.size(), blocksize, new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength), audioscale, delay)) != NULL)
+  if ((conv = new StaticConvolver(convolvers.size(), blocksize, new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength), delay)) != NULL)
   {
     conv->SetParameters(params.level, params.delay, hqproc);
     convolvers.push_back(conv);
@@ -432,7 +442,7 @@ void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
     Convolver *conv;
 
     // set up new convolver
-    if ((conv = new DynamicConvolver(convolvers.size(), blocksize, new apf::conv::Convolver(blocksize, partitions), audioscale)) != NULL)
+    if ((conv = new DynamicConvolver(convolvers.size(), blocksize, new apf::conv::Convolver(blocksize, partitions))) != NULL)
     {
       convolvers.push_back(conv);
 
@@ -561,10 +571,11 @@ void ConvolverManager::Convolve(const float *input, float *output, uint_t inputc
   updateparameters = false;
 
   // now process outputs
+  float level = audioscale / (float)(convolvers.size() / outputchannels);
   for (i = 0; i < convolvers.size(); i++)
   {
     DEBUG5(("Waiting on convolver %u/%u to complete...", i + 1, (uint_t)convolvers.size()));
-    convolvers[i]->EndConvolution(output + (i % outputchannels), outputchannels);
+    convolvers[i]->EndConvolution(output + (i % outputchannels), outputchannels, level);
     DEBUG5(("Convolver %u/%u completed", i + 1, (uint_t)convolvers.size()));
   }
 }
@@ -602,8 +613,10 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
   float *response   = new float[blocksize * partitions];
   float *ir         = new float[len];
 
-  DEBUG2(("Creating %u filters...", n));
-  uint32_t tick = GetTickCount();
+  uint32_t tick     = GetTickCount();
+  float    maxlevel = 0.f;
+
+  DEBUG2(("Creating %u filters...", e * m * r));
 
   for (k = l = 0; k < e; k++)
   {
@@ -617,6 +630,9 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
         if (!file.get_ir(ir, i, j, k)) ERROR("Error reading IR measurement %u for receiver %u and emitter %u from SOFA file", i, j, k);
         TransferSamples(ir, 0, 1, response, 0, 1, 1, blocksize * partitions);
         convolver.prepare_filter(response, response + blocksize * partitions, filters[l]);
+
+        float filterlevel = CalculateLevel(response, blocksize * partitions);
+        maxlevel = MAX(maxlevel, filterlevel);
       }
     }
   }
@@ -627,6 +643,12 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
 
   delete[] response;
   delete[] ir;
+
+  if (maxlevel > 0.f)
+  {
+    audioscale = 1.f / maxlevel;
+    DEBUG2(("Max level = %0.1lfdB, scale = %0.1lfdB", 20.0 * log10(maxlevel), 20.0 * log10(audioscale)));
+  }
 
   // force update of parameters
   updateparameters = true;
@@ -680,6 +702,26 @@ uint_t ConvolverManager::SamplesBuffered() const
   return blocksize * partitions + Convolver::GetMaxAdditionalDelay();
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Calculate reasonnable level value for filter
+ */
+/*--------------------------------------------------------------------------------*/
+float ConvolverManager::CalculateLevel(const float *data, uint_t n)
+{
+  float max = 0.f;
+  float sum = 0.f;
+  uint_t i, dist = 40;  // use running sum of 40 samples, taking the max sum over the entire array
+  
+  for (i = 0; i < n; i++)
+  {
+    sum += data[i];
+    if (i >= dist) sum -= data[i - dist];
+    max  = MAX(max, sum);
+  }
+
+  return max;
+}
+
 /*----------------------------------------------------------------------------------------------------*/
 
 uint_t Convolver::maxadditionaldelay = 2400;
@@ -688,11 +730,10 @@ uint_t Convolver::maxadditionaldelay = 2400;
 /** Protected constructor so that only ConvolverManager can create convolvers
  */
 /*--------------------------------------------------------------------------------*/
-Convolver::Convolver(uint_t _convindex, uint_t _blocksize, float _scale, double _delay) :
+Convolver::Convolver(uint_t _convindex, uint_t _blocksize, double _delay) :
   thread(0),
   blocksize(_blocksize),
   convindex(_convindex),
-  scale(_scale),
   input(new float[blocksize]),
   output(new float[blocksize]),
   outputdelay(_delay),
@@ -779,10 +820,11 @@ void Convolver::StartConvolution(const float *_input, uint_t inputchannels)
  *
  * @param _output buffer to mix locally generated output to (assumed to by blocksize * outputchannels long)
  * @param outputchannels number of channels in _output
+ * @param level mix level
  *
  */
 /*--------------------------------------------------------------------------------*/
-void Convolver::EndConvolution(float *_output, uint_t outputchannels)
+void Convolver::EndConvolution(float *_output, uint_t outputchannels, float level)
 {
   DEBUG4(("%smain wait", DebugHeader().c_str()));
 
@@ -795,7 +837,7 @@ void Convolver::EndConvolution(float *_output, uint_t outputchannels)
   uint_t i;
   for (i = 0; i < blocksize; i++)
   {
-    _output[i * outputchannels] += output[i];
+    _output[i * outputchannels] += output[i] * level;
   }
 }
 
@@ -906,9 +948,9 @@ void Convolver::SetParameters(double level, double delay, bool hqproc)
 /** Protected constructor so that only ConvolverManager can create convolvers
  */
 /*--------------------------------------------------------------------------------*/
-DynamicConvolver::DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale) : Convolver(_convindex, _blocksize, _scale),
-                                                                                                                   convolver(_convolver),
-                                                                                                                   convfilter(NULL),
+DynamicConvolver::DynamicConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver) : Convolver(_convindex, _blocksize),
+                                                                                                     convolver(_convolver),
+                                                                                                     convfilter(NULL),
   filter(NULL)
 {
 }
@@ -943,11 +985,13 @@ void DynamicConvolver::SetFilter(const APFFilter& newfilter)
 /*--------------------------------------------------------------------------------*/
 void DynamicConvolver::Convolve(float *dest)
 {
+  bool crossfade = false;
+
   // add input to convolver
   convolver->add_block(input);
 
   // do convolution
-  const float *result = convolver->convolve(scale);
+  const float *result = convolver->convolve(1.f);
             
   // copy data into delay memory
   memcpy(dest, result, blocksize * sizeof(*dest));
@@ -957,19 +1001,22 @@ void DynamicConvolver::Convolve(float *dest)
   {
     convfilter = (const APFFilter *)filter;
     convolver->set_filter(*convfilter);
+    crossfade = true;   // force crossfade after filter update
     DEBUG3(("[%010lu]: Selected new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
   }
 
   // if queues_empty() returns false, must cross fade between convolutions
-  if (!convolver->queues_empty())
+  if (crossfade || !convolver->queues_empty())
   {
     uint_t i;
+
+    DEBUG3(("Crossfading convolver %u", convindex));
 
     // rotate queues within convolver
     convolver->rotate_queues();
 
     // do convolution a second time
-    result = convolver->convolve(scale);
+    result = convolver->convolve(1.f);
 
     // crossfade new convolution result into buffer
     for (i = 0; i < blocksize; i++)
@@ -987,8 +1034,8 @@ void DynamicConvolver::Convolve(float *dest)
 /** Protected constructor so that only ConvolverManager can create convolvers
  */
 /*--------------------------------------------------------------------------------*/
-StaticConvolver::StaticConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, float _scale, double _delay) : Convolver(_convindex, _blocksize, _scale, _delay),
-                                                                                                                                convolver(_convolver)
+StaticConvolver::StaticConvolver(uint_t _convindex, uint_t _blocksize, APFConvolver *_convolver, double _delay) : Convolver(_convindex, _blocksize, _delay),
+                                                                                                                  convolver(_convolver)
 {
 }
 
@@ -1010,7 +1057,7 @@ void StaticConvolver::Convolve(float *dest)
   convolver->add_block(input);
 
   // do convolution
-  const float *result = convolver->convolve(scale);
+  const float *result = convolver->convolve(1.f);
             
   // copy data into delay memory
   memcpy(dest, result, blocksize * sizeof(*dest));
