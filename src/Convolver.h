@@ -254,6 +254,12 @@ protected:
   /*--------------------------------------------------------------------------------*/
   static float CalculateLevel(const float *data, uint_t n);
 
+  /*--------------------------------------------------------------------------------*/
+  /** Set audio scaling value based on maxlevel
+   */
+  /*--------------------------------------------------------------------------------*/
+  void SetAudioScale(float maxlevel);
+
 protected:
   uint_t                   blocksize;
   uint_t                   partitions;

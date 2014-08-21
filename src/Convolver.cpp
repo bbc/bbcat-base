@@ -163,11 +163,7 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
     UNUSED_PARAMETER(tick);
 #endif
 
-    if (maxlevel > 0.f)
-    {
-      audioscale = 1.f / maxlevel;
-      DEBUG2(("Max level = %0.1lfdB, scale = %0.1lfdB", 20.0 * log10(maxlevel), 20.0 * log10(audioscale)));
-    }
+    SetAudioScale(maxlevel);
 
     // force update of parameters
     updateparameters = true;
@@ -305,11 +301,7 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
       delete[] sampledata;
       delete[] response;
 
-      if (maxlevel > 0.f)
-      {
-        audioscale = 1.f / maxlevel;
-        DEBUG2(("Max level = %0.1lfdB, scale = %0.1lfdB", 20.0 * log10(maxlevel), 20.0 * log10(audioscale)));
-      }
+      SetAudioScale(maxlevel);
 
       // force update of parameters
       updateparameters = true;
@@ -644,11 +636,7 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
   delete[] response;
   delete[] ir;
 
-  if (maxlevel > 0.f)
-  {
-    audioscale = 1.f / maxlevel;
-    DEBUG2(("Max level = %0.1lfdB, scale = %0.1lfdB", 20.0 * log10(maxlevel), 20.0 * log10(audioscale)));
-  }
+  SetAudioScale(maxlevel);
 
   // force update of parameters
   updateparameters = true;
@@ -717,6 +705,24 @@ float ConvolverManager::CalculateLevel(const float *data, uint_t n)
   }
 
   return max;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Set audio scaling value based on maxlevel
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::SetAudioScale(float maxlevel)
+{
+  UNUSED_PARAMETER(maxlevel);
+
+  // currently disabled!
+#if 0
+  if (maxlevel > 0.f)
+  {
+    audioscale = 1.f / maxlevel;
+    DEBUG1(("Max level = %0.1lfdB, scale = %0.1lfdB", 20.0 * log10(maxlevel), 20.0 * log10(audioscale)));
+  }
+#endif
 }
 
 /*----------------------------------------------------------------------------------------------------*/
