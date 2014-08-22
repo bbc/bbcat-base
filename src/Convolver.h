@@ -270,6 +270,7 @@ protected:
   double                   delayscale;
   double                   maxdelay;
   float                    audioscale;
+  uint32_t                 reporttick;
   bool                     hqproc;
   bool                     updateparameters;
 };
@@ -330,6 +331,12 @@ protected:
   /*--------------------------------------------------------------------------------*/
   void StopThread();
 
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether thread is processing audio to non-silent audio
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool IsProcessing() const {return (zeroblocks < maxzeroblocks);}
+
   static uint_t GetMaxAdditionalDelay() {return maxadditionaldelay;}
 
 protected:
@@ -355,6 +362,7 @@ protected:
   uint_t                   blocksize;
   uint_t                   partitions;
   volatile uint_t          zeroblocks;
+  uint_t                   maxzeroblocks;
   uint_t                   convindex;
 
   volatile float           *input;

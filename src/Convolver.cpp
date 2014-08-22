@@ -22,6 +22,9 @@
 #include "FractionalSample.h"
 #include "PerformanceMonitor.h"
 
+// set at 1 to output whether each convolver is processing every 2s
+#define DEBUG_CONVOLVER_STATES 1
+
 BBC_AUDIOTOOLBOX_START
 
 /*--------------------------------------------------------------------------------*/
@@ -39,6 +42,7 @@ ConvolverManager::ConvolverManager(uint_t partitionsize) :
   hqproc(true),
   updateparameters(true)
 {
+  reporttick = GetTickCount();
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -57,6 +61,7 @@ ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
   hqproc(true),
   updateparameters(true)
 {
+  reporttick = GetTickCount();
   LoadIRs(irfile);
 }
 
@@ -79,6 +84,7 @@ ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, 
   hqproc(true),
   updateparameters(true)
 {
+  reporttick = GetTickCount();
   LoadIRs(irfile);
   LoadIRDelays(irdelayfile);
 }
@@ -562,6 +568,28 @@ void ConvolverManager::Convolve(const float *input, float *output, uint_t inputc
   // clear flag
   updateparameters = false;
 
+#if DEBUG_CONVOLVER_STATES
+  // report state of convolvers every two seconds
+  if ((GetTickCount() - reporttick) >= 2000)
+  {
+    std::vector<char> states;
+
+    // create string of indicators (add one for terminator)
+    states.resize(convolvers.size() + 1);
+    // set terminator
+    states[convolvers.size()] = 0;
+
+    for (i = 0; i < convolvers.size(); i++)
+    {
+      states[i] = convolvers[i]->IsProcessing() ? '*' : '.';
+    }
+
+    DEBUG1(("Convolvers: %s", &states[0]));
+
+    reporttick = GetTickCount();
+  }
+#endif
+
   // now process outputs
   float level = audioscale / (float)(convolvers.size() / outputchannels);
   for (i = 0; i < convolvers.size(); i++)
@@ -738,6 +766,7 @@ Convolver::Convolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, d
   blocksize(_blocksize),
   partitions(_partitions),
   zeroblocks(0),
+  maxzeroblocks(0),
   convindex(_convindex),
   input(new float[blocksize]),
   output(new float[blocksize]),
@@ -745,6 +774,10 @@ Convolver::Convolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, d
   outputlevel(1.0),
   quitthread(false)
 {
+  // calculate number of blocks of silence after which there's no need to do any processing
+  maxzeroblocks = partitions + (maxadditionaldelay / blocksize) + 1;
+  if (convindex == 0) DEBUG1(("Max zero blocks = %u", maxzeroblocks));
+
   // create thread
   if (pthread_create(&thread, NULL, &__Process, (void *)this) != 0)
   {
@@ -811,18 +844,21 @@ void Convolver::StartConvolution(const float *_input, uint_t inputchannels)
   for (i = 0; i < blocksize; i++)
   {
     input[i] = _input[i * inputchannels];
-    nonzero |= (input[i] != 0.0); 
+    nonzero |= (input[i] != 0.0);       // detect silence
   }
 
-  if      (nonzero)                 zeroblocks = 0;
-  else if (zeroblocks < partitions) zeroblocks++;
+  // count up silent blocks
+  if      (nonzero)                    zeroblocks = 0;
+  else if (zeroblocks < maxzeroblocks) zeroblocks++;
 
-  //memcpy((float *)output, (const float *)input, blocksize * sizeof(*input));
+  // only start thread if there is non-zero blocks somewhere in the chain
+  if (zeroblocks < maxzeroblocks)
+  {
+    DEBUG4(("%smain signal", DebugHeader().c_str()));
 
-  DEBUG4(("%smain signal", DebugHeader().c_str()));
-
-  // release thread
-  startsignal.Signal();
+    // release thread
+    startsignal.Signal();
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -836,15 +872,16 @@ void Convolver::StartConvolution(const float *_input, uint_t inputchannels)
 /*--------------------------------------------------------------------------------*/
 void Convolver::EndConvolution(float *_output, uint_t outputchannels, float level)
 {
-  DEBUG4(("%smain wait", DebugHeader().c_str()));
-
-  // wait for completion
-  donesignal.Wait();
-
-  DEBUG4(("%smain done", DebugHeader().c_str()));
-
-  if (zeroblocks < partitions)
+  // only wait if processing has been triggered
+  if (zeroblocks < maxzeroblocks)
   {
+    DEBUG4(("%smain wait", DebugHeader().c_str()));
+
+    // wait for completion
+    donesignal.Wait();
+
+    DEBUG4(("%smain done", DebugHeader().c_str()));
+
     // mix locally generated output into supplied output buffer
     uint_t i;
     for (i = 0; i < blocksize; i++)
@@ -867,9 +904,6 @@ void *Convolver::Process()
   float  *delay   = new float[delaylen];      // delay memory
   double level1   = 1.0;
   double delay1   = 0.0;
-#if DEBUG_LEVEL >= 3
-  bool   doingnothing = false;
-#endif
 
   // maxdelay can be extended now because of the rounding up of delaylen
   maxdelay = delaylen - blocksize - 1 - FractionalSampleAdditionalDelayRequired();
@@ -891,16 +925,9 @@ void *Convolver::Process()
     // detect quit request
     if (quitthread) break;
 
+    // decide whether there's any need to perform convolution
     if (zeroblocks < partitions)
     {
-#if DEBUG_LEVEL >= 3
-      if (doingnothing)
-      {
-        DEBUG1(("Convolver %u resuming processing", convindex));
-        doingnothing = false;
-      }
-#endif
-
       // call DynamicConvolver or StaticConvolver
       Convolve(delay + delaypos);
     }
@@ -908,20 +935,14 @@ void *Convolver::Process()
     {
       // no audio in -> simply zero input
       memset(delay + delaypos, 0, blocksize * sizeof(*delay));
-
-#if DEBUG_LEVEL >= 3
-      if (!doingnothing)
-      {
-        DEBUG1(("Convolver %u pausing processing", convindex));
-        doingnothing = true;
-      }
-#endif
     }
 
     // process delay memory using specified delay
     uint_t pos1   = delaypos + delaylen;
     double level2 = outputlevel;
     double delay2 = MIN(outputdelay, (double)maxdelay);
+
+    // decide whether there's any need to perform mixing
     double fpos1  = (double)pos1               - delay1;
     double fpos2  = (double)(pos1 + blocksize) - delay2;
 
