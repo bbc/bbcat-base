@@ -10,6 +10,7 @@
 BBC_AUDIOTOOLBOX_START
 
 class PositionTransform;
+class ScreenTransform;
 
 /*--------------------------------------------------------------------------------*/
 /** Position object - holds polar or cartesian co-ordinates with all angles in degrees
@@ -140,6 +141,18 @@ public:
   friend Position operator * (const Position& pos, const PositionTransform& trans);
 
   /*--------------------------------------------------------------------------------*/
+  /** Apply screen transform
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual Position& operator *= (const ScreenTransform& trans);
+    
+  /*--------------------------------------------------------------------------------*/
+  /** Apply screen transform
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend Position operator * (const Position& pos, const ScreenTransform& trans);
+
+  /*--------------------------------------------------------------------------------*/
   /** Generate friendly text string
    */
   /*--------------------------------------------------------------------------------*/
@@ -206,7 +219,7 @@ class PositionTransform
 public:
   PositionTransform();
   PositionTransform(const PositionTransform& obj);
-  virtual ~PositionTransform() {}
+  ~PositionTransform() {}
 
   /*--------------------------------------------------------------------------------*/
   /** Assignment operator
@@ -248,7 +261,7 @@ public:
   /** Apply transform to position
    */
   /*--------------------------------------------------------------------------------*/
-  virtual void Transform(Position& pos) const;
+  void Transform(Position& pos) const;
 
 protected:
   /*--------------------------------------------------------------------------------*/
@@ -256,6 +269,41 @@ protected:
    */
   /*--------------------------------------------------------------------------------*/
   void Rotate(double& x, double& y, double angle) const;
+};
+
+class ScreenTransform {
+public:
+  ScreenTransform();
+  ScreenTransform(const ScreenTransform& obj);
+  ~ScreenTransform() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Assignment operator
+   */
+  /*--------------------------------------------------------------------------------*/
+  ScreenTransform& operator = (const ScreenTransform& obj);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return scale due to perspective for the specified Z co-ordinate
+   */
+  /*--------------------------------------------------------------------------------*/
+  double GetDistanceScale(double z) const {return ((dist != 0.0) && (z != -dist)) ? dist / (dist + z) : 1.0;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return scale due to perspective for the specified position
+   */
+  /*--------------------------------------------------------------------------------*/
+  double GetDistanceScale(const Position& pos) const {return GetDistanceScale(pos.Cart().pos.z);}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Apply transform to position
+   */
+  /*--------------------------------------------------------------------------------*/
+  void Transform(Position& pos) const;
+  
+  double cx, cy;        // screen centre
+  double sx, sy;        // screen scale
+  double dist;          // perspective distance
 };
 
 BBC_AUDIOTOOLBOX_END

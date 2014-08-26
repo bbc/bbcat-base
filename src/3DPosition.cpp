@@ -116,6 +116,56 @@ void PositionTransform::Rotate(double& x, double& y, double angle) const
 
 /*----------------------------------------------------------------------------------------------------*/
 
+ScreenTransform::ScreenTransform() : cx(0.0),
+                                     cy(0.0),
+                                     sx(1.0),
+                                     sy(1.0),
+                                     dist(0.0)
+{
+}
+
+ScreenTransform::ScreenTransform(const ScreenTransform& obj) : cx(obj.cx),
+                                                               cy(obj.cy),
+                                                               sx(obj.sx),
+                                                               sy(obj.sy),
+                                                               dist(obj.dist)
+{
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Assignment operator
+ */
+/*--------------------------------------------------------------------------------*/
+ScreenTransform& ScreenTransform::operator = (const ScreenTransform& obj)
+{
+  cx   = obj.cx;
+  cy   = obj.cy;
+  sx   = obj.sx;
+  sy   = obj.sy;
+  dist = obj.dist;
+  return *this;
+}
+
+void ScreenTransform::Transform(Position& pos) const
+{
+  if (pos.polar)
+  {
+    // convert to cartesian, transform and then convert back
+    pos = pos.Cart();
+    Transform(pos);
+    pos = pos.Polar();
+  }
+  else
+  {
+    double m = GetDistanceScale(pos.pos.z);
+    
+    pos.pos.x = cx + sx * m * pos.pos.x;
+    pos.pos.y = cy + sy * m * pos.pos.y;
+  }
+}
+
+/*----------------------------------------------------------------------------------------------------*/
+
 /*--------------------------------------------------------------------------------*/
 /** Default constructor, defaults to origin and cartesian co-ordinates
  */
@@ -361,6 +411,27 @@ Position& Position::operator *= (const PositionTransform& trans)
  */
 /*--------------------------------------------------------------------------------*/
 Position operator * (const Position& pos, const PositionTransform& trans)
+{
+  Position res = pos;
+  trans.Transform(res);
+  return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Apply screen transform
+ */
+/*--------------------------------------------------------------------------------*/
+Position& Position::operator *= (const ScreenTransform& trans)
+{
+  trans.Transform(*this);
+  return *this;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Apply screen transform
+ */
+/*--------------------------------------------------------------------------------*/
+Position operator * (const Position& pos, const ScreenTransform& trans)
 {
   Position res = pos;
   trans.Transform(res);

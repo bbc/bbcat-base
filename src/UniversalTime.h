@@ -127,7 +127,16 @@ public:
   uint64_t Calc(uint64_t num)        const {return (uint64_t)((1000000000ULL * (ullong_t)num) / time_denominator);}
   double   CalcSeconds(uint64_t num) const {return 1.0e-9 * (double)Calc(num);}
 
-  friend uint64_t operator * (const UniversalTime& timebase, uint64_t time) {return timebase.Calc(time);}
+  friend uint64_t operator * (const UniversalTime& timebase, uint64_t num)  {return timebase.Calc(num);}
+  friend uint64_t operator * (uint64_t num, const UniversalTime& timebase)  {return timebase.Calc(num);}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Perform inverse conversion from time in ns
+   */
+  /*--------------------------------------------------------------------------------*/
+  uint64_t Invert(uint64_t val)      const {return (uint64_t)(((ullong_t)val * (ullong_t)time_denominator) / 1000000000ULL);}
+
+  friend uint64_t operator / (uint64_t time, const UniversalTime& timebase) {return timebase.Invert(time);}
 
 protected:
   void UpdateTime() {time_current = time_offset + (uint64_t)((1000000000ULL * (ullong_t)time_numerator) / time_denominator);}
