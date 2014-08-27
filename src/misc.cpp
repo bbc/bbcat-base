@@ -113,6 +113,40 @@ void debug_err(const char *fmt, ...)
   }
 }
 
+void pipe_msg(const char *fmt, ...)
+{
+  va_list     ap;
+  std::string str;
+
+  va_start(ap, fmt);
+  VPrintf(str, fmt, ap);
+  va_end(ap);
+
+  {
+    ThreadLock lock(debuglock);
+    static ulong_t tick0 = GetTickCount();
+    ulong_t tick = GetTickCount() - tick0;
+
+    printf("INFO[%010lu]: %s\n", tick, str.c_str());
+    fflush(stdout);
+
+    FreeStrings();
+  }
+}
+
+bool get_pipe_msg(const char *str, ulong_t& tick, std::string& str2)
+{
+  bool ispipemsg = false;
+
+  if (sscanf(str, "INFO[%lu]: ", &tick) > 0)
+  {
+    str2.assign(strstr(str, ": ") + 2);
+    ispipemsg = true;
+  }
+
+  return ispipemsg;
+}
+
 const char *CreateString(const char *data, uint_t len)
 {
   char *str;
@@ -140,7 +174,7 @@ void FreeStrings()
   AllocatedStrings.clear();
 }
 
-uint32_t GetTickCount()
+ulong_t GetTickCount()
 {
 #ifdef __MACH__
   static mach_timebase_info_data_t timebase;
@@ -155,7 +189,7 @@ uint32_t GetTickCount()
   uint64_t tick = mach_absolute_time();
   tick = (tick * timebase.numer) / timebase.denom;
 
-  return (uint32_t)(tick / 1000000);
+  return (ulong_t)(tick / 1000000);
 #else
   struct timespec timespec;
 
@@ -167,7 +201,7 @@ uint32_t GetTickCount()
   clock_gettime(CLOCK_MONOTONIC_RAW, &timespec);
 #endif
 
-  return timespec.tv_sec * 1000 + (timespec.tv_nsec / 1000000);
+  return timespec.tv_sec * 1000UL + (timespec.tv_nsec / 1000000UL);
 #endif
 }
 

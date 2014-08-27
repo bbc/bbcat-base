@@ -147,8 +147,8 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
     DEBUG2(("IRs are %lu samples, therefore %u partitions are needed", irlength, partitions));
 
     apf::conv::Convolver convolver(blocksize, partitions);
-    uint32_t tick = GetTickCount();
-    float    maxlevel = 0.f;
+    ulong_t tick = GetTickCount();
+    float   maxlevel = 0.f;
 
     // create array to take an IR (which won't be full length because we've rounded up to a whole number of partitions)
     DEBUG2(("Creating %u filters...", numirs));
@@ -164,7 +164,7 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
       maxlevel = MAX(maxlevel, filterlevel);
     }
 
-    DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+    DEBUG2(("Finished creating filters (took %lums)", GetTickCount() - tick));
 #if DEBUG_LEVEL < 2
     UNUSED_PARAMETER(tick);
 #endif
@@ -285,8 +285,8 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
       }
 
       DEBUG2(("Creating %u filters...", n));
-      uint32_t tick     = GetTickCount();
-      float    maxlevel = 0.f;
+      ulong_t tick     = GetTickCount();
+      float   maxlevel = 0.f;
       for (i = 0; i < n; i++)
       {
         DEBUG5(("Creating filter for IR %u", i));
@@ -299,7 +299,7 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
         float filterlevel = CalculateLevel(response, blocksize * partitions);
         maxlevel = MAX(maxlevel, filterlevel);
       }
-      DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+      DEBUG2(("Finished creating filters (took %lums)", GetTickCount() - tick));
 #if DEBUG_LEVEL < 2
       UNUSED_PARAMETER(tick);
 #endif
@@ -482,7 +482,7 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir, double level, doubl
   {
     if (ir < filters.size())
     {
-      DEBUG4(("[%010lu]: Selecting IR %03u for convolver %3u", (ulong_t)GetTickCount(), ir, convolver));
+      DEBUG4(("[%010lu]: Selecting IR %03u for convolver %3u", GetTickCount(), ir, convolver));
 
       // store parameters for convolver
       parameters[convolver].irindex = ir;
@@ -633,8 +633,8 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
   float *response   = new float[blocksize * partitions];
   float *ir         = new float[len];
 
-  uint32_t tick     = GetTickCount();
-  float    maxlevel = 0.f;
+  ulong_t tick     = GetTickCount();
+  float   maxlevel = 0.f;
 
   DEBUG2(("Creating %u filters...", e * m * r));
 
@@ -656,7 +656,7 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
       }
     }
   }
-  DEBUG2(("Finished creating filters (took %lums)", (ulong_t)(GetTickCount() - tick)));
+  DEBUG2(("Finished creating filters (took %lums)", GetTickCount() - tick));
 #if DEBUG_LEVEL < 2
   UNUSED_PARAMETER(tick);
 #endif
@@ -797,11 +797,11 @@ Convolver::~Convolver()
 std::string Convolver::DebugHeader() const
 {
   static const std::string column = "                    ";
-  static uint32_t tick0 = GetTickCount();
+  static ulong_t tick0 = GetTickCount();
   std::string res = "";
   uint_t i;
 
-  Printf(res, "%06lu (%02u): ", (ulong_t)(GetTickCount() - tick0), convindex);
+  Printf(res, "%06lu (%02u): ", GetTickCount() - tick0, convindex);
 
   for (i = 0; i < convindex; i++) res += column;
 
@@ -1031,7 +1031,7 @@ void DynamicConvolver::SetFilter(const APFFilter& newfilter)
 {
   if (&newfilter != filter)
   {
-    DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
+    DEBUG3(("[%010lu]: Selecting new filter for convolver %3u", GetTickCount(), convindex));
     // set convolver filter
     filter = &newfilter;
   }
@@ -1063,7 +1063,7 @@ void DynamicConvolver::Convolve(float *dest)
     convfilter = (const APFFilter *)filter;
     convolver->set_filter(*convfilter);
     crossfade = true;   // force crossfade after filter update
-    DEBUG3(("[%010lu]: Selected new filter for convolver %3u", (ulong_t)GetTickCount(), convindex));
+    DEBUG3(("[%010lu]: Selected new filter for convolver %3u", GetTickCount(), convindex));
   }
 
   // if queues_empty() returns false, must cross fade between convolutions

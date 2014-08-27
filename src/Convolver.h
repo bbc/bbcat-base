@@ -270,7 +270,7 @@ protected:
   double                   delayscale;
   double                   maxdelay;
   float                    audioscale;
-  uint32_t                 reporttick;
+  ulong_t                  reporttick;
   bool                     hqproc;
   bool                     updateparameters;
 };

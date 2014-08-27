@@ -66,6 +66,8 @@ typedef void (*DEBUGHANDLER)(const char *str, void *context);
 
 extern void debug_msg(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 extern void debug_err(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
+extern void pipe_msg(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
+extern bool get_pipe_msg(const char *str, ulong_t& tick, std::string& str2);
 
 extern const char *CreateString(const char *data, uint_t len);
 extern void FreeStrings();
@@ -161,7 +163,7 @@ typedef PACKEDSTRUCT
   uint8_t b[10];
 } IEEEEXTENDED;
 
-extern uint32_t GetTickCount();
+extern ulong_t  GetTickCount();
 
 extern uint32_t IEEEExtendedToINT32u(const IEEEEXTENDED *num);
 extern void     INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num);
