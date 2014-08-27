@@ -66,6 +66,8 @@ typedef void (*DEBUGHANDLER)(const char *str, void *context);
 
 extern void debug_msg(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 extern void debug_err(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
+
+extern void enable_pipe(bool enable = true);
 extern void pipe_msg(const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 extern bool get_pipe_msg(const char *str, ulong_t& tick, std::string& str2);
 

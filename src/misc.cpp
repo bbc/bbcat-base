@@ -113,6 +113,12 @@ void debug_err(const char *fmt, ...)
   }
 }
 
+static bool pipe_enabled = false;
+void enable_pipe(bool enable)
+{
+  pipe_enabled = enable;
+}
+
 void pipe_msg(const char *fmt, ...)
 {
   va_list     ap;
