@@ -221,18 +221,6 @@ extern void Printf(std::string& str, const char *fmt, ...) __attribute__ ((forma
 extern void VPrintf(std::string& str, const char *fmt, va_list ap);
 
 /*--------------------------------------------------------------------------------*/
-/** Read a line of text from an open file
- *
- * @param fp file pointer
- * @param line buffer to receive text
- * @param maxlen maximum number of bytes that 'line' cal hold (INCLUDING terminator)
- *
- * @return number of chracters in buffer (excluding terminator), EOF on end of file (with no characters stored)
- */
-/*--------------------------------------------------------------------------------*/
-extern int ReadLine(FILE *fp, char *line, uint_t maxlen);
-
-/*--------------------------------------------------------------------------------*/
 /** Interpolate current towards target at rate coeff, protecting against denormals
  */
 /*--------------------------------------------------------------------------------*/

@@ -8,11 +8,13 @@
 
 BBC_AUDIOTOOLBOX_START
 
-EnhancedFile::EnhancedFile() : fp(NULL)
+EnhancedFile::EnhancedFile() : fp(NULL),
+                               allowclose(false)
 {
 }
 
-EnhancedFile::EnhancedFile(const EnhancedFile& obj) : fp(NULL)
+EnhancedFile::EnhancedFile(const EnhancedFile& obj) : fp(NULL),
+                                                      allowclose(false)
 {
   operator = (obj);
 }
@@ -22,6 +24,10 @@ EnhancedFile::~EnhancedFile()
   fclose();
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Duplicate file by assignment
+ */
+/*--------------------------------------------------------------------------------*/
 EnhancedFile& EnhancedFile::operator = (const EnhancedFile& obj)
 {
   fclose();
@@ -43,11 +49,36 @@ bool EnhancedFile::fopen(const char *filename, const char *mode)
 
   if (!isopen())
   {
-    if ((fp = ::fopen(filename, mode)) != NULL)
+    if (strcmp(filename, "stdout") == 0)
+    {
+      fp             = stdout;
+      this->filename = filename;
+      this->mode     = "w";
+      allowclose     = false;
+      success        = true;
+    }
+    else if (strcmp(filename, "stderr") == 0)
+    {
+      fp             = stderr;
+      this->filename = filename;
+      this->mode     = "w";
+      allowclose     = false;
+      success        = true;
+    }
+    else if (strcmp(filename, "stdin") == 0)
+    {
+      fp             = stdin;
+      this->filename = filename;
+      this->mode     = "r";
+      allowclose     = false;
+      success        = true;
+    }
+    else if ((fp = ::fopen(filename, mode)) != NULL)
     {
       DEBUG2(("Opened '%s' for '%s'", filename, mode));
       this->filename = filename;
       this->mode     = mode;
+      allowclose     = true;
       success        = true;
     }
     else DEBUG2(("Failed to open '%s' for '%s'", filename, mode));
@@ -60,8 +91,9 @@ void EnhancedFile::fclose()
 {
   if (fp)
   {
-    ::fclose(fp);
-    fp = NULL;
+    if (allowclose) ::fclose(fp);
+    fp         = NULL;
+    allowclose = false;
 
     filename = "";
     mode     = "";
@@ -90,6 +122,45 @@ int EnhancedFile::vfprintf(const char *fmt, va_list ap)
   if (fp) ::vfprintf(fp, fmt, ap);
 
   return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Read a line of text from an open file
+ *
+ * @param line buffer to receive text
+ * @param maxlen maximum number of bytes that 'line' can hold (INCLUDING terminator)
+ *
+ * @return number of chracters in buffer (excluding terminator), EOF on end of file (with no characters stored)
+ */
+/*--------------------------------------------------------------------------------*/
+int EnhancedFile::readline(char *line, uint_t maxlen)
+{
+  int l = EOF;
+
+  if (fp)
+  {
+    uint_t i;
+    int    c;   // characters read as int to allow EOF to be detected
+
+    // reduce buffer space by one for terminator
+    maxlen--;
+
+    // loop reading characters until EOF or no more space or linefeed character read
+    for (i = 0; ((c = fgetc(fp)) != EOF) && (c != '\n');)
+    {
+      // ignore overspill characters carriage-returns
+      if ((i < maxlen) && (c != '\r')) line[i++] = c;
+    }
+
+    // add terminator
+    line[i] = 0;
+
+    // if any characters stored or last character wasn't an EOF then return line length
+    // if no characters stored and the last character read was an EOF, return EOF
+    l = (i || (c != EOF)) ? i : EOF;
+  }
+
+  return l;
 }
 
 BBC_AUDIOTOOLBOX_END

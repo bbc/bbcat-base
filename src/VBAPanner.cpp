@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #define DEBUG_LEVEL 1
+#include "EnhancedFile.h"
 #include "VBAPanner.h"
 #include "DistanceModel.h"
 
@@ -102,15 +103,15 @@ void VBAPanner::AddSpeaker(sint_t channel, const Position& pos, double gain)
 /*--------------------------------------------------------------------------------*/
 void VBAPanner::Read(const char *filename)
 {
-  FILE *fp;
+  EnhancedFile fp;
 
-  if ((fp = fopen(filename, "r")) != NULL)
+  if (fp.fopen(filename, "r"))
   {
     static char line[256];
     bool readingspeakers = true;
     int l;
 
-    while ((l = ReadLine(fp, line, sizeof(line))) != EOF)
+    while ((l = fp.readline(line, sizeof(line))) != EOF)
     {
       Position pos;
       sint_t   channel;
@@ -229,6 +230,8 @@ void VBAPanner::Read(const char *filename)
       }
 #endif
     }
+
+    fp.fclose();
   }
   else ERROR("Failed to open file '%s' for reading", filename);
 }

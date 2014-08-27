@@ -341,39 +341,6 @@ void VPrintf(std::string& str, const char *fmt, va_list ap)
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Read a line of text from an open file
- *
- * @param fp file pointer
- * @param line buffer to receive text
- * @param maxlen maximum number of bytes that 'line' cal hold (INCLUDING terminator)
- *
- * @return number of chracters in buffer (excluding terminator), EOF on end of file (with no characters stored)
- */
-/*--------------------------------------------------------------------------------*/
-int ReadLine(FILE *fp, char *line, uint_t maxlen)
-{
-  uint_t i;
-  int    c;   // characters read as int to allow EOF to be detected
-
-  // reduce buffer space by one for terminator
-  maxlen--;
-
-  // loop reading characters until EOF or no more space or linefeed character read
-  for (i = 0; (i < maxlen) && ((c = fgetc(fp)) != EOF) && (c != '\n');)
-  {
-    // ignore carriage-returns 
-    if (c != '\r') line[i++] = c;
-  }
-
-  // add terminator
-  line[i] = 0;
-
-  // if any characters stored or last character wasn't an EOF then return line length
-  // if no characters stored and the last character read was an EOF, return EOF
-  return (i || (c != EOF)) ? i : EOF;
-}
-
-/*--------------------------------------------------------------------------------*/
 /** Interpolate current towards target at rate coeff, protecting against denormals
  */
 /*--------------------------------------------------------------------------------*/
