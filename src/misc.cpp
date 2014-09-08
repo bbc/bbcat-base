@@ -121,14 +121,14 @@ void enable_pipe(bool enable)
 
 void pipe_msg(const char *fmt, ...)
 {
-  va_list     ap;
-  std::string str;
+  if (pipe_enabled) {
+    va_list     ap;
+    std::string str;
 
-  va_start(ap, fmt);
-  VPrintf(str, fmt, ap);
-  va_end(ap);
+    va_start(ap, fmt);
+    VPrintf(str, fmt, ap);
+    va_end(ap);
 
-  {
     ThreadLock lock(debuglock);
     static ulong_t tick0 = GetTickCount();
     ulong_t tick = GetTickCount() - tick0;
