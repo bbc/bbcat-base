@@ -285,9 +285,11 @@ public:
 
   /*--------------------------------------------------------------------------------*/
   /** Return scale due to perspective for the specified Z co-ordinate
+   *
+   * @note assumes +ve is coming OUT of the screen towards the viewer
    */
   /*--------------------------------------------------------------------------------*/
-  double GetDistanceScale(double z) const {return ((dist != 0.0) && (z != -dist)) ? dist / (dist + z) : 1.0;}
+  double GetDistanceScale(double z) const {return (z != dist) ? dist / (dist - z) : 1.0;}
 
   /*--------------------------------------------------------------------------------*/
   /** Return scale due to perspective for the specified position
