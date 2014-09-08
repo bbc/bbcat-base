@@ -163,5 +163,23 @@ int EnhancedFile::readline(char *line, uint_t maxlen)
   return l;
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Return whether a file exists
+ */
+/*--------------------------------------------------------------------------------*/
+bool EnhancedFile::exists(const char *filename)
+{
+  FILE *fp;
+  bool exists = false;
+
+  if ((fp = ::fopen(filename, "rb")) != NULL)
+  {
+    ::fclose(fp);
+    exists = true;
+  }
+
+  return exists;
+}
+
 BBC_AUDIOTOOLBOX_END
 

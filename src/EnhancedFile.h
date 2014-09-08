@@ -66,6 +66,12 @@ public:
 
   const std::string& getfilename() const {return filename;}
 
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether a file exists
+   */
+  /*--------------------------------------------------------------------------------*/
+  static bool exists(const char *filename);
+
 protected:
   std::string filename;
   std::string mode;
