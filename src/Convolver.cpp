@@ -161,6 +161,7 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
       convolver.prepare_filter(irdata + i * irlength, irdata + (i + 1) * irlength, filters[i]);
 
       float filterlevel = CalculateLevel(irdata + i * irlength, irlength);
+      DEBUG2(("Level of filter %u is %0.3lfdB", i, 20.0 * log10(filterlevel)));
       maxlevel = MAX(maxlevel, filterlevel);
     }
 
@@ -297,6 +298,7 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
         convolver.prepare_filter(response, response + blocksize * partitions, filters[i]);
 
         float filterlevel = CalculateLevel(response, blocksize * partitions);
+        DEBUG2(("Level of filter %u is %0.3lfdB", i, 20.0 * log10(filterlevel)));
         maxlevel = MAX(maxlevel, filterlevel);
       }
       DEBUG2(("Finished creating filters (took %lums)", GetTickCount() - tick));
@@ -431,6 +433,8 @@ void ConvolverManager::CreateStaticConvolver(const float *irdata, const ulong_t 
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::SetConvolverCount(uint_t nconvolvers)
 {
+  DEBUG3(("ConvolverManager<%016lx>: setting up for %u convolvers (from %u convolvers)", (ulong_t)this, nconvolvers, (uint_t)convolvers.size()));
+ 
   // update parameters array size
   parameters.resize(nconvolvers);
 
@@ -652,6 +656,7 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
         convolver.prepare_filter(response, response + blocksize * partitions, filters[l]);
 
         float filterlevel = CalculateLevel(response, blocksize * partitions);
+        DEBUG2(("Level of filter %u/%u/%u is %0.3lfdB", k, i, j, 20.0 * log10(filterlevel)));
         maxlevel = MAX(maxlevel, filterlevel);
       }
     }
@@ -724,15 +729,19 @@ uint_t ConvolverManager::SamplesBuffered() const
 /*--------------------------------------------------------------------------------*/
 float ConvolverManager::CalculateLevel(const float *data, uint_t n)
 {
-  float max = 0.f;
+  const uint_t sumlen = 480;
+  float  sum = 0.f;
+  float  max = 0.f;
   uint_t i;
   
   for (i = 0; i < n; i++)
   {
-    max = MAX(max, data[i]);
+    sum += data[i] * data[i];
+    if (i >= sumlen) sum -= data[i - sumlen] * data[i - sumlen];
+    max = MAX(max, sum);
   }
 
-  return max;
+  return sqrtf(max / (float)MIN(sumlen, n));
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -744,7 +753,7 @@ void ConvolverManager::SetAudioScale(float maxlevel)
   UNUSED_PARAMETER(maxlevel);
 
   // currently disabled!
-#if 0
+#if 1
   if (maxlevel > 0.f)
   {
     audioscale = 1.f / maxlevel;
@@ -1012,7 +1021,7 @@ void Convolver::SetParameters(double level, double delay, bool hqproc)
 DynamicConvolver::DynamicConvolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, APFConvolver *_convolver) : Convolver(_convindex, _blocksize, _partitions),
                                                                                                                          convolver(_convolver),
                                                                                                                          convfilter(NULL),
-  filter(NULL)
+                                                                                                                         filter(NULL)
 {
 }
 
