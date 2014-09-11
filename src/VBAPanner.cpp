@@ -146,7 +146,7 @@ void VBAPanner::Read(const char *filename)
       }
     }
 
-    fclose(fp);
+    fp.fclose();
 
 #if DEBUG_LEVEL >= 2
     {

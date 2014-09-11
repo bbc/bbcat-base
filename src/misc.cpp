@@ -315,15 +315,8 @@ std::string CreateIndent(const std::string& indent, uint_t count)
 void Printf(std::string& str, const char *fmt, ...)
 {
   va_list ap;
-  va_start(ap,fmt);
-
-  char *buf = NULL;
-  if (vasprintf(&buf, fmt, ap) > 0)
-  {
-    str += buf;
-    free(buf);
-  }
-
+  va_start(ap, fmt);
+  VPrintf(str, fmt, ap);
   va_end(ap);
 }
 
