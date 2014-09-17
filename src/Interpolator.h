@@ -66,6 +66,12 @@ public:
   /*--------------------------------------------------------------------------------*/
   float GetTarget() const {return target;}
 
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether coeff is at target
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool AtTarget() const {return (current == target);}
+
 protected:
   float target;
   float current;
