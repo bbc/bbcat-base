@@ -63,6 +63,7 @@ public:
   size_t              get_ir_length() const;
   size_t              get_num_receivers() const;
   size_t              get_num_emitters() const;
+  size_t              get_num_delay_measurements() const;       // number of delay measurements can be either get_num_measurements() or 1
   positions_array_t   get_source_positions() const;
   positions_array_t   get_emitter_positions() const;
   positions_array_t   get_listener_positions() const;

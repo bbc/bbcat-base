@@ -127,6 +127,26 @@ public:
   /*--------------------------------------------------------------------------------*/
   void LoadIRDelays(const char *filename);
 
+#if ENABLE_SOFA
+  /*--------------------------------------------------------------------------------*/
+  /** Load impulse reponse data from a SOFA file.
+   *
+   * @param file SOFA file object, opened for reading
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  void LoadIRsSOFA(const SOFA& file);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Load delay data from a SOFA file.
+   *
+   * @param file SOFA file object, opened for reading
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  void LoadDelaysSOFA(const SOFA& file);
+#endif
+
   /*--------------------------------------------------------------------------------*/
   /** Set IR delays
    */
@@ -230,22 +250,10 @@ protected:
 protected:
 #if ENABLE_SOFA
   /*--------------------------------------------------------------------------------*/
-  /** Load impulse reponse data from a SOFA file.
-   *
-   * @param file SOFA file object, opened for reading
-   *
+  /** Get offset into raw data supplied by SOFA file 
    */
   /*--------------------------------------------------------------------------------*/
-  void LoadIRsSOFA(SOFA& file);
-
-  /*--------------------------------------------------------------------------------*/
-  /** Load delay data from a SOFA file.
-   *
-   * @param file SOFA file object, opened for reading
-   *
-   */
-  /*--------------------------------------------------------------------------------*/
-  void LoadDelaysSOFA(SOFA& file);
+  uint_t GetSOFAOffset(const SOFA& file, uint_t emitter, uint_t measurement, uint_t receiver) const;
 #endif
 
   /*--------------------------------------------------------------------------------*/

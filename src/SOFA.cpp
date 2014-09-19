@@ -105,6 +105,13 @@ size_t SOFA::get_num_measurements() const
   return sofa_dims->M.getSize();
 }
 
+size_t SOFA::get_num_delay_measurements() const
+{
+  sofa_var_t delay_data = get_var("Data.Delay");
+  if (delay_data.isNull()) return 0;
+  return (delay_data.getDims()[0].getName() == "M") ? sofa_dims->M.getSize() : 1;
+}
+
 size_t SOFA::get_ir_length() const
 {
   return sofa_dims->N.getSize();
@@ -229,6 +236,21 @@ bool SOFA::get_delays(SOFA::delay_buffer_t& delays, uint_t indexR, uint_t indexE
   {
     count[0] = sofa_dims->M.getSize();
   }
+  return get_delay_data(start, count, delays);
+}
+
+bool SOFA::get_all_delays(SOFA::delay_buffer_t& delays) const
+{
+  sofa_var_t delay_data = get_var("Data.Delay");
+  if (delay_data.isNull()) return false;
+  size_t n_dims = delay_data.getDimCount();
+
+  get_index_vec_t start(n_dims,0);
+  get_index_vec_t count(n_dims,1);
+  count[0] = (delay_data.getDims()[0].getName() == "M") ? sofa_dims->M.getSize() : 1;
+  count[1] = (delay_data.getDims()[1].getName() == "R") ? sofa_dims->R.getSize() : 1;
+  if (n_dims > 2) count[2] = (delay_data.getDims()[2].getName() == "E") ? sofa_dims->E.getSize() : 1; // for MultiSpeakerBRIR
+
   return get_delay_data(start, count, delays);
 }
 
@@ -357,7 +379,7 @@ bool SOFA::get_ir_data(get_index_vec_t start, get_index_vec_t count, SOFA::audio
   }
   if (ir_buffer.size() < size)
   {
-    DEBUG("Warning: resizing ir_buffer.");
+    DEBUG2(("Warning: resizing ir_buffer."));
     ir_buffer.resize(size);
   }
   ir_data.getVar(start,count,&ir_buffer[0]);
@@ -371,13 +393,6 @@ bool SOFA::get_ir_data(get_index_vec_t start, get_index_vec_t count, float *ir_b
   {
     return false;
   }
-  size_t size = 1;
-  if (ir_data.getDimCount() < 0) ERROR("Dim count is <0?!");
-  for (uint_t ii = 0; ii < static_cast<uint_t>(ir_data.getDimCount()); ii ++)
-  {
-    size *= count[ii];
-  }
-
   ir_data.getVar(start,count,ir_buffer);
   return true;
 }
@@ -397,7 +412,7 @@ bool SOFA::get_delay_data(get_index_vec_t start, get_index_vec_t count, SOFA::de
   }
   if (delays.size() != size)
   {
-    DEBUG("Warning: resizing delays buffer.");
+    DEBUG2(("Warning: resizing delays buffer."));
     delays.resize(size);
   }
   delay_data.getVar(start,count,&delays[0]);

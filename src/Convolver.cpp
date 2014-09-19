@@ -16,7 +16,7 @@
 #include <sndfile.hh>
 #include <apf/convolver.h>
 
-#define DEBUG_LEVEL 1
+#define DEBUG_LEVEL 2
 #include "Convolver.h"
 #include "SoundFormatConversions.h"
 #include "FractionalSample.h"
@@ -228,7 +228,7 @@ bool ConvolverManager::LoadSOFA(const char *filename)
 
     if (file)
     {
-      DEBUG3(("Opened '%s' okay, %u measurements from %u sources at %luHz", filename, file.get_num_measurements(), file.get_num_emitters(), (ulong_t)file.get_samplerate()));
+      DEBUG3(("Opened '%s' okay, %u measurements from %u sources at %luHz", filename, (uint_t)file.get_num_measurements(), (uint_t)file.get_num_emitters(), (ulong_t)file.get_samplerate()));
       LoadIRsSOFA(file);
       LoadDelaysSOFA(file);
       return true;
@@ -617,46 +617,63 @@ uint_t ConvolverManager::NumIRs() const
 
 #if ENABLE_SOFA
 /*--------------------------------------------------------------------------------*/
+/** Get offset into raw data supplied by SOFA file 
+ */
+/*--------------------------------------------------------------------------------*/
+uint_t ConvolverManager::GetSOFAOffset(const SOFA& file, uint_t emitter, uint_t measurement, uint_t receiver) const
+{
+  uint_t nr = file.get_num_receivers();
+  uint_t ne = file.get_num_emitters();
+  
+  // This is VERY MUCH reliant on the format of the SOFA file!
+  // ASSUMES data is stored in a 3-dimensional array [measurement][receiver][emitter]
+  return measurement * nr * ne + receiver * ne + emitter;
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Load impulse reponse data from a SOFA file.
  *
  * @param file SOFA file object, opened for reading
  *
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::LoadIRsSOFA(SOFA& file)
+void ConvolverManager::LoadIRsSOFA(const SOFA& file)
 {
   // load impulse responses
   ulong_t len = file.get_ir_length();
-  uint_t i, j, k, l, m = file.get_num_measurements(), r = file.get_num_receivers(), e = file.get_num_emitters();
+  uint_t  ne  = file.get_num_emitters(), ie;
+  uint_t  nm  = file.get_num_measurements(), im;
+  uint_t  nr  = file.get_num_receivers(), ir;
 
   partitions = (uint_t)((len + blocksize - 1) / blocksize);
 
   DEBUG2(("File is %lu samples long, therefore %u partitions are needed", len, partitions));
 
   apf::conv::Convolver convolver(blocksize, partitions);
-  float *response   = new float[blocksize * partitions];
-  float *ir         = new float[len];
-
+  SOFA::audio_buffer_t irdata;
   ulong_t tick     = GetTickCount();
   float   maxlevel = 0.f;
 
-  DEBUG2(("Creating %u filters...", e * m * r));
+  DEBUG2(("Creating %u filters...", ne * nm * nr));
 
-  for (k = l = 0; k < e; k++)
+  file.get_all_irs(irdata);
+
+  // loops MUST be done in this order to maintain the correct layout
+  for (ie = 0; ie < ne; ie++)           // emitters
   {
-    for (i = 0; i < m; i++)
+    for (im = 0; im < nm; im++)         // measurements
     {
-      for (j = 0; j < r; j++, l++)
+      for (ir = 0; ir < nr; ir++)       // receivers
       {
-        DEBUG3(("Creating filter for IR %u", l));
+        const SOFA::audio_sample_t *irptr = &irdata[0] + GetSOFAOffset(file, ie, im, ir) * len;
+        uint_t fn = filters.size(); // index of filter about to be created
+
         filters.push_back(APFFilter(blocksize, partitions));
 
-        if (!file.get_ir(ir, i, j, k)) ERROR("Error reading IR measurement %u for receiver %u and emitter %u from SOFA file", i, j, k);
-        TransferSamples(ir, 0, 1, response, 0, 1, 1, blocksize * partitions);
-        convolver.prepare_filter(response, response + blocksize * partitions, filters[l]);
+        convolver.prepare_filter(irptr, irptr + len, filters[fn]);
 
-        float filterlevel = CalculateLevel(response, blocksize * partitions);
-        DEBUG2(("Level of filter %u/%u/%u is %0.3lfdB", k, i, j, 20.0 * log10(filterlevel)));
+        float filterlevel = CalculateLevel(irptr, len);
+        DEBUG2(("Level of filter %u/%u/%u is %0.3lfdB", ie, im, ir, 20.0 * log10(filterlevel)));
         maxlevel = MAX(maxlevel, filterlevel);
       }
     }
@@ -665,9 +682,6 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
 #if DEBUG_LEVEL < 2
   UNUSED_PARAMETER(tick);
 #endif
-
-  delete[] response;
-  delete[] ir;
 
   SetAudioScale(maxlevel);
 
@@ -682,29 +696,34 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file)
  *
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::LoadDelaysSOFA(SOFA& file)
+void ConvolverManager::LoadDelaysSOFA(const SOFA& file)
 {
   irdelays.clear();
   maxdelay = 0.0;
 
   // get number of measurements and receivers
-  uint_t i, j, k, m = file.get_num_measurements(), r = file.get_num_receivers(), e = file.get_num_emitters(), n = m*r*e;
+  float   sr = file.get_samplerate();
+  uint_t  ne = file.get_num_emitters(), ie;
+  uint_t  nm = file.get_num_measurements(), im, ndm = file.get_num_delay_measurements();        // number of delay measurements MAY be different fron number of measurements
+  uint_t  nr = file.get_num_receivers(), ir;
+  SOFA::delay_buffer_t sofadelays;
 
   // read delays for each receiver and insert into irdelays interleaved
-  irdelays.resize(n);
-  DEBUG2(("Loading %u delays from SOFA file", n));
-  SOFA::delay_buffer_t delays_recv;
-  float sr = file.get_samplerate();
-  for (k = 0; k < e; k++)
+  DEBUG2(("Loading %u delays from SOFA file", ne * nm * nr));
+
+  file.get_all_delays(sofadelays);
+
+  // loops MUST be done in this order to maintain the correct layout
+  for (ie = 0; ie < ne; ie++)           // emitters
   {
-    for (j=0; j<r; j++)
+    for (im = 0; im < nm; im++)         // measurements
     {
-      file.get_delays(delays_recv, j, k);
-      for (i=0; i<m; i++)
+      for (ir = 0; ir < nr; ir++)       // receivers
       {
-        if (delays_recv.size() == 1) irdelays[k*m*r + i*r + j] = delays_recv[0]*sr;
-        else                         irdelays[k*m*r + i*r + j] = delays_recv[i]*sr;
-        maxdelay = MAX(maxdelay, irdelays[k*m*r + i*r + j]);
+        double delay = sofadelays[GetSOFAOffset(file, ie, im % ndm, ir)] * sr;
+
+        irdelays.push_back(delay);
+        maxdelay = MAX(maxdelay, delay);
       }
     }
   }
