@@ -36,22 +36,20 @@ public:
   /** Mirrors of standard fxxxx() functions
    */
   /*--------------------------------------------------------------------------------*/
-  virtual bool     fopen(const char *filename, const char *mode = "rb");
-  bool             isopen() const {return (fp != NULL);}
-  virtual void     fclose();
+  virtual bool   fopen(const char *filename, const char *mode = "rb");
+  bool           isopen() const {return (fp != NULL);}
+  virtual void   fclose();
 
-  virtual size_t   fread(void *ptr, size_t size, size_t count)  {return ::fread(ptr, size, count, fp);}
-  virtual size_t   fwrite(void *ptr, size_t size, size_t count) {return ::fwrite(ptr, size, count, fp);}
-  virtual long int ftell() const {return ::ftell(fp);}
-  virtual int      fseek(long int offset, int origin) {return ::fseek(fp, offset, origin);}
-  virtual int      ferror() const {return ::ferror(fp);}
-  virtual int      fflush() const {return ::fflush(fp);}
-  virtual void     rewind() {::rewind(fp);}
+  virtual size_t fread(void *ptr, size_t size, size_t count)  {return ::fread(ptr, size, count, fp);}
+  virtual size_t fwrite(void *ptr, size_t size, size_t count) {return ::fwrite(ptr, size, count, fp);}
+  virtual off_t  ftell() const {return ::ftello(fp);}
+  virtual int    fseek(off_t offset, int origin) {return ::fseeko(fp, offset, origin);}
+  virtual int    ferror() const {return ::ferror(fp);}
+  virtual int    fflush() const {return ::fflush(fp);}
+  virtual void   rewind() {::rewind(fp);}
 
-  virtual int      fprintf(const char *fmt, ...) __attribute__ ((format (printf,2,3)));
-  virtual int      vfprintf(const char *fmt, va_list ap);
-
-  operator FILE *() {return fp;}
+  virtual int    fprintf(const char *fmt, ...) __attribute__ ((format (printf,2,3)));
+  virtual int    vfprintf(const char *fmt, va_list ap);
 
   /*--------------------------------------------------------------------------------*/
   /** Read a line of text from an open file
