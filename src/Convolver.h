@@ -44,6 +44,15 @@ class Convolver;
 class ConvolverManager
 {
 public:
+  typedef struct {
+    double fade_in_start;
+    double fade_in_length;
+    double fade_out_start;
+    double fade_out_length;
+  } FILTER_FADE;
+
+  static const FILTER_FADE defaultfade;
+
   /*--------------------------------------------------------------------------------*/
   /** Constructor for convolver manager
    *
@@ -58,10 +67,11 @@ public:
    *
    * @param irfile file containing IRs (either WAV or SOFA) - SOFA file can also contain delays
    * @param partitionsize the convolution partition size - essentially the block size of the processing
+   * @param fade fade information to allow a subset of the data to be used
    *
    */
   /*--------------------------------------------------------------------------------*/
-  ConvolverManager(const char *irfile, uint_t partitionsize);
+  ConvolverManager(const char *irfile, uint_t partitionsize, const FILTER_FADE& fade = defaultfade);
 
   /*--------------------------------------------------------------------------------*/
   /** Constructor for convolver manager.
@@ -71,22 +81,12 @@ public:
    * @param irfile file containing IRs (either WAV or SOFA)
    * @param irdelayfile text file containing the required delays (in SAMPLES) of each IR in irfile
    * @param partitionsize the convolution partition size - essentially the block size of the processing
+   * @param fade fade information to allow a subset of the data to be used
    *
    */
   /*--------------------------------------------------------------------------------*/
-  ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize);
+  ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize, const FILTER_FADE& fade = defaultfade);
   virtual ~ConvolverManager();
-
-  /*--------------------------------------------------------------------------------*/
-  /** Sets the expected impulse response length (for static convolvers ONLY)
-   *  Should be called before creating convolvers, will clear all initialised ones
-   *  if existing.
-   *
-   * @param irlength the length of the irs to be added
-   *
-   */
-  /*--------------------------------------------------------------------------------*/
-  void SetIRLength(ulong_t irlength);
 
   /*--------------------------------------------------------------------------------*/
   /** Create impulse responses (IRs) from sample data.
@@ -95,31 +95,27 @@ public:
    * @param irdata pointer to impulse response data
    * @param numirs the number of impulse responses
    * @param irlength the length of each impulse response
+   * @param fade fade information to allow a subset of the data to be used
+   *
    */
   /*--------------------------------------------------------------------------------*/
-  void CreateIRs(const float *irdata, const uint_t numirs, const ulong_t irlength);
+  void CreateIRs(const float *irdata, const uint_t numirs, const uint_t irlength, const FILTER_FADE& fade = defaultfade);
 
   /*--------------------------------------------------------------------------------*/
   /** Load IRs from a file (either WAV or SOFA if enabled).
    *
    * @param filename file containing IRs
+   * @param fade fade information to allow a subset of the data to be used
+   *
    */
   /*--------------------------------------------------------------------------------*/
-  void LoadIRs(const char *filename);
-
-#if ENABLE_SOFA
-  /*--------------------------------------------------------------------------------*/
-  /** Load IR data from SOFA file (including delays if available)
-   */
-  /*--------------------------------------------------------------------------------*/
-  bool LoadSOFA(const char *filename);
-#endif
+  void LoadIRs(const char *filename, const FILTER_FADE& fade = defaultfade);
 
   /*--------------------------------------------------------------------------------*/
   /** Load IR data from WAV file
    */
   /*--------------------------------------------------------------------------------*/
-  bool LoadIRsSndFile(const char *filename);
+  bool LoadIRsSndFile(const char *filename, const FILTER_FADE& fade = defaultfade);
 
   /*--------------------------------------------------------------------------------*/
   /** Load IR delays from text file
@@ -129,13 +125,24 @@ public:
 
 #if ENABLE_SOFA
   /*--------------------------------------------------------------------------------*/
-  /** Load impulse reponse data from a SOFA file.
+  /** Load IR data from SOFA file (including delays if available)
    *
-   * @param file SOFA file object, opened for reading
+   * @param filename filename of SOFA file (.sofa)
+   * @param fade fade information to allow a subset of the data to be used
    *
    */
   /*--------------------------------------------------------------------------------*/
-  void LoadIRsSOFA(const SOFA& file);
+  bool LoadSOFA(const char *filename, const FILTER_FADE& fade = defaultfade);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Load impulse reponse data from a SOFA file.
+   *
+   * @param file SOFA file object, opened for reading
+   * @param fade fade information to allow a subset of the data to be used
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  void LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade = defaultfade);
 
   /*--------------------------------------------------------------------------------*/
   /** Load delay data from a SOFA file.
@@ -148,20 +155,41 @@ public:
 #endif
 
   /*--------------------------------------------------------------------------------*/
-  /** Set IR delays
+  /** Set IR delays (in seconds)
    */
   /*--------------------------------------------------------------------------------*/
   void SetIRDelays(const double *delays, const uint_t num_delays);
+
+  typedef struct {
+    double             samplerate;
+    uint_t             filterstart;
+    uint_t             filterlen;
+    std::vector<float> fadein;
+    std::vector<float> fadeout;
+  } STATIC_CONVOLVER_DATA;
+  
+  /*--------------------------------------------------------------------------------*/
+  /** Prepare fade data for static convolvers
+   *
+   * @param fadedata fade data structure to be populated with fade information
+   * @param irlength length of IR data
+   * @param samplerate sample rate for convert fade times to samples
+   * @param fade fade profile
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  void PrepareStaticConvolvers(STATIC_CONVOLVER_DATA& convolverdata, uint_t irlength, double samplerate, const FILTER_FADE& fade = defaultfade);
 
   /*--------------------------------------------------------------------------------*/
   /** Create a static convolver with the correct parameters for inclusion in this manager
    *
    * @param irdata pointer to impulse response data buffer
-   * @param irlength length of the buffer in samples
-   * @param delay a delay associated with the static convolver
+   * @param delay a delay associated with the static convolver (in seconds)
+   * @param convolverdata previously populated (by the above) data structure
+   *
    */
   /*--------------------------------------------------------------------------------*/
-  void CreateStaticConvolver(const float *irdata, const ulong_t irlength, double delay);
+  void CreateStaticConvolver(const float *irdata, double delay, const STATIC_CONVOLVER_DATA& convolverdata);
 
   /*--------------------------------------------------------------------------------*/
   /** Set delay scaling to compensate for factors such as ITD
@@ -255,6 +283,24 @@ protected:
   /*--------------------------------------------------------------------------------*/
   uint_t GetSOFAOffset(const SOFA& file, uint_t emitter, uint_t measurement, uint_t receiver) const;
 #endif
+
+  /*--------------------------------------------------------------------------------*/
+  /** Calculate number of partitions required for specified filter length and fade parameters
+   */
+  /*--------------------------------------------------------------------------------*/
+  static uint_t CalcPartitions(const FILTER_FADE& fade, double samplerate, uint_t filterlen, uint_t blocksize, uint_t& start, uint_t& len);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Create fades from fade profile
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void CreateFades(const FILTER_FADE& fade, double samplerate, std::vector<float>& fadein, std::vector<float>& fadeout);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Apply fade in and fade out to data
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void ApplyFades(float *data, uint_t len, const std::vector<float>& fadein, const std::vector<float>& fadeout);
 
   /*--------------------------------------------------------------------------------*/
   /** Calculate reasonnable level value for filter

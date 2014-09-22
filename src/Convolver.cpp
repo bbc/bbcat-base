@@ -27,6 +27,8 @@
 
 BBC_AUDIOTOOLBOX_START
 
+const ConvolverManager::FILTER_FADE ConvolverManager::defaultfade = {0.0, 0.0, 0.0, 0.0};
+
 /*--------------------------------------------------------------------------------*/
 /** Constructor for convolver manager
  *
@@ -50,10 +52,11 @@ ConvolverManager::ConvolverManager(uint_t partitionsize) :
  *
  * @param irfile file containing IRs (either WAV or SOFA) - SOFA file can also contain delays
  * @param partitionsize the convolution partition size - essentially the block size of the processing
+ * @param fade fade information to allow a subset of the data to be used
  *
  */
 /*--------------------------------------------------------------------------------*/
-ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
+ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize, const FILTER_FADE& fade) :
   blocksize(partitionsize),
   partitions(0),
   delayscale(1.0),
@@ -62,7 +65,7 @@ ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
   updateparameters(true)
 {
   reporttick = GetTickCount();
-  LoadIRs(irfile);
+  LoadIRs(irfile, fade);
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -73,10 +76,11 @@ ConvolverManager::ConvolverManager(const char *irfile, uint_t partitionsize) :
  * @param irfile file containing IRs (either WAV or SOFA if enabled)
  * @param irdelayfile text file containing the required delays (in SAMPLES) of each IR in irfile
  * @param partitionsize the convolution partition size - essentially the block size of the processing
+ * @param fade fade information to allow a subset of the data to be used
  *
  */
 /*--------------------------------------------------------------------------------*/
-ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize) :
+ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, uint_t partitionsize, const FILTER_FADE& fade) :
   blocksize(partitionsize),
   partitions(0),
   delayscale(1.0),
@@ -85,7 +89,7 @@ ConvolverManager::ConvolverManager(const char *irfile, const char *irdelayfile, 
   updateparameters(true)
 {
   reporttick = GetTickCount();
-  LoadIRs(irfile);
+  LoadIRs(irfile, fade);
   LoadIRDelays(irdelayfile);
 }
 
@@ -101,28 +105,86 @@ ConvolverManager::~ConvolverManager()
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Sets the expected impulse response length (for static convolvers ONLY)
- *  Should be called before creating convolvers, will clear all initialised ones
- *  if existing.
- *
- * @param irlength the length of the irs to be added
- *
+/** Calculate number of partitions required for specified filter length and fade parameters
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::SetIRLength(ulong_t irlength)
+uint_t ConvolverManager::CalcPartitions(const FILTER_FADE& fade, double samplerate, uint_t filterlen, uint_t blocksize, uint_t& start, uint_t& len)
 {
-  partitions = (uint_t)((irlength + blocksize - 1) / blocksize);
+  // work out start sample and number of samples required for filter given the supplied fade information
+  start = (uint_t)floor(MAX(fade.fade_in_start, 0.0) * samplerate);
 
-  if (convolvers.size()) DEBUG1(("Warning: removing existing static convolvers."));
-
-  while (convolvers.size())
+  if ((fade.fade_out_start + fade.fade_out_length) == 0.0) len = filterlen - start;
+  else
   {
-    Convolver *conv = convolvers.back();
-    delete conv;
-    convolvers.pop_back();
+    len = (uint_t)ceil(MAX(fade.fade_out_start + fade.fade_out_length - fade.fade_in_start, 0.0) * samplerate);
+    len = MIN(len, filterlen - start);
   }
 
-  parameters.clear();
+  DEBUG2(("From fade structure (start %0.3lfs fade-in %0.3lfs end %0.3lfs fade-out %0.3lfs), filter length %u samples and sample rate of %0.0lfHz, filter start is %u samples, length %u samples",
+          fade.fade_in_start, fade.fade_in_length,
+          fade.fade_out_start, fade.fade_out_length,
+          filterlen, samplerate,
+          start, len));
+
+  // calculate the number of partitions required for the calculated filter length
+  return (len + blocksize - 1) / blocksize;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Create fades from fade profile
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::CreateFades(const FILTER_FADE& fade, double samplerate, std::vector<float>& fadein, std::vector<float>& fadeout)
+{
+  uint_t i, len = (uint_t)ceil(fade.fade_in_length * samplerate);
+
+  fadein.resize(len);
+
+  DEBUG2(("Filter fade in is %u samples", len));
+
+  if (len) {
+    double scale = 1.0 / (fade.fade_in_length * samplerate);
+
+    for (i = 0; i < len; i++)
+    {
+      double v = MIN((double)i * scale, 1.0);           // ramp
+      fadein[i] = (float)(.5 - .5 * cos(v * M_PI));     // raised cosine profile
+    }
+  }
+
+  len = (uint_t)ceil(fade.fade_out_length * samplerate);
+
+  fadeout.resize(len);
+
+  DEBUG2(("Filter fade out is %u samples", len));
+
+  if (len) {
+    double scale = 1.0 / (fade.fade_out_length * samplerate);
+
+    for (i = 0; i < len; i++)
+    {
+      double v = MIN((double)i * scale, 1.0);           // ramp
+      // NOTE: fade out is stored backwards!
+      fadeout[i] = (float)(.5 - .5 * cos(v * M_PI));    // raised cosine profile
+    }
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Apply fade in and fade out to data
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::ApplyFades(float *data, uint_t len, const std::vector<float>& fadein, const std::vector<float>& fadeout)
+{
+  uint_t i;
+
+  // apply fade in
+  DEBUG3(("Applying fade-in of %u samples", (uint_t)fadein.size()));
+  for (i = 0; i < fadein.size(); i++)  data[i]           *= fadein[i];
+
+  // apply fade out at end of filter (note that the fade MUST be stored backwards for this to work)
+  DEBUG3(("Applying fade-out of %u samples", (uint_t)fadeout.size()));
+  for (i = 0; i < fadeout.size(); i++) data[len - 1 - i] *= fadeout[i];
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -132,9 +194,10 @@ void ConvolverManager::SetIRLength(ulong_t irlength)
  * @param irdata pointer to impulse response data
  * @param numirs the number of impulse responses
  * @param irlength the length of each impulse response
+ * @param fade fade information to allow a subset of the data to be used
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong_t irlength)
+void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const uint_t irlength, const FILTER_FADE& fade)
 {
   uint_t i;
 
@@ -142,9 +205,17 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
 
   if (numirs && irlength)
   {
-    partitions = (uint_t)((irlength + blocksize - 1) / blocksize);
+    std::vector<float> fadein, fadeout;
+    std::vector<float> buffer;
+    double samplerate = 48000.0;
+    uint_t filterstart, filterlen;
 
-    DEBUG2(("IRs are %lu samples, therefore %u partitions are needed", irlength, partitions));
+    partitions = CalcPartitions(fade, samplerate, irlength, blocksize, filterstart, filterlen);
+    CreateFades(fade, samplerate, fadein, fadeout);
+
+    buffer.resize(filterlen);
+
+    DEBUG2(("IRs are %u samples, therefore %u partitions are needed", filterlen, partitions));
 
     apf::conv::Convolver convolver(blocksize, partitions);
     ulong_t tick = GetTickCount();
@@ -155,13 +226,18 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
 
     for (i = 0; i < numirs; i++)
     {
+      const float *irsrc = irdata + i * irlength + filterstart;
+      float *irdata1 = &buffer[0];
+
       DEBUG5(("Creating filter for IR %u", i));
 
       filters.push_back(APFFilter(blocksize, partitions));
-      convolver.prepare_filter(irdata + i * irlength, irdata + (i + 1) * irlength, filters[i]);
+      memcpy(irdata1, irsrc, filterlen * sizeof(*irsrc));
+      ApplyFades(irdata1, filterlen, fadein, fadeout);
+      convolver.prepare_filter(irdata1, irdata1 + filterlen, filters[i]);
 
-      float filterlevel = CalculateLevel(irdata + i * irlength, irlength);
-      DEBUG2(("Level of filter %u is %0.3lfdB", i, 20.0 * log10(filterlevel)));
+      float filterlevel = CalculateLevel(irdata1, filterlen);
+      DEBUG4(("Level of filter %u is %0.3lfdB", i, 20.0 * log10(filterlevel)));
       maxlevel = MAX(maxlevel, filterlevel);
     }
 
@@ -181,21 +257,23 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const ulong
 /** Load IRs from a file (either WAV or SOFA if enabled).
  *
  * @param filename file containing IRs
+ * @param fade fade information to allow a subset of the data to be used
+ *
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::LoadIRs(const char *filename)
+void ConvolverManager::LoadIRs(const char *filename, const FILTER_FADE& fade)
 {
   if (filename)
   {
 #if ENABLE_SOFA
     // only attempt to load file as SOFA if suffix is .sofa (otherwise app bombs out on non-SOFA files)
-    if ((strlen(filename) >= 5) && (strcasecmp(filename + strlen(filename) - 5, ".sofa") == 0) && LoadSOFA(filename))
+    if ((strlen(filename) >= 5) && (strcasecmp(filename + strlen(filename) - 5, ".sofa") == 0) && LoadSOFA(filename, fade))
     {
       DEBUG3(("Loaded IRs from SOFA file (%s).", filename));
     }
     else
 #endif
-      if (LoadIRsSndFile(filename))
+      if (LoadIRsSndFile(filename, fade))
       {
         DEBUG3(("Loaded IRs from WAV file (%s).", filename));
       } else
@@ -214,11 +292,12 @@ void ConvolverManager::LoadIRs(const char *filename)
 /** Load impulse reponse data from a SOFA file.
  *
  * @param file SOFA file object, opened for reading
+ * @param fade fade information to allow a subset of the data to be used
  *
  * @note Receiver measurements are interleaved.
  */
 /*--------------------------------------------------------------------------------*/
-bool ConvolverManager::LoadSOFA(const char *filename)
+bool ConvolverManager::LoadSOFA(const char *filename, const FILTER_FADE& fade)
 {
   filters.clear();
 
@@ -228,8 +307,8 @@ bool ConvolverManager::LoadSOFA(const char *filename)
 
     if (file)
     {
-      DEBUG3(("Opened '%s' okay, %u measurements from %u sources at %luHz", filename, (uint_t)file.get_num_measurements(), (uint_t)file.get_num_emitters(), (ulong_t)file.get_samplerate()));
-      LoadIRsSOFA(file);
+      DEBUG3(("Opened '%s' okay, %u measurements from %u sources at %luHz", filename, (uint_t)file.get_num_measurements(), (uint_t)file.get_num_emitters(), (uint_t)file.get_samplerate()));
+      LoadIRsSOFA(file, fade);
       LoadDelaysSOFA(file);
       return true;
     }
@@ -250,9 +329,11 @@ bool ConvolverManager::LoadSOFA(const char *filename)
 /** Load IR files from a WAV file
  *
  * @param filename name of a WAV file containing IRs
+ * @param fade fade information to allow a subset of the data to be used
+ *
  */
 /*--------------------------------------------------------------------------------*/
-bool ConvolverManager::LoadIRsSndFile(const char *filename)
+bool ConvolverManager::LoadIRsSndFile(const char *filename, const FILTER_FADE& fade)
 {
   filters.clear();
 
@@ -262,27 +343,31 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
 
     if (file && file.frames() && file.channels())
     {
-      ulong_t len = file.frames();
+      uint_t filelen = file.frames();
       uint_t i, n = file.channels();
+      uint_t filterstart, filterlen;
+      std::vector<float> fadein, fadeout;
 
-      DEBUG3(("Opened '%s' okay, %u channels at %luHz", filename, n, (ulong_t)file.samplerate()));
+      DEBUG3(("Opened '%s' okay, %u channels at %uHz", filename, n, (uint_t)file.samplerate()));
 
-      partitions = (uint_t)((len + blocksize - 1) / blocksize);
+      partitions = CalcPartitions(fade, file.samplerate(), filelen, blocksize, filterstart, filterlen);
 
-      DEBUG2(("File '%s' is %lu samples long, therefore %u partitions are needed", filename, len, partitions));
+      CreateFades(fade, file.samplerate(), fadein, fadeout);
+
+      DEBUG2(("File '%s' is %u samples long, therefore %u partitions are needed", filename, filelen, partitions));
 
       apf::conv::Convolver convolver(blocksize, partitions);
-      float *sampledata = new float[blocksize * partitions * n]; 
-      float *response   = new float[blocksize * partitions];
+      float *sampledata = new float[filelen * n];
+      float *response   = new float[filterlen];
       slong_t res;
 
-      memset(sampledata, 0, blocksize * partitions * n * sizeof(*sampledata));
+      memset(sampledata, 0, filelen * n * sizeof(*sampledata));
 
       DEBUG2(("Reading sample data..."));
 
-      if ((res = file.read(sampledata, blocksize * partitions * n)) < 0)
+      if ((res = file.read(sampledata, filelen * n)) < 0)
       {
-        ERROR("Read of %u frames result: %ld", blocksize * partitions, res);
+        ERROR("Read of %u frames result: %ld", filelen, res);
       }
 
       DEBUG2(("Creating %u filters...", n));
@@ -294,11 +379,12 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename)
 
         filters.push_back(APFFilter(blocksize, partitions));
 
-        TransferSamples(sampledata, i, n, response, 0, 1, 1, blocksize * partitions);
-        convolver.prepare_filter(response, response + blocksize * partitions, filters[i]);
+        TransferSamples(sampledata + filterstart * n, i, n, response, 0, 1, 1, filterlen);
+        ApplyFades(response, filterlen, fadein, fadeout);
+        convolver.prepare_filter(response, response + filterlen, filters[i]);
 
-        float filterlevel = CalculateLevel(response, blocksize * partitions);
-        DEBUG2(("Level of filter %u is %0.3lfdB", i, 20.0 * log10(filterlevel)));
+        float filterlevel = CalculateLevel(response, filterlen);
+        DEBUG4(("Level of filter %u is %0.3lfdB", i, 20.0 * log10(filterlevel)));
         maxlevel = MAX(maxlevel, filterlevel);
       }
       DEBUG2(("Finished creating filters (took %lums)", GetTickCount() - tick));
@@ -402,26 +488,76 @@ void ConvolverManager::SetIRDelays(const double *delays, const uint_t num_delays
 }
 
 /*--------------------------------------------------------------------------------*/
+/** Prepare data for static convolvers
+ *
+ * @param convolverdata data structure to be populated with fade information
+ * @param irlength length of IR data
+ * @param samplerate sample rate for convert fade times to samples
+ * @param fade fade profile
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::PrepareStaticConvolvers(STATIC_CONVOLVER_DATA& convolverdata, uint_t irlength, double samplerate, const FILTER_FADE& fade)
+{
+  if (convolvers.size())
+  {
+    DEBUG1(("Warning: removing existing static convolvers"));
+
+    while (convolvers.size())
+    {
+      Convolver *conv = convolvers.back();
+      delete conv;
+      convolvers.pop_back();
+    }
+  }
+
+  parameters.clear();
+
+  // populate convolverdata
+  convolverdata.samplerate = samplerate;
+
+  // calculate number of partitions and filter start/length
+  partitions = CalcPartitions(fade, samplerate, irlength, blocksize, convolverdata.filterstart, convolverdata.filterlen);
+  
+  // create fades
+  CreateFades(fade, samplerate, convolverdata.fadein, convolverdata.fadeout);
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Create a static convolver with the correct parameters for inclusion in this manager
  *
  * @param irdata pointer to impulse response data buffer
- * @param irlength length of the buffer in samples
  * @param delay a delay associated with the static convolver
+ * @param convolverdata previously populated (by the above) data structure
+ *
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::CreateStaticConvolver(const float *irdata, const ulong_t irlength, double delay)
+void ConvolverManager::CreateStaticConvolver(const float *irdata, double delay, const STATIC_CONVOLVER_DATA& convolverdata)
 {
-  PARAMETERS params;
+  std::vector<float> data;
   Convolver *conv;
 
-  memset(&params, 0, sizeof(params));
-  params.delay = delay;
-  params.level = 1.0;
-  parameters.push_back(params);
+  // take copy of IR data in order to apply fades
+  data.resize(convolverdata.filterlen);
+
+  float *fadedirdata = &data[0];
+
+  // copy data
+  memcpy(fadedirdata, irdata + convolverdata.filterstart, data.size() * sizeof(*irdata));
+
+  // apply fades
+  ApplyFades(fadedirdata, data.size(), convolverdata.fadein, convolverdata.fadeout);
 
   // set up new convolver
-  if ((conv = new StaticConvolver(convolvers.size(), blocksize, partitions, new apf::conv::StaticConvolver(blocksize, irdata, irdata + irlength), delay)) != NULL)
+  if ((conv = new StaticConvolver(convolvers.size(), blocksize, partitions, new apf::conv::StaticConvolver(blocksize, fadedirdata, fadedirdata + data.size()), delay * convolverdata.samplerate)) != NULL)
   {
+    PARAMETERS params;
+
+    memset(&params, 0, sizeof(params));
+    params.delay = delay;
+    params.level = 1.0;
+    parameters.push_back(params);
+
     conv->SetParameters(params.level, params.delay, hqproc);
     convolvers.push_back(conv);
   }
@@ -634,20 +770,25 @@ uint_t ConvolverManager::GetSOFAOffset(const SOFA& file, uint_t emitter, uint_t 
 /** Load impulse reponse data from a SOFA file.
  *
  * @param file SOFA file object, opened for reading
+ * @param fade fade information to allow a subset of the data to be used
  *
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::LoadIRsSOFA(const SOFA& file)
+void ConvolverManager::LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade)
 {
   // load impulse responses
-  ulong_t len = file.get_ir_length();
-  uint_t  ne  = file.get_num_emitters(), ie;
-  uint_t  nm  = file.get_num_measurements(), im;
-  uint_t  nr  = file.get_num_receivers(), ir;
+  uint_t irlength = file.get_ir_length();
+  uint_t ne = file.get_num_emitters(), ie;
+  uint_t nm = file.get_num_measurements(), im;
+  uint_t nr = file.get_num_receivers(), ir;
+  std::vector<float> fadein, fadeout;
+  double samplerate = file.get_samplerate();
+  uint_t filterstart, filterlen;
 
-  partitions = (uint_t)((len + blocksize - 1) / blocksize);
+  partitions = CalcPartitions(fade, samplerate, irlength, blocksize, filterstart, filterlen);
+  CreateFades(fade, samplerate, fadein, fadeout);
 
-  DEBUG2(("File is %lu samples long, therefore %u partitions are needed", len, partitions));
+  DEBUG2(("File is %u samples long, therefore %u partitions are needed", filterlen, partitions));
 
   apf::conv::Convolver convolver(blocksize, partitions);
   SOFA::audio_buffer_t irdata;
@@ -665,15 +806,15 @@ void ConvolverManager::LoadIRsSOFA(const SOFA& file)
     {
       for (ir = 0; ir < nr; ir++)       // receivers
       {
-        const SOFA::audio_sample_t *irptr = &irdata[0] + GetSOFAOffset(file, ie, im, ir) * len;
+        SOFA::audio_sample_t *irdata1 = &irdata[0] + GetSOFAOffset(file, ie, im, ir) * irlength + filterstart;
         uint_t fn = filters.size(); // index of filter about to be created
 
         filters.push_back(APFFilter(blocksize, partitions));
+        ApplyFades(irdata1, filterlen, fadein, fadeout);
+        convolver.prepare_filter(irdata1, irdata1 + filterlen, filters[fn]);
 
-        convolver.prepare_filter(irptr, irptr + len, filters[fn]);
-
-        float filterlevel = CalculateLevel(irptr, len);
-        DEBUG2(("Level of filter %u/%u/%u is %0.3lfdB", ie, im, ir, 20.0 * log10(filterlevel)));
+        float filterlevel = CalculateLevel(irdata1, filterlen);
+        DEBUG4(("Level of filter %u/%u/%u is %0.3lfdB", ie, im, ir, 20.0 * log10(filterlevel)));
         maxlevel = MAX(maxlevel, filterlevel);
       }
     }
