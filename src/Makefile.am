@@ -8,13 +8,13 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LDFLAGS =	\
     $(APLIBS_DSP_LDFLAGS)
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD =	\
+	$(APLIBS_GLOBAL_LIBS)						\
 	$(PTHREAD_LIBS)								\
-	$(SOFA_LIBS)								\
 	$(RT_LIBS)
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS =	\
+	$(APLIBS_GLOBAL_CFLAGS)						\
 	$(APLIBS_DSP_CFLAGS)						\
-	$(SOFA_CFLAGS)								\
 	$(PTHREAD_CFLAGS)
 
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
