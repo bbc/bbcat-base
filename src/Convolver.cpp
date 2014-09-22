@@ -23,7 +23,8 @@
 #include "PerformanceMonitor.h"
 
 // set at 1 to output whether each convolver is processing every 2s
-#define DEBUG_CONVOLVER_STATES 1
+#define DEBUG_CONVOLVER_STATES   0
+#define MEASURE_MAX_FILTER_LEVEL 0
 
 BBC_AUDIOTOOLBOX_START
 
@@ -219,7 +220,10 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const uint_
 
     apf::conv::Convolver convolver(blocksize, partitions);
     ulong_t tick = GetTickCount();
+
+#if MEASURE_MAX_FILTER_LEVEL
     float   maxlevel = 0.f;
+#endif
 
     // create array to take an IR (which won't be full length because we've rounded up to a whole number of partitions)
     DEBUG2(("Creating %u filters...", numirs));
@@ -236,9 +240,11 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const uint_
       ApplyFades(irdata1, filterlen, fadein, fadeout);
       convolver.prepare_filter(irdata1, irdata1 + filterlen, filters[i]);
 
+#if MEASURE_MAX_FILTER_LEVEL
       float filterlevel = CalculateLevel(irdata1, filterlen);
       DEBUG4(("Level of filter %u is %0.3lfdB", i, 20.0 * log10(filterlevel)));
       maxlevel = MAX(maxlevel, filterlevel);
+#endif
     }
 
     DEBUG2(("Finished creating filters (took %lums)", GetTickCount() - tick));
@@ -246,7 +252,9 @@ void ConvolverManager::CreateIRs(const float *irdata, uint_t numirs, const uint_
     UNUSED_PARAMETER(tick);
 #endif
 
+#if MEASURE_MAX_FILTER_LEVEL
     SetAudioScale(maxlevel);
+#endif
 
     // force update of parameters
     updateparameters = true;
@@ -372,7 +380,9 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename, const FILTER_FADE& f
 
       DEBUG2(("Creating %u filters...", n));
       ulong_t tick     = GetTickCount();
+#if MEASURE_MAX_FILTER_LEVEL
       float   maxlevel = 0.f;
+#endif
       for (i = 0; i < n; i++)
       {
         DEBUG5(("Creating filter for IR %u", i));
@@ -383,9 +393,11 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename, const FILTER_FADE& f
         ApplyFades(response, filterlen, fadein, fadeout);
         convolver.prepare_filter(response, response + filterlen, filters[i]);
 
+#if MEASURE_MAX_FILTER_LEVEL
         float filterlevel = CalculateLevel(response, filterlen);
         DEBUG4(("Level of filter %u is %0.3lfdB", i, 20.0 * log10(filterlevel)));
         maxlevel = MAX(maxlevel, filterlevel);
+#endif
       }
       DEBUG2(("Finished creating filters (took %lums)", GetTickCount() - tick));
 #if DEBUG_LEVEL < 2
@@ -395,7 +407,9 @@ bool ConvolverManager::LoadIRsSndFile(const char *filename, const FILTER_FADE& f
       delete[] sampledata;
       delete[] response;
 
+#if MEASURE_MAX_FILTER_LEVEL
       SetAudioScale(maxlevel);
+#endif
 
       // force update of parameters
       updateparameters = true;
@@ -731,11 +745,10 @@ void ConvolverManager::Convolve(const float *input, float *output, uint_t inputc
 #endif
 
   // now process outputs
-  float level = audioscale / (float)(convolvers.size() / outputchannels);
   for (i = 0; i < convolvers.size(); i++)
   {
     DEBUG5(("Waiting on convolver %u/%u to complete...", i + 1, (uint_t)convolvers.size()));
-    convolvers[i]->EndConvolution(output + (i % outputchannels), outputchannels, level);
+    convolvers[i]->EndConvolution(output + (i % outputchannels), outputchannels, audioscale);
     DEBUG5(("Convolver %u/%u completed", i + 1, (uint_t)convolvers.size()));
   }
 }
@@ -793,7 +806,9 @@ void ConvolverManager::LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade)
   apf::conv::Convolver convolver(blocksize, partitions);
   SOFA::audio_buffer_t irdata;
   ulong_t tick     = GetTickCount();
+#if MEASURE_MAX_FILTER_LEVEL
   float   maxlevel = 0.f;
+#endif
 
   DEBUG2(("Creating %u filters...", ne * nm * nr));
 
@@ -813,9 +828,11 @@ void ConvolverManager::LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade)
         ApplyFades(irdata1, filterlen, fadein, fadeout);
         convolver.prepare_filter(irdata1, irdata1 + filterlen, filters[fn]);
 
+#if MEASURE_MAX_FILTER_LEVEL
         float filterlevel = CalculateLevel(irdata1, filterlen);
         DEBUG4(("Level of filter %u/%u/%u is %0.3lfdB", ie, im, ir, 20.0 * log10(filterlevel)));
         maxlevel = MAX(maxlevel, filterlevel);
+#endif
       }
     }
   }
@@ -824,7 +841,9 @@ void ConvolverManager::LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade)
   UNUSED_PARAMETER(tick);
 #endif
 
+#if MEASURE_MAX_FILTER_LEVEL
   SetAudioScale(maxlevel);
+#endif
 
   // force update of parameters
   updateparameters = true;
@@ -906,20 +925,19 @@ float ConvolverManager::CalculateLevel(const float *data, uint_t n)
 
 /*--------------------------------------------------------------------------------*/
 /** Set audio scaling value based on maxlevel
+ *
+ * (Not currently used)
  */
 /*--------------------------------------------------------------------------------*/
 void ConvolverManager::SetAudioScale(float maxlevel)
 {
   UNUSED_PARAMETER(maxlevel);
 
-  // currently disabled!
-#if 1
   if (maxlevel > 0.f)
   {
     audioscale = 1.f / maxlevel;
     DEBUG1(("Max level = %0.1lfdB, scale = %0.1lfdB", 20.0 * log10(maxlevel), 20.0 * log10(audioscale)));
   }
-#endif
 }
 
 /*----------------------------------------------------------------------------------------------------*/
