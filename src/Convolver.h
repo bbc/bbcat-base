@@ -142,7 +142,7 @@ public:
    *
    */
   /*--------------------------------------------------------------------------------*/
-  void LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade = defaultfade);
+  void LoadIRsSOFA(SOFA& file, const FILTER_FADE& fade = defaultfade);
 
   /*--------------------------------------------------------------------------------*/
   /** Load delay data from a SOFA file.
@@ -151,7 +151,7 @@ public:
    *
    */
   /*--------------------------------------------------------------------------------*/
-  void LoadDelaysSOFA(const SOFA& file);
+  void LoadDelaysSOFA(SOFA& file);
 #endif
 
   /*--------------------------------------------------------------------------------*/

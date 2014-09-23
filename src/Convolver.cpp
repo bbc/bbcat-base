@@ -789,7 +789,7 @@ uint_t ConvolverManager::GetSOFAOffset(const SOFA& file, uint_t emitter, uint_t 
  *
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade)
+void ConvolverManager::LoadIRsSOFA(SOFA& file, const FILTER_FADE& fade)
 {
   // load impulse responses
   uint_t irlength = file.get_ir_length();
@@ -858,7 +858,7 @@ void ConvolverManager::LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade)
  *
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::LoadDelaysSOFA(const SOFA& file)
+void ConvolverManager::LoadDelaysSOFA(SOFA& file)
 {
   irdelays.clear();
   maxdelay = 0.0;

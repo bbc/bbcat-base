@@ -127,20 +127,31 @@ size_t SOFA::get_num_emitters() const
   return sofa_dims->E.getSize();
 }
 
-bool SOFA::get_all_irs(audio_buffer_t& ir_buffer) const
+bool SOFA::get_all_irs(audio_buffer_t& ir_buffer)
 {
-  sofa_var_t ir_data = get_var("Data.IR");
-  if (ir_data.isNull()) return false;
-  size_t n_dims = ir_data.getDimCount();
+  bool success = false;
 
-  get_index_vec_t start(n_dims,0);
-  get_index_vec_t count(n_dims,1);
-  count[0] = sofa_dims->M.getSize();
-  count[1] = sofa_dims->R.getSize();
-  if (n_dims > 3) count[2] = sofa_dims->E.getSize(); // for MultiSpeakerBRIR
-  count[n_dims-1] = sofa_dims->N.getSize();
+  if (allirdata.size() == 0)
+  {
+    // data not set up yet
+    sofa_var_t ir_data = get_var("Data.IR");
+    if (ir_data.isNull()) return false;
+    size_t n_dims = ir_data.getDimCount();
 
-  return get_ir_data(start, count, ir_buffer);
+    get_index_vec_t start(n_dims,0);
+    get_index_vec_t count(n_dims,1);
+    count[0] = sofa_dims->M.getSize();
+    count[1] = sofa_dims->R.getSize();
+    if (n_dims > 3) count[2] = sofa_dims->E.getSize(); // for MultiSpeakerBRIR
+    count[n_dims-1] = sofa_dims->N.getSize();
+
+    success = get_ir_data(start, count, allirdata);
+  }
+  else success = true;
+
+  if (success) ir_buffer = allirdata;
+
+  return success;
 }
 
 bool SOFA::get_all_irs(float* ir_buffer) const
@@ -239,19 +250,30 @@ bool SOFA::get_delays(SOFA::delay_buffer_t& delays, uint_t indexR, uint_t indexE
   return get_delay_data(start, count, delays);
 }
 
-bool SOFA::get_all_delays(SOFA::delay_buffer_t& delays) const
+bool SOFA::get_all_delays(SOFA::delay_buffer_t& delays)
 {
-  sofa_var_t delay_data = get_var("Data.Delay");
-  if (delay_data.isNull()) return false;
-  size_t n_dims = delay_data.getDimCount();
+  bool success = false;
 
-  get_index_vec_t start(n_dims,0);
-  get_index_vec_t count(n_dims,1);
-  count[0] = (delay_data.getDims()[0].getName() == "M") ? sofa_dims->M.getSize() : 1;
-  count[1] = (delay_data.getDims()[1].getName() == "R") ? sofa_dims->R.getSize() : 1;
-  if (n_dims > 2) count[2] = (delay_data.getDims()[2].getName() == "E") ? sofa_dims->E.getSize() : 1; // for MultiSpeakerBRIR
+  if (alldelaydata.size() == 0)
+  {
+    // data not set up yet
+    sofa_var_t delay_data = get_var("Data.Delay");
+    if (delay_data.isNull()) return false;
+    size_t n_dims = delay_data.getDimCount();
 
-  return get_delay_data(start, count, delays);
+    get_index_vec_t start(n_dims,0);
+    get_index_vec_t count(n_dims,1);
+    count[0] = (delay_data.getDims()[0].getName() == "M") ? sofa_dims->M.getSize() : 1;
+    count[1] = (delay_data.getDims()[1].getName() == "R") ? sofa_dims->R.getSize() : 1;
+    if (n_dims > 2) count[2] = (delay_data.getDims()[2].getName() == "E") ? sofa_dims->E.getSize() : 1; // for MultiSpeakerBRIR
+
+    success = get_delay_data(start, count, alldelaydata);
+  }
+  else success = true;
+
+  if (success) delays = alldelaydata;
+
+  return success;
 }
 
 SOFA::positions_array_t SOFA::get_source_positions() const
