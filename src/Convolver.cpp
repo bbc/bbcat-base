@@ -562,8 +562,10 @@ void ConvolverManager::CreateStaticConvolver(const float *irdata, double delay, 
   // apply fades
   ApplyFades(fadedirdata, data.size(), convolverdata.fadein, convolverdata.fadeout);
 
+  delay *= convolverdata.samplerate;
+
   // set up new convolver
-  if ((conv = new StaticConvolver(convolvers.size(), blocksize, partitions, new apf::conv::StaticConvolver(blocksize, fadedirdata, fadedirdata + data.size()), delay * convolverdata.samplerate)) != NULL)
+  if ((conv = new StaticConvolver(convolvers.size(), blocksize, partitions, new apf::conv::StaticConvolver(blocksize, fadedirdata, fadedirdata + data.size()), delay)) != NULL)
   {
     PARAMETERS params;
 
@@ -881,6 +883,8 @@ void ConvolverManager::LoadDelaysSOFA(const SOFA& file)
       for (ie = 0; ie < ne; ie++)     // emitters
       {
         double delay = sofadelays[GetSOFAOffset(file, ie, im % ndm, ir)] * sr;
+
+        DEBUG3(("Delay for %u:%u:%u is %0.1lf samples", im, ir, ie, delay));
 
         irdelays.push_back(delay);
         maxdelay = MAX(maxdelay, delay);
