@@ -189,7 +189,7 @@ public:
    *
    */
   /*--------------------------------------------------------------------------------*/
-  void CreateStaticConvolver(const float *irdata, double delay, const STATIC_CONVOLVER_DATA& convolverdata);
+  void CreateStaticConvolver(SOFA& file, uint_t index, double delay, const STATIC_CONVOLVER_DATA& convolverdata);
 
   /*--------------------------------------------------------------------------------*/
   /** Set delay scaling to compensate for factors such as ITD
@@ -282,6 +282,12 @@ protected:
    */
   /*--------------------------------------------------------------------------------*/
   uint_t GetSOFAOffset(const SOFA& file, uint_t emitter, uint_t measurement, uint_t receiver) const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Copy data from all IR data array
+   */
+  /*--------------------------------------------------------------------------------*/
+  void CopyIRData(SOFA& file, uint_t index, uint_t filterstart, uint_t filterlen, SOFA::audio_buffer_t& buffer);
 #endif
 
   /*--------------------------------------------------------------------------------*/

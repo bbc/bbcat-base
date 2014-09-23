@@ -546,26 +546,23 @@ void ConvolverManager::PrepareStaticConvolvers(STATIC_CONVOLVER_DATA& convolverd
  *
  */
 /*--------------------------------------------------------------------------------*/
-void ConvolverManager::CreateStaticConvolver(const float *irdata, double delay, const STATIC_CONVOLVER_DATA& convolverdata)
+void ConvolverManager::CreateStaticConvolver(SOFA& file, uint_t index, double delay, const STATIC_CONVOLVER_DATA& convolverdata)
 {
-  std::vector<float> data;
+  SOFA::audio_buffer_t buffer;
   Convolver *conv;
 
   // take copy of IR data in order to apply fades
-  data.resize(convolverdata.filterlen);
+  CopyIRData(file, index, convolverdata.filterstart, convolverdata.filterlen, buffer);
 
-  float *fadedirdata = &data[0];
-
-  // copy data
-  memcpy(fadedirdata, irdata + convolverdata.filterstart, data.size() * sizeof(*irdata));
+  float *irdata = &buffer[0];
 
   // apply fades
-  ApplyFades(fadedirdata, data.size(), convolverdata.fadein, convolverdata.fadeout);
+  ApplyFades(irdata, buffer.size(), convolverdata.fadein, convolverdata.fadeout);
 
   delay *= convolverdata.samplerate;
 
   // set up new convolver
-  if ((conv = new StaticConvolver(convolvers.size(), blocksize, partitions, new apf::conv::StaticConvolver(blocksize, fadedirdata, fadedirdata + data.size()), delay)) != NULL)
+  if ((conv = new StaticConvolver(convolvers.size(), blocksize, partitions, new apf::conv::StaticConvolver(blocksize, irdata, irdata + buffer.size()), delay)) != NULL)
   {
     PARAMETERS params;
 
@@ -782,6 +779,19 @@ uint_t ConvolverManager::GetSOFAOffset(const SOFA& file, uint_t emitter, uint_t 
 }
 
 /*--------------------------------------------------------------------------------*/
+/** Copy data from all IR data array
+ */
+/*--------------------------------------------------------------------------------*/
+void ConvolverManager::CopyIRData(SOFA& file, uint_t index, uint_t filterstart, uint_t filterlen, SOFA::audio_buffer_t& buffer)
+{
+  const SOFA::audio_buffer_t& allirdata = file.get_all_irs();
+  uint_t ir_len = file.get_ir_length();
+
+  buffer.resize(filterlen);
+  memcpy(&buffer[0], &allirdata[index * ir_len + filterstart], filterlen * sizeof(buffer[0]));
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Load impulse reponse data from a SOFA file.
  *
  * @param file SOFA file object, opened for reading
@@ -806,15 +816,12 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file, const FILTER_FADE& fade)
   DEBUG2(("File is %u samples long, therefore %u partitions are needed", filterlen, partitions));
 
   apf::conv::Convolver convolver(blocksize, partitions);
-  SOFA::audio_buffer_t irdata;
   ulong_t tick     = GetTickCount();
 #if MEASURE_MAX_FILTER_LEVEL
   float   maxlevel = 0.f;
 #endif
 
   DEBUG2(("Creating %u filters...", ne * nm * nr));
-
-  file.get_all_irs(irdata);
 
   // loops MUST be done in this order to maintain the correct layout
   for (im = 0; im < nm; im++)         // measurements
@@ -823,10 +830,13 @@ void ConvolverManager::LoadIRsSOFA(SOFA& file, const FILTER_FADE& fade)
     {
       for (ie = 0; ie < ne; ie++)     // emitters
       {
-        SOFA::audio_sample_t *irdata1 = &irdata[0] + GetSOFAOffset(file, ie, im, ir) * irlength + filterstart;
+        SOFA::audio_buffer_t buffer;
         uint_t fn = filters.size(); // index of filter about to be created
 
         filters.push_back(APFFilter(blocksize, partitions));
+
+        CopyIRData(file, GetSOFAOffset(file, ie, im, ir), + filterstart, filterlen, buffer);
+        float *irdata1 = &buffer[0];
         ApplyFades(irdata1, filterlen, fadein, fadeout);
         convolver.prepare_filter(irdata1, irdata1 + filterlen, filters[fn]);
 
@@ -868,12 +878,11 @@ void ConvolverManager::LoadDelaysSOFA(SOFA& file)
   uint_t  ne = file.get_num_emitters(), ie;
   uint_t  nm = file.get_num_measurements(), im, ndm = file.get_num_delay_measurements();        // number of delay measurements MAY be different fron number of measurements
   uint_t  nr = file.get_num_receivers(), ir;
-  SOFA::delay_buffer_t sofadelays;
 
   // read delays for each receiver and insert into irdelays interleaved
   DEBUG2(("Loading %u delays from SOFA file", ne * nm * nr));
 
-  file.get_all_delays(sofadelays);
+  const SOFA::delay_buffer_t& sofadelays = file.get_all_delays();
 
   // loops MUST be done in this order to maintain the correct layout
   for (im = 0; im < nm; im++)         // measurements

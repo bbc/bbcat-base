@@ -127,15 +127,13 @@ size_t SOFA::get_num_emitters() const
   return sofa_dims->E.getSize();
 }
 
-bool SOFA::get_all_irs(audio_buffer_t& ir_buffer)
+const SOFA::audio_buffer_t& SOFA::get_all_irs()
 {
-  bool success = false;
-
   if (allirdata.size() == 0)
   {
     // data not set up yet
     sofa_var_t ir_data = get_var("Data.IR");
-    if (ir_data.isNull()) return false;
+    if (ir_data.isNull()) return allirdata;
     size_t n_dims = ir_data.getDimCount();
 
     get_index_vec_t start(n_dims,0);
@@ -145,13 +143,15 @@ bool SOFA::get_all_irs(audio_buffer_t& ir_buffer)
     if (n_dims > 3) count[2] = sofa_dims->E.getSize(); // for MultiSpeakerBRIR
     count[n_dims-1] = sofa_dims->N.getSize();
 
-    success = get_ir_data(start, count, allirdata);
+    get_ir_data(start, count, allirdata);
   }
-  else success = true;
 
-  if (success) ir_buffer = allirdata;
+  return allirdata;
+}
 
-  return success;
+bool SOFA::get_all_irs(audio_buffer_t& ir_buffer)
+{
+  return ((ir_buffer = get_all_irs()).size() > 0);
 }
 
 bool SOFA::get_all_irs(float* ir_buffer) const
@@ -250,15 +250,13 @@ bool SOFA::get_delays(SOFA::delay_buffer_t& delays, uint_t indexR, uint_t indexE
   return get_delay_data(start, count, delays);
 }
 
-bool SOFA::get_all_delays(SOFA::delay_buffer_t& delays)
+const SOFA::delay_buffer_t& SOFA::get_all_delays()
 {
-  bool success = false;
-
   if (alldelaydata.size() == 0)
   {
     // data not set up yet
     sofa_var_t delay_data = get_var("Data.Delay");
-    if (delay_data.isNull()) return false;
+    if (delay_data.isNull()) return alldelaydata;
     size_t n_dims = delay_data.getDimCount();
 
     get_index_vec_t start(n_dims,0);
@@ -267,13 +265,15 @@ bool SOFA::get_all_delays(SOFA::delay_buffer_t& delays)
     count[1] = (delay_data.getDims()[1].getName() == "R") ? sofa_dims->R.getSize() : 1;
     if (n_dims > 2) count[2] = (delay_data.getDims()[2].getName() == "E") ? sofa_dims->E.getSize() : 1; // for MultiSpeakerBRIR
 
-    success = get_delay_data(start, count, alldelaydata);
+    get_delay_data(start, count, alldelaydata);
   }
-  else success = true;
 
-  if (success) delays = alldelaydata;
+  return alldelaydata;
+}
 
-  return success;
+bool SOFA::get_all_delays(SOFA::delay_buffer_t& delays)
+{
+  return ((delays = get_all_delays()).size() > 0);
 }
 
 SOFA::positions_array_t SOFA::get_source_positions() const

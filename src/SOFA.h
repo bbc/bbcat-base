@@ -51,27 +51,29 @@ public:
 
   operator bool () const { return (sofa_file != NULL); }
 
-  std::string         get_convention_name() const;
-  float               get_samplerate() const;
-  bool                get_all_irs(audio_buffer_t& ir_buffer);
-  bool                get_all_irs(float* ir_buffer) const;
-  bool                get_ir(audio_buffer_t& ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE = 0) const;
-  bool                get_ir(float* ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE = 0) const;
-  bool                get_all_delays(delay_buffer_t& delays);
-  bool                get_delays(delay_buffer_t& delays, uint_t indexR, uint_t indexE = 0) const;
-  size_t              get_num_measurements() const;
-  size_t              get_ir_length() const;
-  size_t              get_num_receivers() const;
-  size_t              get_num_emitters() const;
-  size_t              get_num_delay_measurements() const;       // number of delay measurements can be either get_num_measurements() or 1
-  positions_array_t   get_source_positions() const;
-  positions_array_t   get_emitter_positions() const;
-  positions_array_t   get_listener_positions() const;
-  positions_array_t   get_receiver_positions() const;
-  positions_array_t   get_listener_view_vecs() const;
-  positions_array_t   get_listener_up_vecs() const;
-  void                list_vars() const;
-  void                list_atts() const;
+  std::string           get_convention_name() const;
+  float                 get_samplerate() const;
+  bool                  get_all_irs(audio_buffer_t& ir_buffer);
+  const audio_buffer_t& get_all_irs();
+  bool                  get_all_irs(float* ir_buffer) const;
+  bool                  get_ir(audio_buffer_t& ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE = 0) const;
+  bool                  get_ir(float* ir_buffer, uint_t indexM, uint_t indexR, uint_t indexE = 0) const;
+  bool                  get_all_delays(delay_buffer_t& delays);
+  const delay_buffer_t& get_all_delays();
+  bool                  get_delays(delay_buffer_t& delays, uint_t indexR, uint_t indexE = 0) const;
+  size_t                get_num_measurements() const;
+  size_t                get_ir_length() const;
+  size_t                get_num_receivers() const;
+  size_t                get_num_emitters() const;
+  size_t                get_num_delay_measurements() const;       // number of delay measurements can be either get_num_measurements() or 1
+  positions_array_t     get_source_positions() const;
+  positions_array_t     get_emitter_positions() const;
+  positions_array_t     get_listener_positions() const;
+  positions_array_t     get_receiver_positions() const;
+  positions_array_t     get_listener_view_vecs() const;
+  positions_array_t     get_listener_up_vecs() const;
+  void                  list_vars() const;
+  void                  list_atts() const;
 
 protected:
   void list_varatts(const sofa_var_t sofa_var) const;
