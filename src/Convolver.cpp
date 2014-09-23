@@ -636,8 +636,6 @@ bool ConvolverManager::SelectIR(uint_t convolver, uint_t ir, double level, doubl
   {
     if (ir < filters.size())
     {
-      DEBUG4(("[%010lu]: Selecting IR %03u for convolver %3u", GetTickCount(), ir, convolver));
-
       // store parameters for convolver
       parameters[convolver].irindex = ir;
       parameters[convolver].level   = level;
@@ -675,6 +673,8 @@ void ConvolverManager::UpdateConvolverParameters(uint_t convolver)
       // if a delay is available for this IR, subtract minimum delay and scale it by delayscale
       // to compensate for ITD
       double delay = (ir < irdelays.size()) ? irdelays[ir] * delayscale : 0.0;
+
+      DEBUG3(("Convolver[%03u]: Selecting IR %03u and delay %10.3lf samples", convolver, ir, delay));
 
       // pass parameters to convolver, add additional delay to scaled delay due to IR's
       DynamicConvolver *dynconv;
@@ -815,11 +815,11 @@ void ConvolverManager::LoadIRsSOFA(const SOFA& file, const FILTER_FADE& fade)
   file.get_all_irs(irdata);
 
   // loops MUST be done in this order to maintain the correct layout
-  for (ie = 0; ie < ne; ie++)           // emitters
+  for (im = 0; im < nm; im++)         // measurements
   {
-    for (im = 0; im < nm; im++)         // measurements
+    for (ir = 0; ir < nr; ir++)       // receivers
     {
-      for (ir = 0; ir < nr; ir++)       // receivers
+      for (ie = 0; ie < ne; ie++)     // emitters
       {
         SOFA::audio_sample_t *irdata1 = &irdata[0] + GetSOFAOffset(file, ie, im, ir) * irlength + filterstart;
         uint_t fn = filters.size(); // index of filter about to be created
@@ -874,11 +874,11 @@ void ConvolverManager::LoadDelaysSOFA(const SOFA& file)
   file.get_all_delays(sofadelays);
 
   // loops MUST be done in this order to maintain the correct layout
-  for (ie = 0; ie < ne; ie++)           // emitters
+  for (im = 0; im < nm; im++)         // measurements
   {
-    for (im = 0; im < nm; im++)         // measurements
+    for (ir = 0; ir < nr; ir++)       // receivers
     {
-      for (ir = 0; ir < nr; ir++)       // receivers
+      for (ie = 0; ie < ne; ie++)     // emitters
       {
         double delay = sofadelays[GetSOFAOffset(file, ie, im % ndm, ir)] * sr;
 
@@ -963,7 +963,7 @@ Convolver::Convolver(uint_t _convindex, uint_t _blocksize, uint_t _partitions, d
 {
   // calculate number of blocks of silence after which there's no need to do any processing
   maxzeroblocks = partitions + (maxadditionaldelay / blocksize) + 1;
-  if (convindex == 0) DEBUG1(("Max zero blocks = %u", maxzeroblocks));
+  if (convindex == 0) DEBUG2(("Max zero blocks = %u", maxzeroblocks));
 
   // create thread
   if (pthread_create(&thread, NULL, &__Process, (void *)this) != 0)
