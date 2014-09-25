@@ -84,13 +84,32 @@ PositionTransform& PositionTransform::operator -= (const PositionTransform& obj)
   return *this;
 }
 
-void PositionTransform::Transform(Position& pos) const
+/*--------------------------------------------------------------------------------*/
+/** Rotate x and y by angle
+ */
+/*--------------------------------------------------------------------------------*/
+void PositionTransform::Rotate(double& x, double& y, double angle) const
+{
+  if (angle != 0.0)
+  {
+    angle *= M_PI / 180.0;
+    double x1 = x * cos(angle) - y * sin(angle);
+    double y1 = x * sin(angle) + y * cos(angle);
+    x = x1; y = y1;
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Apply transform to position
+ */
+/*--------------------------------------------------------------------------------*/
+void PositionTransform::ApplyTransform(Position& pos) const
 {
   if (pos.polar)
   {
     // convert to cartesian, transform and then convert back
     pos = pos.Cart();
-    Transform(pos);
+    ApplyTransform(pos);
     pos = pos.Polar();
   }
   else
@@ -103,14 +122,26 @@ void PositionTransform::Transform(Position& pos) const
   }
 }
 
-void PositionTransform::Rotate(double& x, double& y, double angle) const
+/*--------------------------------------------------------------------------------*/
+/** Remove transform to position
+ */
+/*--------------------------------------------------------------------------------*/
+void PositionTransform::RemoveTransform(Position& pos) const
 {
-  if (angle != 0.0)
+  if (pos.polar)
   {
-    angle *= M_PI / 180.0;
-    double x1 = x * cos(angle) - y * sin(angle);
-    double y1 = x * sin(angle) + y * cos(angle);
-    x = x1; y = y1;
+    // convert to cartesian, transform and then convert back
+    pos = pos.Cart();
+    RemoveTransform(pos);
+    pos = pos.Polar();
+  }
+  else
+  {
+    pos -= posttranslation;
+    Rotate(pos.pos.x, pos.pos.y, -zrotation); 
+    Rotate(pos.pos.x, pos.pos.z, -yrotation); 
+    Rotate(pos.pos.y, pos.pos.z, -xrotation); 
+    pos -= pretranslation;
   }
 }
 
@@ -146,13 +177,17 @@ ScreenTransform& ScreenTransform::operator = (const ScreenTransform& obj)
   return *this;
 }
 
-void ScreenTransform::Transform(Position& pos) const
+/*--------------------------------------------------------------------------------*/
+/** Apply transform to position
+ */
+/*--------------------------------------------------------------------------------*/
+void ScreenTransform::ApplyTransform(Position& pos) const
 {
   if (pos.polar)
   {
     // convert to cartesian, transform and then convert back
     pos = pos.Cart();
-    Transform(pos);
+    ApplyTransform(pos);
     pos = pos.Polar();
   }
   else
@@ -161,6 +196,30 @@ void ScreenTransform::Transform(Position& pos) const
     
     pos.pos.x = cx + sx * m * pos.pos.x;
     pos.pos.y = cy + sy * m * pos.pos.y;
+
+    // NOTE: pos.pos.z is NOT changed, VERY important for removing transform!
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Remove transform to position
+ */
+/*--------------------------------------------------------------------------------*/
+void ScreenTransform::RemoveTransform(Position& pos) const
+{
+  if (pos.polar)
+  {
+    // convert to cartesian, transform and then convert back
+    pos = pos.Cart();
+    RemoveTransform(pos);
+    pos = pos.Polar();
+  }
+  else
+  {
+    double m = GetDistanceScale(pos.pos.z);
+    
+    pos.pos.x = (pos.pos.x - cx) / (sx * m);
+    pos.pos.y = (pos.pos.y - cy) / (sy * m);
   }
 }
 
@@ -402,7 +461,7 @@ bool operator == (const Position& obj1, const Position& obj2)
 /*--------------------------------------------------------------------------------*/
 Position& Position::operator *= (const PositionTransform& trans)
 {
-  trans.Transform(*this);
+  trans.ApplyTransform(*this);
   return *this;
 }
 
@@ -413,7 +472,28 @@ Position& Position::operator *= (const PositionTransform& trans)
 Position operator * (const Position& pos, const PositionTransform& trans)
 {
   Position res = pos;
-  trans.Transform(res);
+  trans.ApplyTransform(res);
+  return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Remove position transform
+ */
+/*--------------------------------------------------------------------------------*/
+Position& Position::operator /= (const PositionTransform& trans)
+{
+  trans.RemoveTransform(*this);
+  return *this;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Remove position transform
+ */
+/*--------------------------------------------------------------------------------*/
+Position operator / (const Position& pos, const PositionTransform& trans)
+{
+  Position res = pos;
+  trans.RemoveTransform(res);
   return res;
 }
 
@@ -423,7 +503,7 @@ Position operator * (const Position& pos, const PositionTransform& trans)
 /*--------------------------------------------------------------------------------*/
 Position& Position::operator *= (const ScreenTransform& trans)
 {
-  trans.Transform(*this);
+  trans.ApplyTransform(*this);
   return *this;
 }
 
@@ -434,7 +514,28 @@ Position& Position::operator *= (const ScreenTransform& trans)
 Position operator * (const Position& pos, const ScreenTransform& trans)
 {
   Position res = pos;
-  trans.Transform(res);
+  trans.ApplyTransform(res);
+  return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Remove screen transform
+ */
+/*--------------------------------------------------------------------------------*/
+Position& Position::operator /= (const ScreenTransform& trans)
+{
+  trans.RemoveTransform(*this);
+  return *this;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Remove screen transform
+ */
+/*--------------------------------------------------------------------------------*/
+Position operator / (const Position& pos, const ScreenTransform& trans)
+{
+  Position res = pos;
+  trans.RemoveTransform(res);
   return res;
 }
 

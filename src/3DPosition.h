@@ -141,6 +141,18 @@ public:
   friend Position operator * (const Position& pos, const PositionTransform& trans);
 
   /*--------------------------------------------------------------------------------*/
+  /** Remove position transform
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual Position& operator /= (const PositionTransform& trans);
+    
+  /*--------------------------------------------------------------------------------*/
+  /** Remove position transform
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend Position operator / (const Position& pos, const PositionTransform& trans);
+
+  /*--------------------------------------------------------------------------------*/
   /** Apply screen transform
    */
   /*--------------------------------------------------------------------------------*/
@@ -151,6 +163,18 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   friend Position operator * (const Position& pos, const ScreenTransform& trans);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Remove screen transform
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual Position& operator /= (const ScreenTransform& trans);
+    
+  /*--------------------------------------------------------------------------------*/
+  /** Remove screen transform
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend Position operator / (const Position& pos, const ScreenTransform& trans);
 
   /*--------------------------------------------------------------------------------*/
   /** Generate friendly text string
@@ -213,7 +237,6 @@ public:
  *
  */
 /*--------------------------------------------------------------------------------*/
-
 class PositionTransform
 {
 public:
@@ -261,7 +284,13 @@ public:
   /** Apply transform to position
    */
   /*--------------------------------------------------------------------------------*/
-  void Transform(Position& pos) const;
+  void ApplyTransform(Position& pos) const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Remove transform to position
+   */
+  /*--------------------------------------------------------------------------------*/
+  void RemoveTransform(Position& pos) const;
 
 protected:
   /*--------------------------------------------------------------------------------*/
@@ -271,6 +300,13 @@ protected:
   void Rotate(double& x, double& y, double angle) const;
 };
 
+/*--------------------------------------------------------------------------------*/
+/** Screen transformation class
+ *
+ * Transform consists of scaling and positioning on screen and applying perspective
+ *
+ */
+/*--------------------------------------------------------------------------------*/
 class ScreenTransform {
 public:
   ScreenTransform();
@@ -301,7 +337,13 @@ public:
   /** Apply transform to position
    */
   /*--------------------------------------------------------------------------------*/
-  void Transform(Position& pos) const;
+  void ApplyTransform(Position& pos) const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Remove transform to position
+   */
+  /*--------------------------------------------------------------------------------*/
+  void RemoveTransform(Position& pos) const;
   
   double cx, cy;        // screen centre
   double sx, sy;        // screen scale
