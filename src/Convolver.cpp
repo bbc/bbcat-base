@@ -121,7 +121,7 @@ uint_t ConvolverManager::CalcPartitions(const FILTER_FADE& fade, double samplera
     len = MIN(len, filterlen - start);
   }
 
-  DEBUG2(("From fade structure (start %0.3lfs fade-in %0.3lfs end %0.3lfs fade-out %0.3lfs), filter length %u samples and sample rate of %0.0lfHz, filter start is %u samples, length %u samples",
+  DEBUG2(("From fade structure (fade-in start %0.3lfs fade-in length %0.3lfs fade-out start %0.3lfs fade-out length %0.3lfs), filter length %u samples and sample rate of %0.0lfHz, filter start is %u samples, length %u samples",
           fade.fade_in_start, fade.fade_in_length,
           fade.fade_out_start, fade.fade_out_length,
           filterlen, samplerate,
