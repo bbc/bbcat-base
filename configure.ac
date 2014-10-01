@@ -36,31 +36,85 @@ AC_SUBST(ACLOCAL_AMFLAGS)
 DX_DOXYGEN_FEATURE(ON)
 DX_INIT_DOXYGEN(aplibs-dsp, doxygen.cfg)
 
-# Check if we should enable GPL code  (./configure --enable-gpl)
-AC_MSG_CHECKING(whether to include code under gpl)
-AC_ARG_ENABLE(gpl, AS_HELP_STRING([--disable-gpl], [disable code under GPL]), ENABLE_GPL="no", ENABLE_GPL="yes")
-AM_CONDITIONAL(ENABLE_GPL, test "x${ENABLE_GPL}" = "xyes")
-if test "x${ENABLE_GPL}" = "xyes"; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
-
 APLIBS_GLOBAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
 APLIBS_GLOBAL_LIBS=""
 
-AC_MSG_CHECKING(whether to include support for SOFA files)
-AC_ARG_ENABLE(sofa, AS_HELP_STRING([--disable-sofa], [disable SOFA support]), ENABLE_SOFA="no", ENABLE_SOFA="yes")
-AM_CONDITIONAL(ENABLE_SOFA, test "x${ENABLE_SOFA}" = "xyes")
-if test "x${ENABLE_SOFA}" = "xyes"; then
-  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_SOFA=1"
+ENABLE_SOFA="no"
+ENABLE_CONVOLVER="no"
+
+# Check if we should disable GPL code  (./configure --disable-gpl)
+AC_MSG_CHECKING(whether to include code under gpl)
+AC_ARG_ENABLE(gpl, AS_HELP_STRING([--disable-gpl], [disable code under GPL]), ENABLE_GPL="no", ENABLE_GPL="yes")
+if test "x${ENABLE_GPL}" = "xyes"; then
   AC_MSG_RESULT(yes)
+
+  # check for convolving support
+  AC_MSG_CHECKING(whether to include support for convolving)
+  AC_ARG_ENABLE(convolver, AS_HELP_STRING([--disable-convolver], [disable convolver support]), ENABLE_CONVOLVER="no", ENABLE_CONVOLVER="yes")
+  if test "x${ENABLE_CONVOLVER}" = "xyes"; then
+    AC_MSG_RESULT(yes)
+
+    # check for SOFA support
+    AC_MSG_CHECKING(whether to include SOFA support)
+    AC_ARG_ENABLE(sofa, AS_HELP_STRING([--disable-sofa], [disable SOFA support]), ENABLE_SOFA="no", ENABLE_SOFA="yes")
+    if test "x${ENABLE_SOFA}" = "xyes"; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+    fi
+  else
+    AC_MSG_RESULT(no)
+  fi
 else
-  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_SOFA=0"
   AC_MSG_RESULT(no)
 fi
+
+AM_CONDITIONAL(ENABLE_GPL,       test "x${ENABLE_GPL}" = "xyes")
+AM_CONDITIONAL(ENABLE_SOFA,      test "x${ENABLE_SOFA}" = "xyes")
+AM_CONDITIONAL(ENABLE_CONVOLVER, test "x${ENABLE_CONVOLVER}" = "xyes")
+
+if test "x${ENABLE_GPL}" = "xyes"; then
+  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_GPL=1"
+else
+  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_GPL=0"
+fi
+
+if test "x${ENABLE_CONVOLVER}" = "xyes"; then
+  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_CONVOLVER=1"
+else
+  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_CONVOLVER=0"
+fi
+
+if test "x${ENABLE_SOFA}" = "xyes"; then
+  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_SOFA=1"
+else
+  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_SOFA=0"
+fi
+
 AC_SUBST(APLIBS_GLOBAL_CFLAGS)
 AC_SUBST(APLIBS_GLOBAL_LIBS)
+
+if test "x$ENABLE_CONVOLVER" = "xyes"; then
+  LIBSNDFILE_VER="1.0.25"
+  PKG_CHECK_MODULES([SNDFILE], [sndfile >= LIBSNDFILE_VER], HAVE_SNDFILE=yes, HAVE_SNDFILE=no)
+  if test "x${HAVE_SNDFILE}" != xyes ; then
+    AC_MSG_ERROR([sndfile >= $LIBSNDFILE_VER is required])
+  fi
+
+  # Checking for FFTW3 (single-precision)
+  FFTW_VER="3.0.0"
+  PKG_CHECK_MODULES([FFTW], [fftw3f >= FFTW_VER], HAVE_FFTW=yes, HAVE_FFTW=no)
+  if test "x${HAVE_FFTW}" != xyes ; then
+    AC_MSG_ERROR([fftw3f >= $FFTW_VER is required])
+  fi
+  
+  dnl Check for apf
+  APF_VER="0.2.0"
+  PKG_CHECK_MODULES([APF], [apf-0.2 >= 0.2.0], HAVE_APF=yes, HAVE_APF=no)
+  if test "x${HAVE_APF}" != xyes ; then
+    AC_MSG_ERROR([apf >= $APF_VER is required])
+  fi
+fi
 
 # Check if we should disable optimization  (./configure --disable-opt)
 AC_MSG_CHECKING(whether to disable optimization)
@@ -74,12 +128,6 @@ else
 fi
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
-
-LIBSNDFILE_VER="1.0.25"
-PKG_CHECK_MODULES([SNDFILE], [sndfile >= LIBSNDFILE_VER], HAVE_SNDFILE=yes, HAVE_SNDFILE=no)
-if test "x${HAVE_SNDFILE}" != xyes ; then
-  AC_MSG_ERROR([sndfile library is required])
-fi
 
 AC_ARG_WITH([thread],
     AS_HELP_STRING([--with-thread=IMPL],[use threading library {auto,pthread,gthread,win32,none} [[default=auto]]]),
@@ -117,22 +165,6 @@ if test "x${with_thread}" = "xgthread" ; then
   PKG_CHECK_MODULES(GTHREAD, gthread-2.0, HAVE_GTHREAD=yes, HAVE_GTHREAD=no)
   AC_SUBST(GTHREAD_LIBS)
   AC_SUBST(GTHREAD_CFLAGS)
-fi
-
-if test "x$ENABLE_GPL" = "xyes"; then
-  # Checking for FFTW3 (single-precision)
-  FFTW_VER="3.0.0"
-  PKG_CHECK_MODULES([FFTW], [fftw3f >= FFTW_VER], HAVE_FFTW=yes, HAVE_FFTW=no)
-  if test "x${HAVE_FFTW}" != xyes ; then
-    AC_MSG_ERROR([fftw3f >= $FFTW_VER is required])
-  fi
-  
-  dnl Check for apf
-  APF_VER="0.2.0"
-  PKG_CHECK_MODULES([APF], [apf-0.2 >= 0.2.0], HAVE_APF=yes, HAVE_APF=no)
-  if test "x${HAVE_APF}" != xyes ; then
-    AC_MSG_ERROR([apf >= $APF_VER is required])
-  fi
 fi
 
 if test ! x$osx = xtrue ; then

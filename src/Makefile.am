@@ -20,7 +20,6 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS =	\
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
 	3DPosition.cpp								\
 	ByteSwap.cpp								\
-	Crossfader.cpp								\
 	DistanceModel.cpp							\
 	EnhancedFile.cpp							\
 	FractionalSample.cpp						\
@@ -38,12 +37,10 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
 pkginclude_HEADERS =							\
 	3DPosition.h								\
 	ByteSwap.h									\
-	Crossfader.hpp								\
 	DistanceModel.h								\
 	EnhancedFile.h								\
 	FractionalSample.h							\
 	Interpolator.h								\
-	Logging.hpp									\
 	ParameterSet.h								\
 	PerformanceMonitor.h						\
 	PositionCursor.h							\
@@ -57,19 +54,20 @@ pkginclude_HEADERS =							\
 	VBAPanner2D.h								\
 	misc.h
 
-if ENABLE_GPL
+if ENABLE_CONVOLVER
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS += $(APF_CFLAGS) $(SNDFILE_CFLAGS) $(FFTW_CFLAGS)
-libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD += $(APF_LIBS) $(SNDFILE_LIBS) $(FFTW_LIBS)
-libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES += Convolver.cpp
-pkginclude_HEADERS += Convolver.h
+libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD   += $(APF_LIBS) $(SNDFILE_LIBS) $(FFTW_LIBS)
+libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES  += Convolver.cpp
+pkginclude_HEADERS                            += Convolver.h
 endif
 
+if ENABLE_GPL
 if ENABLE_SOFA
-#-DENABLE_SOFA is passed through SOFA_CFLAGS
 libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_CPPFLAGS += $(NETCDF_CFLAGS) $(NETCDFCXX_CFLAGS)
-libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD += $(NETCDF_LIBS) $(NETCDFCXX_LIBS)
-libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES += SOFA.cpp
-pkginclude_HEADERS += SOFA.h
+libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_LIBADD   += $(NETCDF_LIBS) $(NETCDFCXX_LIBS)
+libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES  += SOFA.cpp
+pkginclude_HEADERS                            += SOFA.h
+endif
 endif
 
 noinst_HEADERS =
