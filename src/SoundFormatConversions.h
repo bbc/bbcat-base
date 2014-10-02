@@ -75,6 +75,12 @@ extern bool IsSampleInteger(SampleFormat_t type);
 extern bool IsSampleFloat(SampleFormat_t type);
 
 /*--------------------------------------------------------------------------------*/
+/** Return number of bits per sample for a given sample format
+ */
+/*--------------------------------------------------------------------------------*/
+extern uint8_t GetBitsPerSample(SampleFormat_t type);
+
+/*--------------------------------------------------------------------------------*/
 /** Return number of bytes per sample for a given sample format
  */
 /*--------------------------------------------------------------------------------*/

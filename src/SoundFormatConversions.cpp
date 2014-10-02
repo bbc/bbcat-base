@@ -14,15 +14,24 @@ BBC_AUDIOTOOLBOX_START
 /** Array of number of bytes for each format
  */
 /*--------------------------------------------------------------------------------*/
-const uint8_t SoundFormatBytes[SampleFormat_Count] =
+const uint8_t SoundFormatBits[SampleFormat_Count] =
 {
-  1, // SampleFormat_Unknown
-  2, // SampleFormat_16bit
-  3, // SampleFormat_24bit
-  4, // SampleFormat_32bit
-  4, // SampleFormat_Float
-  8, // SampleFormat_Double
+  1,  // SampleFormat_Unknown
+  16, // SampleFormat_16bit
+  24, // SampleFormat_24bit
+  32, // SampleFormat_32bit
+  32, // SampleFormat_Float
+  64, // SampleFormat_Double
 };
+
+/*--------------------------------------------------------------------------------*/
+/** Return number of bits per sample for a given sample format
+ */
+/*--------------------------------------------------------------------------------*/
+uint8_t GetBitsPerSample(SampleFormat_t type)
+{
+  return SoundFormatBits[type];
+}
 
 /*--------------------------------------------------------------------------------*/
 /** Return number of bytes per sample for a given sample format
@@ -30,7 +39,7 @@ const uint8_t SoundFormatBytes[SampleFormat_Count] =
 /*--------------------------------------------------------------------------------*/
 uint8_t GetBytesPerSample(SampleFormat_t type)
 {
-  return SoundFormatBytes[type];
+  return (SoundFormatBits[type] + 7) >> 3;
 }
 
 /*--------------------------------------------------------------------------------*/
