@@ -69,13 +69,13 @@ Quaternion& Quaternion::operator = (const Quaternion& obj)
   z = obj.z;
   return *this; 
 }
-Quaternion& Quaternion::operator = (const Position& pos)
+Quaternion& Quaternion::operator = (const Position& vec)
 {
-  Position _pos = pos.Cart();
+  Position _vec = vec.Cart().Unit();
   w = 0.0;
-  x = _pos.pos.x;
-  y = _pos.pos.y;
-  z = _pos.pos.z;
+  x = _vec.pos.x;
+  y = _vec.pos.y;
+  z = _vec.pos.z;
   return *this; 
 }
 

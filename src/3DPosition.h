@@ -283,7 +283,7 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   Quaternion& operator = (const Quaternion& obj);
-  Quaternion& operator = (const Position& pos);
+  Quaternion& operator = (const Position& vec);
 
   /*--------------------------------------------------------------------------------*/
   /** Negate operator - invert rotation
