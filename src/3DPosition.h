@@ -267,27 +267,23 @@ public:
   /*--------------------------------------------------------------------------------*/
   Quaternion(double phi = 0.0, double _x = 1.0, double _y = 0.0, double _z = 0.0);
   Quaternion(double phi, const Position& vec);
+  Quaternion(const Position& vec);
   /*--------------------------------------------------------------------------------*/
   /** Copy constructor
    */
   /*--------------------------------------------------------------------------------*/
   Quaternion(const Quaternion& obj) : w(obj.w),
-                                        x(obj.x),
-                                        y(obj.y),
-                                        z(obj.z) {}
+                                      x(obj.x),
+                                      y(obj.y),
+                                      z(obj.z) {}
   ~Quaternion() {}
 
   /*--------------------------------------------------------------------------------*/
   /** Assignment operator
    */
   /*--------------------------------------------------------------------------------*/
-  Quaternion& operator = (const Quaternion& obj) {
-    w = obj.w;
-    x = obj.x;
-    y = obj.y;
-    z = obj.z;
-    return *this; 
-  }
+  Quaternion& operator = (const Quaternion& obj);
+  Quaternion& operator = (const Position& pos);
 
   /*--------------------------------------------------------------------------------*/
   /** Negate operator - invert rotation

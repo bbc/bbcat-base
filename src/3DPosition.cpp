@@ -52,6 +52,32 @@ Quaternion::Quaternion(double phi, const Position& vec)
 {
   Set(phi, vec);
 }
+Quaternion::Quaternion(const Position& vec)
+{
+  operator = (vec);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Assignment operator
+ */
+/*--------------------------------------------------------------------------------*/
+Quaternion& Quaternion::operator = (const Quaternion& obj)
+{
+  w = obj.w;
+  x = obj.x;
+  y = obj.y;
+  z = obj.z;
+  return *this; 
+}
+Quaternion& Quaternion::operator = (const Position& pos)
+{
+  Position _pos = pos.Cart();
+  w = 0.0;
+  x = _pos.pos.x;
+  y = _pos.pos.y;
+  z = _pos.pos.z;
+  return *this; 
+}
 
 /*--------------------------------------------------------------------------------*/
 /** Explicit set functions
@@ -60,7 +86,7 @@ Quaternion::Quaternion(double phi, const Position& vec)
 Quaternion& Quaternion::Set(double phi, double _x, double _y, double _z)
 {
   // Quaternion version of rotation of phi degrees of (_x, _y, _z) axis is:
-  // cos(phi * pi / 360) - (_x.i + _y.j + _z.k).sin(phi * pi / 360)
+  // cos(phi * pi / 360) + (_x.i + _y.j + _z.k).sin(phi * pi / 360)
   double s, m = sqrt(_x * _x + _y * _y + _z * _z); // calculate magnitude of pure vector
   phi *= M_PI / 360.0;                        // convert from degrees to radians and half angle
   w    = cos(phi);
@@ -112,21 +138,8 @@ Quaternion operator / (const Quaternion& obj1, const Quaternion& obj2)
 /*--------------------------------------------------------------------------------*/
 Position operator * (const Position& pos, const Quaternion& rotation)
 {
-  Position res, _pos = pos.Cart();
-  double t2 =  rotation.w * rotation.x;
-  double t3 =  rotation.w * rotation.y;
-  double t4 =  rotation.w * rotation.z;
-  double t5 = -rotation.x * rotation.x;
-  double t6 =  rotation.x * rotation.y;
-  double t7 =  rotation.x * rotation.z;
-  double t8 = -rotation.y * rotation.y;
-  double t9 =  rotation.y * rotation.z;
-  double t1 = -rotation.z * rotation.z;
-  res.polar = false;
-  res.pos.x = 2.0 * ((t8 + t1) * _pos.pos.x + (t6 - t4) * _pos.pos.y + (t3 + t7) * _pos.pos.z) + _pos.pos.x;
-  res.pos.y = 2.0 * ((t4 + t6) * _pos.pos.x + (t5 + t1) * _pos.pos.y + (t9 - t2) * _pos.pos.z) + _pos.pos.y;
-  res.pos.z = 2.0 * ((t7 - t3) * _pos.pos.x + (t2 + t9) * _pos.pos.y + (t5 + t8) * _pos.pos.z) + _pos.pos.z;
-  return pos.polar ? res.Polar() : res;
+  // calculate p' = qp(q^-1)
+  return ((rotation * Quaternion(pos)) * (-rotation)).GetAxis();
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -135,21 +148,8 @@ Position operator * (const Position& pos, const Quaternion& rotation)
 /*--------------------------------------------------------------------------------*/
 Position operator / (const Position& pos, const Quaternion& rotation)
 {
-  Position res, _pos = pos.Cart();
-  double t2 =  rotation.w * -rotation.x;        // note inverted x/y/z with respect to the above
-  double t3 =  rotation.w * -rotation.y;
-  double t4 =  rotation.w * -rotation.z;
-  double t5 =  rotation.x * -rotation.x;
-  double t6 = -rotation.x * -rotation.y;
-  double t7 = -rotation.x * -rotation.z;
-  double t8 =  rotation.y * -rotation.y;
-  double t9 = -rotation.y * -rotation.z;
-  double t1 =  rotation.z * -rotation.z;
-  res.polar = false;
-  res.pos.x = 2.0 * ((t8 + t1) * _pos.pos.x + (t6 - t4) * _pos.pos.y + (t3 + t7) * _pos.pos.z) + _pos.pos.x;
-  res.pos.y = 2.0 * ((t4 + t6) * _pos.pos.x + (t5 + t1) * _pos.pos.y + (t9 - t2) * _pos.pos.z) + _pos.pos.y;
-  res.pos.z = 2.0 * ((t7 - t3) * _pos.pos.x + (t2 + t9) * _pos.pos.y + (t5 + t8) * _pos.pos.z) + _pos.pos.z;
-  return pos.polar ? res.Polar() : res;
+  // calculate p' = (q^-1)pq
+  return (((-rotation) * Quaternion(pos)) * rotation).GetAxis();
 }
 
 /*--------------------------------------------------------------------------------*/
