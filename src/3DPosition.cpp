@@ -8,15 +8,162 @@
 
 BBC_AUDIOTOOLBOX_START
 
-PositionTransform::PositionTransform() : xrotation(0.0),
-                                         yrotation(0.0),
-                                         zrotation(0.0)
+const Position XAxis(1.0, 0.0, 0.0);
+const Position YAxis(0.0, 1.0, 0.0);
+const Position ZAxis(0.0, 0.0, 1.0);
+
+/*--------------------------------------------------------------------------------*/
+/** Apply rotation
+ */
+/*--------------------------------------------------------------------------------*/
+Position& Position::operator *= (const Quaternion& rotation)
+{
+  *this = *this * rotation;
+  return *this;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Remove rotation
+ */
+/*--------------------------------------------------------------------------------*/
+Position& Position::operator /= (const Quaternion& rotation)
+{
+  *this = *this / rotation;
+  return *this;
+}
+
+/*--------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------*/
+/** Simple constructor
+ *
+ * @param phi rotation angle IN DEGREES
+ * @param x   x component of axis of rotation
+ * @param y   y component of axis of rotation
+ * @param z   z component of axis of rotation
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+Quaternion::Quaternion(double phi, double _x, double _y, double _z)
+{
+  Set(phi, _x, _y, _z);
+}
+Quaternion::Quaternion(double phi, const Position& vec)
+{
+  Set(phi, vec);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Explicit set functions
+ */
+/*--------------------------------------------------------------------------------*/
+Quaternion& Quaternion::Set(double phi, double _x, double _y, double _z)
+{
+  // Quaternion version of rotation of phi degrees of (_x, _y, _z) axis is:
+  // cos(phi * pi / 360) - (_x.i + _y.j + _z.k).sin(phi * pi / 360)
+  double s, m = sqrt(_x * _x + _y * _y + _z * _z); // calculate magnitude of pure vector
+  phi *= M_PI / 360.0;                        // convert from degrees to radians and half angle
+  w    = cos(phi);
+  s    = sin(phi) / ((m > 0.0) ? m : 1.0);    // divide sin multiplier by magnitude of (_x, _y, _z) magnitude to ensure it is a unit vector
+  x    = s * _x;
+  y    = s * _y;
+  z    = s * _z;
+  return *this;
+}
+
+Quaternion& Quaternion::Set(double phi, const Position& vec)
+{
+  Position _vec = vec.Cart();
+  return Set(phi, _vec.pos.x, _vec.pos.y, _vec.pos.z);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Multiply operator - apply second rotation to first
+ */
+/*--------------------------------------------------------------------------------*/
+Quaternion operator * (const Quaternion& obj1, const Quaternion& obj2)
+{
+  // (a + bi + cj + dk)(e + fi + gi + hk) = 
+  //     (ae - bf - cg - dh) + (af + be + ch - dg)i + (ag - bh + ce + df)j + (ah + bg - cf + de)k
+  // a = w     e = obj.w
+  // b = x     f = obj.x
+  // c = y     g = obj.y
+  // d = z     h = obj.z
+  Quaternion res;
+  res.w = obj1.w * obj2.w - obj1.x * obj2.x - obj1.y * obj2.y - obj1.z * obj2.z;
+  res.x = obj1.w * obj2.x + obj1.x * obj2.w + obj1.y * obj2.z - obj1.z * obj2.y;
+  res.y = obj1.w * obj2.y - obj1.x * obj2.z + obj1.y * obj2.w + obj1.z * obj2.x;
+  res.z = obj1.w * obj2.z + obj1.x * obj2.y - obj1.y * obj2.x + obj1.z * obj2.w;
+  return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Divide operator - remove second rotation from first
+ */
+/*--------------------------------------------------------------------------------*/
+Quaternion operator / (const Quaternion& obj1, const Quaternion& obj2)
+{
+  return obj1 * -obj2;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Rotate position by Quaternion
+ */
+/*--------------------------------------------------------------------------------*/
+Position operator * (const Position& pos, const Quaternion& rotation)
+{
+  Position res, _pos = pos.Cart();
+  double t2 =  rotation.w * rotation.x;
+  double t3 =  rotation.w * rotation.y;
+  double t4 =  rotation.w * rotation.z;
+  double t5 = -rotation.x * rotation.x;
+  double t6 =  rotation.x * rotation.y;
+  double t7 =  rotation.x * rotation.z;
+  double t8 = -rotation.y * rotation.y;
+  double t9 =  rotation.y * rotation.z;
+  double t1 = -rotation.z * rotation.z;
+  res.polar = false;
+  res.pos.x = 2.0 * ((t8 + t1) * _pos.pos.x + (t6 - t4) * _pos.pos.y + (t3 + t7) * _pos.pos.z) + _pos.pos.x;
+  res.pos.y = 2.0 * ((t4 + t6) * _pos.pos.x + (t5 + t1) * _pos.pos.y + (t9 - t2) * _pos.pos.z) + _pos.pos.y;
+  res.pos.z = 2.0 * ((t7 - t3) * _pos.pos.x + (t2 + t9) * _pos.pos.y + (t5 + t8) * _pos.pos.z) + _pos.pos.z;
+  return pos.polar ? res.Polar() : res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Reverse rotate position by Quaternion
+ */
+/*--------------------------------------------------------------------------------*/
+Position operator / (const Position& pos, const Quaternion& rotation)
+{
+  Position res, _pos = pos.Cart();
+  double t2 =  rotation.w * -rotation.x;        // note inverted x/y/z with respect to the above
+  double t3 =  rotation.w * -rotation.y;
+  double t4 =  rotation.w * -rotation.z;
+  double t5 =  rotation.x * -rotation.x;
+  double t6 = -rotation.x * -rotation.y;
+  double t7 = -rotation.x * -rotation.z;
+  double t8 =  rotation.y * -rotation.y;
+  double t9 = -rotation.y * -rotation.z;
+  double t1 =  rotation.z * -rotation.z;
+  res.polar = false;
+  res.pos.x = 2.0 * ((t8 + t1) * _pos.pos.x + (t6 - t4) * _pos.pos.y + (t3 + t7) * _pos.pos.z) + _pos.pos.x;
+  res.pos.y = 2.0 * ((t4 + t6) * _pos.pos.x + (t5 + t1) * _pos.pos.y + (t9 - t2) * _pos.pos.z) + _pos.pos.y;
+  res.pos.z = 2.0 * ((t7 - t3) * _pos.pos.x + (t2 + t9) * _pos.pos.y + (t5 + t8) * _pos.pos.z) + _pos.pos.z;
+  return pos.polar ? res.Polar() : res;
+}
+
+/*--------------------------------------------------------------------------------*/
+
+PositionTransform::PositionTransform()
 {
 }
 
-PositionTransform::PositionTransform(const PositionTransform& obj) : xrotation(0.0),
-                                                                     yrotation(0.0),
-                                                                     zrotation(0.0)
+PositionTransform::PositionTransform(const PositionTransform& obj)
+{
+  operator = (obj);
+}
+
+PositionTransform::PositionTransform(const Quaternion& obj)
 {
   operator = (obj);
 }
@@ -28,16 +175,17 @@ PositionTransform::PositionTransform(const PositionTransform& obj) : xrotation(0
 PositionTransform& PositionTransform::operator = (const PositionTransform& obj)
 {
   pretranslation  = obj.pretranslation;
-  xrotation       = obj.xrotation;
-  yrotation       = obj.yrotation;
-  zrotation       = obj.zrotation;
-  while (xrotation < -180.0) xrotation += 360.0;
-  while (xrotation >= 180.0) xrotation -= 360.0;
-  while (yrotation < -180.0) yrotation += 360.0;
-  while (yrotation >= 180.0) yrotation -= 360.0;
-  while (zrotation < -180.0) zrotation += 360.0;
-  while (zrotation >= 180.0) zrotation -= 360.0;
+  rotation        = obj.rotation;
   posttranslation = obj.posttranslation;
+
+  return *this;
+}
+
+PositionTransform& PositionTransform::operator = (const Quaternion& obj)
+{
+  pretranslation  = Position();
+  rotation        = obj;
+  posttranslation = Position();
 
   return *this;
 }
@@ -49,15 +197,7 @@ PositionTransform& PositionTransform::operator = (const PositionTransform& obj)
 PositionTransform& PositionTransform::operator += (const PositionTransform& obj)
 {
   pretranslation  += obj.pretranslation;
-  xrotation       += obj.xrotation;
-  yrotation       += obj.yrotation;
-  zrotation       += obj.zrotation;
-  while (xrotation < -180.0) xrotation += 360.0;
-  while (xrotation >= 180.0) xrotation -= 360.0;
-  while (yrotation < -180.0) yrotation += 360.0;
-  while (yrotation >= 180.0) yrotation -= 360.0;
-  while (zrotation < -180.0) zrotation += 360.0;
-  while (zrotation >= 180.0) zrotation -= 360.0;
+  rotation        *= obj.rotation;
   posttranslation += obj.posttranslation;
 
   return *this;
@@ -70,33 +210,10 @@ PositionTransform& PositionTransform::operator += (const PositionTransform& obj)
 PositionTransform& PositionTransform::operator -= (const PositionTransform& obj)
 {
   pretranslation  -= obj.pretranslation;
-  xrotation       -= obj.xrotation;
-  yrotation       -= obj.yrotation;
-  zrotation       -= obj.zrotation;
-  while (xrotation < -180.0) xrotation += 360.0;
-  while (xrotation >= 180.0) xrotation -= 360.0;
-  while (yrotation < -180.0) yrotation += 360.0;
-  while (yrotation >= 180.0) yrotation -= 360.0;
-  while (zrotation < -180.0) zrotation += 360.0;
-  while (zrotation >= 180.0) zrotation -= 360.0;
+  rotation        /= obj.rotation;
   posttranslation -= obj.posttranslation;
 
   return *this;
-}
-
-/*--------------------------------------------------------------------------------*/
-/** Rotate x and y by angle
- */
-/*--------------------------------------------------------------------------------*/
-void PositionTransform::Rotate(double& x, double& y, double angle) const
-{
-  if (angle != 0.0)
-  {
-    angle *= M_PI / 180.0;
-    double x1 = x * cos(angle) - y * sin(angle);
-    double y1 = x * sin(angle) + y * cos(angle);
-    x = x1; y = y1;
-  }
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -115,9 +232,7 @@ void PositionTransform::ApplyTransform(Position& pos) const
   else
   {
     pos += pretranslation;
-    Rotate(pos.pos.y, pos.pos.z, xrotation); 
-    Rotate(pos.pos.x, pos.pos.z, yrotation); 
-    Rotate(pos.pos.x, pos.pos.y, zrotation); 
+    pos *= rotation;
     pos += posttranslation;
   }
 }
@@ -138,9 +253,7 @@ void PositionTransform::RemoveTransform(Position& pos) const
   else
   {
     pos -= posttranslation;
-    Rotate(pos.pos.x, pos.pos.y, -zrotation); 
-    Rotate(pos.pos.x, pos.pos.z, -yrotation); 
-    Rotate(pos.pos.y, pos.pos.z, -xrotation); 
+    pos /= rotation;
     pos -= pretranslation;
   }
 }

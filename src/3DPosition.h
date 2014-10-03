@@ -11,6 +11,7 @@ BBC_AUDIOTOOLBOX_START
 
 class PositionTransform;
 class ScreenTransform;
+class Quaternion;
 
 /*--------------------------------------------------------------------------------*/
 /** Position object - holds polar or cartesian co-ordinates with all angles in degrees
@@ -66,25 +67,25 @@ public:
   /** Return the same position but as polar co-ordinates
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position Polar() const;
+  Position Polar() const;
 
   /*--------------------------------------------------------------------------------*/
   /** Return the same position but as cartesian co-ordinates
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position Cart() const;
+  Position Cart() const;
 
   /*--------------------------------------------------------------------------------*/
   /** Limit azimuth and elevation
    */
   /*--------------------------------------------------------------------------------*/
-  virtual void LimitAngles();
+  void LimitAngles();
 
   /*--------------------------------------------------------------------------------*/
   /** Assignment
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position& operator = (const Position& obj) {polar = obj.polar; pos = obj.pos; return *this;}
+  Position& operator = (const Position& obj) {polar = obj.polar; pos = obj.pos; return *this;}
 
   /*--------------------------------------------------------------------------------*/
   /** Translate the current position by the supplied position in cartesian space
@@ -92,17 +93,17 @@ public:
    * @note the object remains in the same co-ordinate system as it was
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position& operator += (const Position& obj);
-  virtual Position& operator -= (const Position& obj);
+  Position& operator += (const Position& obj);
+  Position& operator -= (const Position& obj);
 
   /*--------------------------------------------------------------------------------*/
   /** Scale/reduce the current position
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position& operator *= (double val);
-  virtual Position& operator /= (double val) {return operator *= (1.0 / val);}
-  virtual Position& operator *= (const double vals[3]);
-  virtual Position& operator *= (const double vals[3][3]);
+  Position& operator *= (double val);
+  Position& operator /= (double val) {return operator *= (1.0 / val);}
+  Position& operator *= (const double vals[3]);
+  Position& operator *= (const double vals[3][3]);
 
   /*--------------------------------------------------------------------------------*/
   /** Binary arithmetic operations, doesn't modify supplied objects
@@ -126,13 +127,13 @@ public:
   /** Return antipodean version of position
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position operator - () const;
+  Position operator - () const;
 
   /*--------------------------------------------------------------------------------*/
   /** Apply position transform
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position& operator *= (const PositionTransform& trans);
+  Position& operator *= (const PositionTransform& trans);
     
   /*--------------------------------------------------------------------------------*/
   /** Apply position transform
@@ -144,7 +145,7 @@ public:
   /** Remove position transform
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position& operator /= (const PositionTransform& trans);
+  Position& operator /= (const PositionTransform& trans);
     
   /*--------------------------------------------------------------------------------*/
   /** Remove position transform
@@ -156,7 +157,7 @@ public:
   /** Apply screen transform
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position& operator *= (const ScreenTransform& trans);
+  Position& operator *= (const ScreenTransform& trans);
     
   /*--------------------------------------------------------------------------------*/
   /** Apply screen transform
@@ -168,7 +169,7 @@ public:
   /** Remove screen transform
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position& operator /= (const ScreenTransform& trans);
+  Position& operator /= (const ScreenTransform& trans);
     
   /*--------------------------------------------------------------------------------*/
   /** Remove screen transform
@@ -177,22 +178,34 @@ public:
   friend Position operator / (const Position& pos, const ScreenTransform& trans);
 
   /*--------------------------------------------------------------------------------*/
+  /** Apply rotation
+   */
+  /*--------------------------------------------------------------------------------*/
+  Position& operator *= (const Quaternion& rotation);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Remove rotation
+   */
+  /*--------------------------------------------------------------------------------*/
+  Position& operator /= (const Quaternion& rotation);
+
+  /*--------------------------------------------------------------------------------*/
   /** Generate friendly text string
    */
   /*--------------------------------------------------------------------------------*/
-  virtual std::string ToString() const;
+  std::string ToString() const;
 
   /*--------------------------------------------------------------------------------*/
   /** Return unit vector version of this Position
    */
   /*--------------------------------------------------------------------------------*/
-  virtual Position Unit() const;
+  Position Unit() const;
 
   /*--------------------------------------------------------------------------------*/
   /** Return modulus (distance) of Position from origin
    */
   /*--------------------------------------------------------------------------------*/
-  virtual double Mod() const {return polar ? pos.d : sqrt(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);}
+  double Mod() const {return polar ? pos.d : sqrt(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);}
 
   /*--------------------------------------------------------------------------------*/
   /** Return dot product of two positions
@@ -228,6 +241,117 @@ public:
   } pos;
 };
 
+extern const Position XAxis;
+extern const Position YAxis;
+extern const Position ZAxis;
+
+/*----------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------*/
+/** Quaternion class
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+class Quaternion
+{
+public:
+  /*--------------------------------------------------------------------------------*/
+  /** Simple constructor
+   *
+   * @param phi rotation angle IN DEGREES
+   * @param x   x component of axis of rotation
+   * @param y   y component of axis of rotation
+   * @param z   z component of axis of rotation
+   *
+   */
+  /*--------------------------------------------------------------------------------*/
+  Quaternion(double phi = 0.0, double _x = 1.0, double _y = 0.0, double _z = 0.0);
+  Quaternion(double phi, const Position& vec);
+  /*--------------------------------------------------------------------------------*/
+  /** Copy constructor
+   */
+  /*--------------------------------------------------------------------------------*/
+  Quaternion(const Quaternion& obj) : w(obj.w),
+                                        x(obj.x),
+                                        y(obj.y),
+                                        z(obj.z) {}
+  ~Quaternion() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Assignment operator
+   */
+  /*--------------------------------------------------------------------------------*/
+  Quaternion& operator = (const Quaternion& obj) {
+    w = obj.w;
+    x = obj.x;
+    y = obj.y;
+    z = obj.z;
+    return *this; 
+  }
+
+  /*--------------------------------------------------------------------------------*/
+  /** Negate operator - invert rotation
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend Quaternion operator - (const Quaternion& obj) {
+    Quaternion res;
+    res.w =  obj.w;
+    res.x = -obj.x;
+    res.y = -obj.y;
+    res.z = -obj.z;
+    return res; 
+  }
+
+  /*--------------------------------------------------------------------------------*/
+  /** Explicit set functions
+   */
+  /*--------------------------------------------------------------------------------*/
+  Quaternion& Set(double phi, double _x, double _y, double _z);
+  Quaternion& Set(double phi, const Position& vec);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Multiply operator - apply second rotation to first
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend Quaternion operator * (const Quaternion& obj1, const Quaternion& obj2);
+  Quaternion& operator *= (const Quaternion& obj) {*this = *this * obj; return *this;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Divide operator - remove second rotation from first
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend Quaternion operator / (const Quaternion& obj1, const Quaternion& obj2);
+  Quaternion& operator /= (const Quaternion& obj) {*this = *this / obj; return *this;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return angle
+   *
+   * @note returns a value in the range 0 - 180 degrees
+   */
+  /*--------------------------------------------------------------------------------*/
+  double GetAngle() const {return 360.0 / M_PI * acos(w);}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return axis of Quaternion
+   */
+  /*--------------------------------------------------------------------------------*/
+  Position GetAxis() const {return Position(x, y, z);}
+  
+  /*--------------------------------------------------------------------------------*/
+  /** Rotate position by Quaternion
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend Position operator * (const Position& pos, const Quaternion& rotation);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Reverse rotate position by Quaternion
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend Position operator / (const Position& pos, const Quaternion& rotation);
+
+  double w, x, y, z;
+};
+
 /*----------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------*/
@@ -242,6 +366,7 @@ class PositionTransform
 public:
   PositionTransform();
   PositionTransform(const PositionTransform& obj);
+  PositionTransform(const Quaternion&        obj);
   ~PositionTransform() {}
 
   /*--------------------------------------------------------------------------------*/
@@ -249,12 +374,14 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   PositionTransform& operator = (const PositionTransform& obj);
+  PositionTransform& operator = (const Quaternion&        obj);
 
   /*--------------------------------------------------------------------------------*/
   /** Add transform to this transform
    */
   /*--------------------------------------------------------------------------------*/
   PositionTransform& operator += (const PositionTransform& obj);
+  PositionTransform& operator *= (const Quaternion&        obj) {rotation *= obj; return *this;}
   friend PositionTransform operator + (const PositionTransform& obj1, const PositionTransform& obj2)
   {
     PositionTransform res = obj1;
@@ -267,6 +394,7 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   PositionTransform& operator -= (const PositionTransform& obj);
+  PositionTransform& operator /= (const Quaternion&        obj) {rotation /= obj; return *this;}
   friend PositionTransform operator - (const PositionTransform& obj1, const PositionTransform& obj2)
   {
     PositionTransform res = obj1;
@@ -274,11 +402,9 @@ public:
     return res;
   }
 
-  Position pretranslation;
-  double   xrotation; // rotation around the x-axis
-  double   yrotation; // rotation around the y-axis
-  double   zrotation; // rotation around the z-axis
-  Position posttranslation;
+  Position   pretranslation;
+  Quaternion rotation;
+  Position   posttranslation;
 
   /*--------------------------------------------------------------------------------*/
   /** Apply transform to position
@@ -291,13 +417,6 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   void RemoveTransform(Position& pos) const;
-
-protected:
-  /*--------------------------------------------------------------------------------*/
-  /** Rotate x and y by angle
-   */
-  /*--------------------------------------------------------------------------------*/
-  void Rotate(double& x, double& y, double angle) const;
 };
 
 /*--------------------------------------------------------------------------------*/

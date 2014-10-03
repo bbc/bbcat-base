@@ -20,7 +20,7 @@
 
 BBC_AUDIOTOOLBOX_START
 
-static std::vector<char *> AllocatedStrings;
+static std::vector<char *> allocatedStrings;
 
 static ThreadLockObject debuglock;
 
@@ -162,7 +162,7 @@ const char *CreateString(const char *data, uint_t len)
     memcpy(str, data, len);
     str[len] = 0;
 
-    AllocatedStrings.push_back(str);
+    allocatedStrings.push_back(str);
   }
 
   return str;
@@ -172,12 +172,12 @@ void FreeStrings()
 {
   uint_t i;
 
-  for (i = 0; i < AllocatedStrings.size(); i++)
+  for (i = 0; i < allocatedStrings.size(); i++)
   {
-    delete[] AllocatedStrings[i];
+    delete[] allocatedStrings[i];
   }
 
-  AllocatedStrings.clear();
+  allocatedStrings.clear();
 }
 
 ulong_t GetTickCount()
