@@ -40,8 +40,8 @@ public:
   bool           isopen() const {return (fp != NULL);}
   virtual void   fclose();
 
-  virtual size_t fread(void *ptr, size_t size, size_t count)  {return ::fread(ptr, size, count, fp);}
-  virtual size_t fwrite(void *ptr, size_t size, size_t count) {return ::fwrite(ptr, size, count, fp);}
+  virtual size_t fread(void *ptr, size_t size, size_t count)        {return ::fread(ptr, size, count, fp);}
+  virtual size_t fwrite(const void *ptr, size_t size, size_t count) {return ::fwrite(ptr, size, count, fp);}
   virtual off_t  ftell() const {return ::ftello(fp);}
   virtual int    fseek(off_t offset, int origin) {return ::fseeko(fp, offset, origin);}
   virtual int    ferror() const {return ::ferror(fp);}
