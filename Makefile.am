@@ -7,16 +7,16 @@ SUBDIRS = src
 
 EXTRA_DIST = README COPYING autogen.sh
 
-pkgconfig_DATA = aplibs-dsp-$(APLIBS_DSP_MAJORMINOR).pc
+pkgconfig_DATA = bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc
 
-aplibs-dsp-$(APLIBS_DSP_MAJORMINOR).pc: aplibs-dsp.pc
-	cp aplibs-dsp.pc aplibs-dsp-$(APLIBS_DSP_MAJORMINOR).pc
+bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc: bbcat-base.pc
+	cp bbcat-base.pc bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc
 
-aplibs-dsp-$(APLIBS_DSP_MAJORMINOR)-uninstalled.pc: aplibs-dsp-uninstalled.pc
-	cp aplibs-dsp-uninstalled.pc aplibs-dsp-$(APLIBS_DSP_MAJORMINOR)-uninstalled.pc
+bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc: bbcat-base-uninstalled.pc
+	cp bbcat-base-uninstalled.pc bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc
 
-BUILT_SOURCES = aplibs-dsp-$(APLIBS_DSP_MAJORMINOR)-uninstalled.pc
+BUILT_SOURCES = bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc
 
-CLEANFILES = aplibs-dsp-$(APLIBS_DSP_MAJORMINOR).pc aplibs-dsp-$(APLIBS_DSP_MAJORMINOR)-uninstalled.pc
+CLEANFILES = bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc
 
 ACLOCAL_FLAGS = -I m4

@@ -1,12 +1,12 @@
 Purpose
 
-aplibs-dsp is a general purpose DSP library which forms the basis of the Audio Toolbox software and is also integrated into IP Studio
+bbcat-base is a general purpose BASE library which forms the basis of the Audio Toolbox software and is also integrated into IP Studio
 
 Dependencies
 
 apf - git@git0.rd.bbc.co.uk:apf/apf.git
-netcdf-bbc - git@git0.rd.bbc.co.uk:aplibs/netcdf-bbc.git (for SOFA file support)
-netcdf-cxx4-bbc - git@git0.rd.bbc.co.uk:aplibs/netcdf-cxx4-bbc.git (for SOFA file support)
+netcdf-bbc - git@git0.rd.bbc.co.uk:bbcat/netcdf-bbc.git (for SOFA file support)
+netcdf-cxx4-bbc - git@git0.rd.bbc.co.uk:bbcat/netcdf-cxx4-bbc.git (for SOFA file support)
 
 Files
 

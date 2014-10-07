@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@/bbcat-base-@BBCAT_BASE_MAJORMINOR@
+toolsdir=${exec_prefix}/bin
+
+
+Name: bbcat-base-@BBCAT_BASE_MAJORMINOR@
+Description: General purpose audio BASE library
+Requires.private: @BBCAT_BASE_PKG_DEPS@
+Version: @VERSION@
+Libs: -L${libdir} -lap-base-@BBCAT_BASE_MAJORMINOR@ @BBCAT_GLOBAL_LIBS@
+Cflags: -I${includedir} @BBCAT_GLOBAL_CFLAGS@

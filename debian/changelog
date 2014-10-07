@@ -1,5 +1,5 @@
-aplibs-dsp (0.1.1.0) quantal; urgency=low
+bbcat-base (0.1.0.0) quantal; urgency=low
 
   * Initial release.
 
- -- Andrew Bonney <andrew.bonney@bbc.co.uk>  Fri, 02 Aug 2013 13:55:44 +0100
+ -- Richard Day <richard.day@bbc.co.uk>  Tue, 06 Oct 2013 11:27:00 +0100

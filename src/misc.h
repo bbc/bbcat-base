@@ -80,7 +80,7 @@ extern void FreeStrings();
 /*--------------------------------------------------------------------------------*/
 /** Debug output control
  *
- * Before including any include files from aplibs-*, #define DEBUG_LEVEL to a value
+ * Before including any include files from bbcat-*, #define DEBUG_LEVEL to a value
  *
  * The value dictates which debug informatin (in that file) is output:
  * DEBUG_LEVEL  Debug output

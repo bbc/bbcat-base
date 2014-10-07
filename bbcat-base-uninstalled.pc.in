@@ -1,0 +1,10 @@
+prefix=
+exec_prefix=
+libdir=${pcfiledir}/bbcat-base/
+includedir=${pcfiledir}/
+
+Name: bbcat-base-@BBCAT_BASE_MAJORMINOR@ uninstalled
+Description: General purpose audio BASE library
+Version: @VERSION@
+Libs: -L${libdir} -lap-base-@BBCAT_BASE_MAJORMINOR@
+Cflags: -I${includedir} -I@srcdir@

@@ -1,14 +1,14 @@
 AC_PREREQ([2.68])
-AC_INIT([APLIBS_DSP],[0.1.1.0])
+AC_INIT([BBCAT_BASE],[0.1.0.0])
 
-AS_NANO(APLIBS_DSP_CVS=no,APLIBS_DSP_CVS=yes)
+AS_NANO(BBCAT_BASE_CVS=no,BBCAT_BASE_CVS=yes)
 
 AM_INIT_AUTOMAKE([1.11 silent-rules])
 AM_SILENT_RULES([yes])
 
 # Version number that will be appended to the library filename
-APLIBS_DSP_MAJORMINOR=0.1
-AC_SUBST(APLIBS_DSP_MAJORMINOR)
+BBCAT_BASE_MAJORMINOR=0.1
+AC_SUBST(BBCAT_BASE_MAJORMINOR)
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -18,8 +18,8 @@ AC_CONFIG_HEADERS([config.h])
 # - interfaces added -> increment AGE also
 # - interfaces removed -> set AGE = 0
 #    (AGE is the number of previous values of CURRENT that are compatible)
-APLIBS_DSP_LIBVERSION="1:1:0"
-AC_SUBST(APLIBS_DSP_LIBVERSION)
+BBCAT_BASE_LIBVERSION="1:0:0"
+AC_SUBST(BBCAT_BASE_LIBVERSION)
 
 LT_PREREQ([2.2.6])
 LT_INIT(disable-static win32-dll)
@@ -34,87 +34,13 @@ ACLOCAL_AMFLAGS="-I m4 $ACLOCAL_AMFLAGS"
 AC_SUBST(ACLOCAL_AMFLAGS)
 
 DX_DOXYGEN_FEATURE(ON)
-DX_INIT_DOXYGEN(aplibs-dsp, doxygen.cfg)
+DX_INIT_DOXYGEN(bbcat-base, doxygen.cfg)
 
-APLIBS_GLOBAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
-APLIBS_GLOBAL_LIBS=""
+BBCAT_GLOBAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
+BBCAT_GLOBAL_LIBS=""
 
-ENABLE_SOFA="no"
-ENABLE_CONVOLVER="no"
-
-# Check if we should disable GPL code  (./configure --disable-gpl)
-AC_MSG_CHECKING(whether to include code under gpl)
-AC_ARG_ENABLE(gpl, AS_HELP_STRING([--disable-gpl], [disable code under GPL]), ENABLE_GPL="no", ENABLE_GPL="yes")
-if test "x${ENABLE_GPL}" = "xyes"; then
-  AC_MSG_RESULT(yes)
-
-  # check for convolving support
-  AC_MSG_CHECKING(whether to include support for convolving)
-  AC_ARG_ENABLE(convolver, AS_HELP_STRING([--disable-convolver], [disable convolver support]), ENABLE_CONVOLVER="no", ENABLE_CONVOLVER="yes")
-  if test "x${ENABLE_CONVOLVER}" = "xyes"; then
-    AC_MSG_RESULT(yes)
-
-    # check for SOFA support
-    AC_MSG_CHECKING(whether to include SOFA support)
-    AC_ARG_ENABLE(sofa, AS_HELP_STRING([--disable-sofa], [disable SOFA support]), ENABLE_SOFA="no", ENABLE_SOFA="yes")
-    if test "x${ENABLE_SOFA}" = "xyes"; then
-      AC_MSG_RESULT(yes)
-    else
-      AC_MSG_RESULT(no)
-    fi
-  else
-    AC_MSG_RESULT(no)
-  fi
-else
-  AC_MSG_RESULT(no)
-fi
-
-AM_CONDITIONAL(ENABLE_GPL,       test "x${ENABLE_GPL}" = "xyes")
-AM_CONDITIONAL(ENABLE_SOFA,      test "x${ENABLE_SOFA}" = "xyes")
-AM_CONDITIONAL(ENABLE_CONVOLVER, test "x${ENABLE_CONVOLVER}" = "xyes")
-
-if test "x${ENABLE_GPL}" = "xyes"; then
-  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_GPL=1"
-else
-  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_GPL=0"
-fi
-
-if test "x${ENABLE_CONVOLVER}" = "xyes"; then
-  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_CONVOLVER=1"
-else
-  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_CONVOLVER=0"
-fi
-
-if test "x${ENABLE_SOFA}" = "xyes"; then
-  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_SOFA=1"
-else
-  APLIBS_GLOBAL_CFLAGS="$APLIBS_GLOBAL_CFLAGS -DENABLE_SOFA=0"
-fi
-
-AC_SUBST(APLIBS_GLOBAL_CFLAGS)
-AC_SUBST(APLIBS_GLOBAL_LIBS)
-
-if test "x$ENABLE_CONVOLVER" = "xyes"; then
-  LIBSNDFILE_VER="1.0.25"
-  PKG_CHECK_MODULES([SNDFILE], [sndfile >= LIBSNDFILE_VER], HAVE_SNDFILE=yes, HAVE_SNDFILE=no)
-  if test "x${HAVE_SNDFILE}" != xyes ; then
-    AC_MSG_ERROR([sndfile >= $LIBSNDFILE_VER is required])
-  fi
-
-  # Checking for FFTW3 (single-precision)
-  FFTW_VER="3.0.0"
-  PKG_CHECK_MODULES([FFTW], [fftw3f >= FFTW_VER], HAVE_FFTW=yes, HAVE_FFTW=no)
-  if test "x${HAVE_FFTW}" != xyes ; then
-    AC_MSG_ERROR([fftw3f >= $FFTW_VER is required])
-  fi
-  
-  dnl Check for apf
-  APF_VER="0.2.0"
-  PKG_CHECK_MODULES([APF], [apf-0.2 >= 0.2.0], HAVE_APF=yes, HAVE_APF=no)
-  if test "x${HAVE_APF}" != xyes ; then
-    AC_MSG_ERROR([apf >= $APF_VER is required])
-  fi
-fi
+AC_SUBST(BBCAT_GLOBAL_CFLAGS)
+AC_SUBST(BBCAT_GLOBAL_LIBS)
 
 # Check if we should disable optimization  (./configure --disable-opt)
 AC_MSG_CHECKING(whether to disable optimization)
@@ -174,57 +100,33 @@ if test ! x$osx = xtrue ; then
   AC_SUBST(RT_LIBS)
 fi
 
-if test "x${ENABLE_SOFA}" = "xyes"; then
-  NETCDF_VER="4.1.3"
-  PKG_CHECK_MODULES([NETCDF], [netcdf >= $NETCDF_VER], HAVE_NETCDF=yes, HAVE_NETCDF=no)
+AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CFLAGS, [-Wall])
+#AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CFLAGS, [-Werror])
+AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CFLAGS, [-Wextra])
+AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CFLAGS, [-msse2])
 
-  if test "x${HAVE_NETCDF}" != "xyes" ; then
-    AC_MSG_ERROR([netcdf >= $NETCDF_VER is required])
-  fi
+BBCAT_BASE_CFLAGS="$BBCAT_BASE_CFLAGS -I\$(top_srcdir)"
+AC_SUBST(BBCAT_BASE_CFLAGS)
 
-  NETCDFCXX_VER="4.2.1"
-  PKG_CHECK_MODULES([NETCDFCXX], [netcdf-cxx4 >= $NETCDFCXX_VER], HAVE_NETCDFCXX=yes, HAVE_NETCDFCXX=no)
+BBCAT_BASE_LDFLAGS=""
+AC_APPEND_SUPPORTED_LDFLAGS(BBCAT_BASE_LDFLAGS, [-Wl,--no-undefined])
+AC_SUBST(BBCAT_BASE_LDFLAGS)
 
-  if test "x${HAVE_NETCDFCXX}" != "xyes" ; then
-    AC_MSG_ERROR([netcdf-cxx4 >= $NETCDFCXX_VER is required])
-  fi
-fi
+BBCAT_BASE_LIBS="\$(top_builddir)/src/libap-base-$BBCAT_BASE_MAJORMINOR.la"
+AC_SUBST(BBCAT_BASE_LIBS)
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_SIZE_T
-AX_CREATE_STDINT_H([src/aplibs-dsp-stdint.h])
-
-AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Wall])
-#AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Werror])
-AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-Wextra])
-AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-msse2])
-
-AC_LANG_PUSH([C++])
-AC_APPEND_SUPPORTED_CFLAGS(APLIBS_DSP_CFLAGS, [-std=c++11])
-AC_LANG_POP([C++])
-
-APLIBS_DSP_CFLAGS="$APLIBS_DSP_CFLAGS -I\$(top_srcdir)"
-AC_SUBST(APLIBS_DSP_CFLAGS)
-
-APLIBS_DSP_LDFLAGS=""
-AC_APPEND_SUPPORTED_LDFLAGS(APLIBS_DSP_LDFLAGS, [-Wl,--no-undefined])
-AC_SUBST(APLIBS_DSP_LDFLAGS)
-
-APLIBS_DSP_LIBS="\$(top_builddir)/src/libap-dsp-$APLIBS_DSP_MAJORMINOR.la"
-AC_SUBST(APLIBS_DSP_LIBS)
-
-AC_SUBST(APLIBS_DSP_PKG_DEPS)
+AC_SUBST(BBCAT_BASE_PKG_DEPS)
 
 pkgconfigdir="\$(libdir)/pkgconfig"
 AC_SUBST(pkgconfigdir)
 
-aplibsdspbindir="\$(libdir)/aplibs-dsp/"
-AC_SUBST(aplibsdspbindir)
+bbcatbasebindir="\$(libdir)/bbcat-base/"
+AC_SUBST(bbcatbasebindir)
 
 AC_CONFIG_FILES([
 Makefile
-aplibs-dsp-uninstalled.pc
-aplibs-dsp.pc
+bbcat-base-uninstalled.pc
+bbcat-base.pc
 src/Makefile
 ])
 AC_OUTPUT
