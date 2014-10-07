@@ -25,7 +25,8 @@ libap_base_@BBCAT_BASE_MAJORMINOR@_la_SOURCES =	\
 	misc.cpp									\
 	ParameterSet.cpp							\
 	PerformanceMonitor.cpp						\
-	ThreadLock.cpp
+	ThreadLock.cpp								\
+	UDPSocket.cpp
 
 pkginclude_HEADERS =							\
 	3DPosition.h								\
@@ -37,6 +38,7 @@ pkginclude_HEADERS =							\
 	PositionCursor.h							\
 	ThreadLock.h								\
 	UniversalTime.h								\
+	UDPSocket.h									\
 	misc.h
 
 noinst_HEADERS =
