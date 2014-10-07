@@ -1,12 +1,8 @@
 Purpose
 
-bbcat-base is a general purpose BASE library which forms the basis of the Audio Toolbox software and is also integrated into IP Studio
+Base library for BBC Audio Toolbox
 
-Dependencies
-
-apf - git@git0.rd.bbc.co.uk:apf/apf.git
-netcdf-bbc - git@git0.rd.bbc.co.uk:bbcat/netcdf-bbc.git (for SOFA file support)
-netcdf-cxx4-bbc - git@git0.rd.bbc.co.uk:bbcat/netcdf-cxx4-bbc.git (for SOFA file support)
+Contains miscellaneous debug, file and position functions
 
 Files
 
@@ -27,19 +23,6 @@ src/3DPosition.h                        |
 src/ByteSwap.cpp                        | Byte swapping for endianness control
 src/ByteSwap.h                          |
 
-src/Convolver.cpp                       | Multi-channel parallelized and partitioned convolution using APF
-src/Convolver.h                         |
-
-src/Crossfader.cpp                      | Various kinds of aduio crossfades
-src/Crossfader.hpp                      |
-
-src/FractionalSample.cpp                | Fractional delay line for floating point samples
-src/FractionalSample.h
-
-src/genconversions.php                  | PHP script to GENERATE SoundFormatRawConverisons.cpp
-
-src/Logging.hpp                         | Logging functionality
-
 src/Makefile.am                         | Makefile for automake
 
 src/misc.cpp                            | Miscelleanous functions and definitions, especially debugging functions
@@ -53,28 +36,5 @@ src/PerformanceMonitor.h                |
 
 src/PositionCursor.h                    | Interface for a 3D position cursor (i.e. tying positions to time)
 
-src/readme.txt                          | Small readme file
-
-src/SOFA.cpp                            | SOFA file support via the netcdf-bbc libraries
-src/SOFA.h                              |
-
-src/SoundDelayBuffer.cpp                | Delay/ring audio buffer 
-src/SoundDelayBuffer.h                  |
-
-src/SoundFormatConversions.cpp          | Sound sample format conversion/transfer routines
-src/SoundFormatConversions.h            |
-
-src/SoundFormatRawConversions.cpp       | AUTO-GENERATED (by genconversions.php) implementation of efficient sound format conversions
-src/SoundFormatRawConversions.h         | (.h file not auto-generated)
-
-src/SoundMixing.cpp                     | Sound summing functions
-src/SoundMixing.h                       |
-
 src/ThreadLock.cpp                      | Thread locking classes
 src/ThreadLock.h                        |
-
-src/VBAPanner2D.cpp                     | VBAP panner (2D version) 
-src/VBAPanner2D.h                       |
-
-src/VBAPanner.cpp                       | VBAP pannel (3D version)
-src/VBAPanner.h                         |
