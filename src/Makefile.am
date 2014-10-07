@@ -30,9 +30,7 @@ libap_dsp_@APLIBS_DSP_MAJORMINOR@_la_SOURCES =	\
 	SoundFormatConversions.cpp					\
 	SoundFormatRawConversions.cpp				\
 	SoundMixing.cpp								\
-	ThreadLock.cpp								\
-	VBAPanner.cpp								\
-	VBAPanner2D.cpp
+	ThreadLock.cpp
 
 pkginclude_HEADERS =							\
 	3DPosition.h								\
@@ -50,8 +48,6 @@ pkginclude_HEADERS =							\
 	SoundMixing.h								\
 	ThreadLock.h								\
 	UniversalTime.h								\
-	VBAPanner.h									\
-	VBAPanner2D.h								\
 	misc.h
 
 if ENABLE_CONVOLVER
