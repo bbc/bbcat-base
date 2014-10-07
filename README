@@ -38,3 +38,6 @@ src/PositionCursor.h                    | Interface for a 3D position cursor (i.
 
 src/ThreadLock.cpp                      | Thread locking classes
 src/ThreadLock.h                        |
+
+src/UDPSocket.cpp                       | Simple UDP transmitter/receiver
+src/UDPSocket.h                         |
