@@ -4,7 +4,7 @@ libdir=${pcfiledir}/bbcat-base/
 includedir=${pcfiledir}/
 
 Name: bbcat-base-@BBCAT_BASE_MAJORMINOR@ uninstalled
-Description: General purpose audio BASE library
+Description: Base library for BBC Audio Toolbox
 Version: @VERSION@
-Libs: -L${libdir} -lap-base-@BBCAT_BASE_MAJORMINOR@
+Libs: -L${libdir} -lbbcat-base-@BBCAT_BASE_MAJORMINOR@
 Cflags: -I${includedir} -I@srcdir@

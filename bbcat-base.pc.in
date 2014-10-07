@@ -6,8 +6,8 @@ toolsdir=${exec_prefix}/bin
 
 
 Name: bbcat-base-@BBCAT_BASE_MAJORMINOR@
-Description: General purpose audio BASE library
+Description: Base library for BBC Audio Toolbox
 Requires.private: @BBCAT_BASE_PKG_DEPS@
 Version: @VERSION@
-Libs: -L${libdir} -lap-base-@BBCAT_BASE_MAJORMINOR@ @BBCAT_GLOBAL_LIBS@
+Libs: -L${libdir} -lbbcat-base-@BBCAT_BASE_MAJORMINOR@ @BBCAT_GLOBAL_LIBS@
 Cflags: -I${includedir} @BBCAT_GLOBAL_CFLAGS@
