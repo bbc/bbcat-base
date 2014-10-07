@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <map>
+
 #define DEBUG_LEVEL 0
 #include "ParameterSet.h"
 
@@ -48,7 +50,8 @@ ParameterSet& ParameterSet::operator += (const ParameterSet& obj)
 /*--------------------------------------------------------------------------------*/
 ParameterSet& ParameterSet::operator -= (const ParameterSet& obj)
 {
-  std::map<std::string,std::string>::const_iterator it, it2;
+  std::map<std::string,std::string>::const_iterator it;
+  std::map<std::string,std::string>::iterator       it2;
 
   for (it = obj.values.begin(); it != obj.values.end(); ++it)
   {
