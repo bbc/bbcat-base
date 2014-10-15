@@ -71,7 +71,7 @@ Quaternion& Quaternion::operator = (const Quaternion& obj)
 }
 Quaternion& Quaternion::operator = (const Position& vec)
 {
-  Position _vec = vec.Cart().Unit();
+  Position _vec = vec.Cart();
   w = 0.0;
   x = _vec.pos.x;
   y = _vec.pos.y;
