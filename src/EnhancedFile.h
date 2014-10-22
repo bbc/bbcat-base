@@ -70,6 +70,12 @@ public:
   /*--------------------------------------------------------------------------------*/
   static bool exists(const char *filename);
 
+  /*--------------------------------------------------------------------------------*/
+  /** Concatenate two paths
+   */
+  /*--------------------------------------------------------------------------------*/
+  static std::string catpath(const std::string& dir1, const std::string& dir2);
+
 protected:
   std::string filename;
   std::string mode;

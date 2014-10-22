@@ -181,5 +181,28 @@ bool EnhancedFile::exists(const char *filename)
   return exists;
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Concatenate two paths
+ */
+/*--------------------------------------------------------------------------------*/
+std::string EnhancedFile::catpath(const std::string& dir1, const std::string& dir2)
+{
+  std::string res;
+
+  // check for second path being an absolute path
+  if ((dir2.length() > 0) && (dir2[0] == '/')) return dir2;
+
+  // start with first path
+  res = dir1;
+  if ((res.length() > 0) && (dir2.length() > 0) && (res[res.length() - 1] != '/'))
+  {
+    // concatenating two valid paths but first path doesn't end with a slash so add one
+    res += "/";
+  }
+  res += dir2;
+
+  return res;
+}
+
 BBC_AUDIOTOOLBOX_END
 
