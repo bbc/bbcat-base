@@ -221,10 +221,10 @@ void PerformanceMonitor::LogToFile(FILE *fp, perftime_t t, const TIMING_DATA& da
 
     if (ftell(fp) == 0)
     {
-      fprintf(fp, "Time Start/Stop \"Start Time\" \"Stop Time\" \"Average Elapsed\" \"Average Taken\" \"This Elapsed\" \"This Taken\" \"Last Start/Stop\" Utilization Instance ID\n");
+      fprintf(fp, "Time Start/Stop \"Start Time\" \"Stop Time\" \"Average Elapsed\" \"Average Taken\" \"This Elapsed\" \"This Taken\" \"Last Start/Stop\" Utilization Instance ID Thread\n");
     }
 
-    fprintf(fp, "%0.9lf %2d %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.3lf %u \"%s (%s)\"\n",
+    fprintf(fp, "%0.9lf %2d %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.3lf %u \"%s (%s)\" \"Thread<0x%lx>\"\n",
             DISP(t),
             start ? 1 : -1,
             DISP(this_timing.start),
@@ -237,7 +237,8 @@ void PerformanceMonitor::LogToFile(FILE *fp, perftime_t t, const TIMING_DATA& da
             data.utilization,
             data.instance,
             id.c_str(),
-            start ? "Start" : "Stop");
+            start ? "Start" : "Stop",
+            (ulong_t)pthread_self());
   }
 }
 
