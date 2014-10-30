@@ -286,6 +286,13 @@ public:
   Quaternion& operator = (const Position& vec);
 
   /*--------------------------------------------------------------------------------*/
+  /** Comparison operators
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend bool operator == (const Quaternion& obj1, const Quaternion& obj2);
+  friend bool operator != (const Quaternion& obj1, const Quaternion& obj2) {return !operator == (obj1, obj2);}
+
+  /*--------------------------------------------------------------------------------*/
   /** Negate operator - invert rotation
    */
   /*--------------------------------------------------------------------------------*/
@@ -371,6 +378,13 @@ public:
   /*--------------------------------------------------------------------------------*/
   PositionTransform& operator = (const PositionTransform& obj);
   PositionTransform& operator = (const Quaternion&        obj);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Comparison operators
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend bool operator == (const PositionTransform& obj1, const PositionTransform& obj2);
+  friend bool operator != (const PositionTransform& obj1, const PositionTransform& obj2) {return !operator == (obj1, obj2);}
 
   /*--------------------------------------------------------------------------------*/
   /** Add transform to this transform

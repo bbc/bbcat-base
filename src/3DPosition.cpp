@@ -80,6 +80,15 @@ Quaternion& Quaternion::operator = (const Position& vec)
 }
 
 /*--------------------------------------------------------------------------------*/
+/** Comparison operators
+ */
+/*--------------------------------------------------------------------------------*/
+bool operator == (const Quaternion& obj1, const Quaternion& obj2)
+{
+  return ((obj1.w == obj2.w) && (obj1.x == obj2.x) && (obj1.y == obj2.y) && (obj1.z == obj2.z));
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Explicit set functions
  */
 /*--------------------------------------------------------------------------------*/
@@ -188,6 +197,17 @@ PositionTransform& PositionTransform::operator = (const Quaternion& obj)
   posttranslation = Position();
 
   return *this;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Comparison operators
+ */
+/*--------------------------------------------------------------------------------*/
+bool operator == (const PositionTransform& obj1, const PositionTransform& obj2)
+{
+  return ((obj1.pretranslation  == obj2.pretranslation)  &&
+          (obj1.rotation        == obj2.rotation)        &&
+          (obj1.posttranslation == obj2.posttranslation));
 }
 
 /*--------------------------------------------------------------------------------*/
