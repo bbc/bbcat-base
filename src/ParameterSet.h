@@ -76,7 +76,10 @@ public:
   void Set(const std::string& name, bool               val);
   void Set(const std::string& name, sint_t             val);
   void Set(const std::string& name, slong_t            val);
-  void Set(const std::string& name, double             val);
+
+  static const char *DoubleFormatHuman;         // format as human-readable, scientific format with 32 decimal places
+  static const char *DoubleFormatExact;         // format as hex-encoded double (exact)
+  void Set(const std::string& name, double             val, const char *fmt = DoubleFormatHuman);
 
   /*--------------------------------------------------------------------------------*/
   /** Return whether a parameter exists

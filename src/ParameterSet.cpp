@@ -10,6 +10,9 @@
 
 BBC_AUDIOTOOLBOX_START
 
+const char *ParameterSet::DoubleFormatHuman = "%0.32le";
+const char *ParameterSet::DoubleFormatExact = "#%016lx";
+
 ParameterSet::ParameterSet(const ParameterSet& obj)
 {
   operator = (obj);
@@ -111,10 +114,12 @@ void ParameterSet::Set(const std::string& name, slong_t val)
   Set(name, str);
 }
 
-void ParameterSet::Set(const std::string& name, double val)
+void ParameterSet::Set(const std::string& name, double val, const char *fmt)
 {
   std::string str;
-  Printf(str, "%0.32le", val);
+  // this will FAIL to compile as 32-bit code
+  // print double as hex encoded double
+  Printf(str, fmt, val);
   Set(name, str);
 }
 
@@ -176,7 +181,20 @@ bool ParameterSet::Get(const std::string& name, ulong_t& val) const
 bool ParameterSet::Get(const std::string& name, double& val) const
 {
   const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && (sscanf(it->second.c_str(), "%lf", &val) > 0));
+
+  if (it != values.end())
+  {
+    const char *str = it->second.c_str();
+
+    // this will FAIL to compile as 32-bit code
+    // values starting with a '#' are a 64-bit hex representation of the double value
+    if ((str[0] == '#') && (sscanf(str + 1, "%lx", (ulong_t *)&val) > 0)) return true;
+
+    // otherwise try to scan the string as a double
+    if ((str[0] != '#') && (sscanf(str,     "%lf",            &val) > 0)) return true;
+  }
+
+  return false;
 }
 
 std::string ParameterSet::Raw(const std::string& name, const std::string& defval) const
