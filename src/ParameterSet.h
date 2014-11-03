@@ -69,17 +69,17 @@ public:
   /** Set parameter
    *
    * @note any existing value with the same name will be overwritten
-   *
+   * @note they return a reference to the object to allow chaining
    */
   /*--------------------------------------------------------------------------------*/
-  void Set(const std::string& name, const std::string& val);
-  void Set(const std::string& name, bool               val);
-  void Set(const std::string& name, sint_t             val);
-  void Set(const std::string& name, slong_t            val);
+  ParameterSet& Set(const std::string& name, const std::string& val);
+  ParameterSet& Set(const std::string& name, bool               val);
+  ParameterSet& Set(const std::string& name, sint_t             val);
+  ParameterSet& Set(const std::string& name, slong_t            val);
 
   static const char *DoubleFormatHuman;         // format as human-readable, scientific format with 32 decimal places
   static const char *DoubleFormatExact;         // format as hex-encoded double (exact)
-  void Set(const std::string& name, double             val, const char *fmt = DoubleFormatHuman);
+  ParameterSet& Set(const std::string& name, double             val, const char *fmt = DoubleFormatHuman);
 
   /*--------------------------------------------------------------------------------*/
   /** Return whether a parameter exists

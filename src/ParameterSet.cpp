@@ -88,39 +88,49 @@ std::string ParameterSet::ToString() const
  *
  */
 /*--------------------------------------------------------------------------------*/
-void ParameterSet::Set(const std::string& name, const std::string& val)
+ParameterSet& ParameterSet::Set(const std::string& name, const std::string& val)
 {
   values[name] = val;
+
+  return *this;
 }
 
-void ParameterSet::Set(const std::string& name, bool val)
+ParameterSet& ParameterSet::Set(const std::string& name, bool val)
 {
   std::string str;
   Printf(str, "%u", val ? 1 : 0);
   Set(name, str);
+
+  return *this;
 }
 
-void ParameterSet::Set(const std::string& name, sint_t val)
+ParameterSet& ParameterSet::Set(const std::string& name, sint_t val)
 {
   std::string str;
   Printf(str, "%d", val);
   Set(name, str);
+
+  return *this;
 }
 
-void ParameterSet::Set(const std::string& name, slong_t val)
+ParameterSet& ParameterSet::Set(const std::string& name, slong_t val)
 {
   std::string str;
   Printf(str, "%ld", val);
   Set(name, str);
+
+  return *this;
 }
 
-void ParameterSet::Set(const std::string& name, double val, const char *fmt)
+ParameterSet& ParameterSet::Set(const std::string& name, double val, const char *fmt)
 {
   std::string str;
   // this will FAIL to compile as 32-bit code
   // print double as hex encoded double
   Printf(str, fmt, val);
   Set(name, str);
+
+  return *this;
 }
 
 /*--------------------------------------------------------------------------------*/
