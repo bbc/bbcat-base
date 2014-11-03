@@ -40,7 +40,7 @@ uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creat
 /** create an instance of the specified type
  */
 /*--------------------------------------------------------------------------------*/
-SelfRegisteringParametricObject *SelfRegisteringParametricObject::Create(const char *type, const ParameterSet& parameters)
+SelfRegisteringParametricObject *SelfRegisteringParametricObject::CreateObject(const char *type, const ParameterSet& parameters)
 {
   std::map<const std::string,CREATOR>::const_iterator it;
   SelfRegisteringParametricObject *obj = NULL;

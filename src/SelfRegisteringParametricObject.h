@@ -40,7 +40,7 @@ public:
   /** create an instance of the specified type
    */
   /*--------------------------------------------------------------------------------*/
-  static SelfRegisteringParametricObject *Create(const char *type, const ParameterSet& parameters);
+  static SelfRegisteringParametricObject *CreateObject(const char *type, const ParameterSet& parameters);
 
   /*--------------------------------------------------------------------------------*/
   /** Get a list of objects that can be created (optionally restricted)
@@ -67,7 +67,7 @@ protected:
  * @note this should be put in the cpp file *only*
  */
 /*--------------------------------------------------------------------------------*/
-#define SELF_REGISTER(type, name) const volatile uint_t type::_dummy = SelfRegisteringParametricObject::Register(name, &type::CreateObject);
+#define SELF_REGISTER(type, name) const volatile uint_t type::_dummy = SelfRegisteringParametricObject::Register(name, &type::CreateRegisteredObject);
 
 /*--------------------------------------------------------------------------------*/
 /** Creator macro
@@ -83,7 +83,7 @@ private:                                                                \
   static const volatile uint_t _dummy;                                  \
 public:                                                                 \
   type(const ParameterSet& parameters);                                 \
-  static SelfRegisteringParametricObject *CreateObject(const ParameterSet& parameters) {return new type(parameters);}
+  static SelfRegisteringParametricObject *CreateRegisteredObject(const ParameterSet& parameters) {return new type(parameters);}
 
 BBC_AUDIOTOOLBOX_END
 
