@@ -25,6 +25,7 @@ libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_SOURCES =	\
 	misc.cpp										\
 	ParameterSet.cpp								\
 	PerformanceMonitor.cpp							\
+	SelfRegisteringParametricObject.cpp				\
 	ThreadLock.cpp									\
 	UDPSocket.cpp
 
@@ -36,6 +37,7 @@ pkginclude_HEADERS =							\
 	ParameterSet.h								\
 	PerformanceMonitor.h						\
 	PositionCursor.h							\
+	SelfRegisteringParametricObject.h			\
 	ThreadLock.h								\
 	UniversalTime.h								\
 	UDPSocket.h									\
