@@ -3,13 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG_LEVEL 0
+#define DEBUG_LEVEL 1
 #include "SelfRegisteringParametricObject.h"
 
 BBC_AUDIOTOOLBOX_START
 
 // a pointer to the map of creators, see ::Register() for an explanation of why this is a pointer
-const std::map<const char *,SelfRegisteringParametricObject::CREATOR> *SelfRegisteringParametricObject::creators = NULL;
+const std::map<const std::string,SelfRegisteringParametricObject::CREATOR> *SelfRegisteringParametricObject::creators = NULL;
 
 /*--------------------------------------------------------------------------------*/
 /** registration function (called by SELF_REGISTER macro below)
@@ -22,7 +22,9 @@ uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creat
   // static objects in this class are created
   // therefore we create the map here and then set an external pointer to it
   // ::Create() is safe to call BEFORE this 
-  static std::map<const char *,CREATOR> _creators;
+  static std::map<const std::string,CREATOR> _creators;
+
+  DEBUG1(("Registering object type '%s'", type));
 
   // set creator in map
   _creators[type] = creator;
@@ -40,7 +42,7 @@ uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creat
 /*--------------------------------------------------------------------------------*/
 SelfRegisteringParametricObject *SelfRegisteringParametricObject::Create(const char *type, const ParameterSet& parameters)
 {
-  std::map<const char *,CREATOR>::const_iterator it;
+  std::map<const std::string,CREATOR>::const_iterator it;
   SelfRegisteringParametricObject *obj = NULL;
 
   if (creators && ((it = creators->find(type)) != creators->end()))
@@ -59,16 +61,16 @@ SelfRegisteringParametricObject *SelfRegisteringParametricObject::Create(const c
  * @param match a string that *must* appear at the start of the name for it to be entered into the list
  */
 /*--------------------------------------------------------------------------------*/
-void SelfRegisteringParametricObject::GetList(std::vector<const char *>& list, const char *match)
+void SelfRegisteringParametricObject::GetList(std::vector<const std::string>& list, const char *match)
 {
   if (creators)
   {
-    std::map<const char *,CREATOR>::const_iterator it;
+    std::map<const std::string,CREATOR>::const_iterator it;
     uint_t l = match ? strlen(match) : 0;
 
     for (it = creators->begin(); it != creators->end(); ++it)
     {
-      if (!match || (l && (strncasecmp(it->first, match, l) == 0))) list.push_back(it->first);
+      if (!match || (l && (strncasecmp(it->first.c_str(), match, l) == 0))) list.push_back(it->first);
     }
   }
 }

@@ -1,6 +1,7 @@
 #ifndef __SELF_REGISTERING_PARAMETRIC_OBJECT__
 #define __SELF_REGISTERING_PARAMETRIC_OBJECT__
 
+#include <string>
 #include <map>
 
 #include "ParameterSet.h"
@@ -47,14 +48,14 @@ public:
    * @param match a string that *must* appear at the start of the name for it to be entered into the list
    */
   /*--------------------------------------------------------------------------------*/
-  static void GetList(std::vector<const char *>& list, const char *match = ""); 
+  static void GetList(std::vector<const std::string>& list, const char *match = ""); 
 
 protected:
   /*--------------------------------------------------------------------------------*/
   /** this is deliberately a pointer, see code for reasons 
    */
   /*--------------------------------------------------------------------------------*/
-  static const std::map<const char *,CREATOR> *creators;
+  static const std::map<const std::string,CREATOR> *creators;
 };
 
 /*--------------------------------------------------------------------------------*/
@@ -66,7 +67,7 @@ protected:
  * @note this should be put in the cpp file *only*
  */
 /*--------------------------------------------------------------------------------*/
-#define SELF_REGISTER(type, name) uint_t type::_dummy = SelfRegisteringParametricObject::Register(name, &type::Create);
+#define SELF_REGISTER(type, name) const volatile uint_t type::_dummy = SelfRegisteringParametricObject::Register(name, &type::CreateObject);
 
 /*--------------------------------------------------------------------------------*/
 /** Creator macro
@@ -79,10 +80,10 @@ protected:
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTER_CREATOR(type)                                     \
 private:                                                                \
-  static uint_t _dummy;                                                 \
+  static const volatile uint_t _dummy;                                  \
 public:                                                                 \
   type(const ParameterSet& parameters);                                 \
-  static SelfRegisteringParametricObject *Create(const ParameterSet& parameters) {return new type(parameters);}
+  static SelfRegisteringParametricObject *CreateObject(const ParameterSet& parameters) {return new type(parameters);}
 
 BBC_AUDIOTOOLBOX_END
 
