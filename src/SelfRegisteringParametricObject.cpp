@@ -49,4 +49,24 @@ SelfRegisteringParametricObject *SelfRegisteringParametricObject::Create(const c
   return obj;
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Get a list of objects that can be created (optionally restricted)
+ *
+ * @param match a string that *must* appear at the start of the name for it to be entered into the list
+ */
+/*--------------------------------------------------------------------------------*/
+void SelfRegisteringParametricObject::GetList(std::vector<const char *>& list, const char *match)
+{
+  if (creators)
+  {
+    std::map<const char *,CREATOR>::const_iterator it;
+    uint_t l = match ? strlen(match) : 0;
+
+    for (it = creators->begin(); it != creators->end(); ++it)
+    {
+      if (!match || (l && (strncasecmp(it->first, match, l) == 0))) list.push_back(it->first);
+    }
+  }
+}
+
 BBC_AUDIOTOOLBOX_END

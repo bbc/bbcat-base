@@ -24,7 +24,7 @@ public:
   virtual ~SelfRegisteringParametricObject() {}
 
   /*--------------------------------------------------------------------------------*/
-  /** typedef for creator function 
+  /** typedef for creator function
    */
   /*--------------------------------------------------------------------------------*/
   typedef SelfRegisteringParametricObject *(*CREATOR)(const ParameterSet& parameters);
@@ -40,6 +40,14 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   static SelfRegisteringParametricObject *Create(const char *type, const ParameterSet& parameters);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Get a list of objects that can be created (optionally restricted)
+   *
+   * @param match a string that *must* appear at the start of the name for it to be entered into the list
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void GetList(std::vector<const char *>& list, const char *match = ""); 
 
 protected:
   /*--------------------------------------------------------------------------------*/
