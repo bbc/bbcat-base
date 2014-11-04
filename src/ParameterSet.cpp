@@ -133,6 +133,20 @@ ParameterSet& ParameterSet::Set(const std::string& name, double val, const char 
   return *this;
 }
 
+ParameterSet& ParameterSet::Set(const std::string& name, const ParameterSet& val)
+{
+  std::string prefix = name + ".";
+  Iterator it;
+
+  // create a set of 'sub-parameters' - parameters with a prefix to indicate a sub object
+  for (it = val.GetBegin(); it != val.GetEnd(); ++it)
+  {
+    Set(prefix + it->first, it->second);
+  }
+
+  return *this;
+}
+
 /*--------------------------------------------------------------------------------*/
 /** Get value
  *
@@ -211,6 +225,33 @@ std::string ParameterSet::Raw(const std::string& name, const std::string& defval
 {
   const std::map<std::string,std::string>::const_iterator it = values.find(name);
   return (it != values.end()) ? it->second : defval; 
+}
+
+bool ParameterSet::GetSubParameters(ParameterSet& parameters, const std::string& prefix) const
+{
+  std::string _prefix = prefix + ".";
+  Iterator it;
+
+  for (it = GetBegin(); it != GetEnd(); ++it)
+  {
+    // if the name starts with 'vbap.' create a corresponding parameters in vbapparameters
+    if (it->first.find(_prefix) == 0) parameters.Set(it->first.substr(_prefix.length()), it->second);
+  }
+
+  return !parameters.IsEmpty();
+}
+
+ParameterSet ParameterSet::GetSubParameters(const std::string& prefix) const
+{
+  ParameterSet parameters;
+  GetSubParameters(parameters, prefix);
+  return parameters;
+}
+
+bool ParameterSet::Get(const std::string& name, ParameterSet& val) const
+{
+  // extract sub-parameters using name as prefix
+  return GetSubParameters(val, name);
 }
 
 BBC_AUDIOTOOLBOX_END

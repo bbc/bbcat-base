@@ -72,14 +72,15 @@ public:
    * @note they return a reference to the object to allow chaining
    */
   /*--------------------------------------------------------------------------------*/
-  ParameterSet& Set(const std::string& name, const std::string& val);
-  ParameterSet& Set(const std::string& name, bool               val);
-  ParameterSet& Set(const std::string& name, sint_t             val);
-  ParameterSet& Set(const std::string& name, slong_t            val);
+  ParameterSet& Set(const std::string& name, const std::string&  val);
+  ParameterSet& Set(const std::string& name, bool                val);
+  ParameterSet& Set(const std::string& name, sint_t              val);
+  ParameterSet& Set(const std::string& name, slong_t             val);
 
   static const char *DoubleFormatHuman;         // format as human-readable, scientific format with 32 decimal places
   static const char *DoubleFormatExact;         // format as hex-encoded double (exact)
-  ParameterSet& Set(const std::string& name, double             val, const char *fmt = DoubleFormatHuman);
+  ParameterSet& Set(const std::string& name, double              val, const char *fmt = DoubleFormatHuman);
+  ParameterSet& Set(const std::string& name, const ParameterSet& val);
 
   /*--------------------------------------------------------------------------------*/
   /** Return whether a parameter exists
@@ -105,15 +106,23 @@ public:
    * @return true if parameter found and value extracted
    */
   /*--------------------------------------------------------------------------------*/
-  bool Get(const std::string& name, std::string& val) const;
-  bool Get(const std::string& name, bool&        val) const;
-  bool Get(const std::string& name, sint_t&      val) const;
-  bool Get(const std::string& name, uint_t&      val) const;
-  bool Get(const std::string& name, slong_t&     val) const;
-  bool Get(const std::string& name, ulong_t&     val) const;
-  bool Get(const std::string& name, double&      val) const;
+  bool Get(const std::string& name, std::string&  val) const;
+  bool Get(const std::string& name, bool&         val) const;
+  bool Get(const std::string& name, sint_t&       val) const;
+  bool Get(const std::string& name, uint_t&       val) const;
+  bool Get(const std::string& name, slong_t&      val) const;
+  bool Get(const std::string& name, ulong_t&      val) const;
+  bool Get(const std::string& name, double&       val) const;
+  bool Get(const std::string& name, ParameterSet& val) const;
 
   std::string Raw(const std::string& name, const std::string& defval = "") const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return sub-parameters prefixed by 'prefix.'
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool         GetSubParameters(ParameterSet& parameters, const std::string& prefix) const;
+  ParameterSet GetSubParameters(const std::string& prefix) const;
 
 protected:
   std::map<std::string,std::string> values;
