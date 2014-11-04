@@ -339,6 +339,71 @@ void VPrintf(std::string& str, const char *fmt, va_list ap)
   }
 }
 
+
+/*--------------------------------------------------------------------------------*/
+/** Split a string by a delimiter, allowing for quotes to prevent splitting in the wrong place
+ *
+ * @param str string split
+ * @param list list to be populated
+ * @param delim delimiter character
+ * @param maxstrings if non-zero specifies the maximum number of entries in list
+ *
+ * @return position in string when scanning stopped
+ *
+ * @note whitespace is IGNORED!
+ */
+/*--------------------------------------------------------------------------------*/
+uint_t SplitString(const std::string& str, std::vector<std::string>& list, char delim, uint_t maxstrings)
+{
+  uint_t p = 0, l = str.length();
+
+  while ((p < l) && (!maxstrings || (list.size() < maxstrings)))
+  {
+    // ignore whitespace before string
+    while ((p < l) && ((str[p] == ' ') || (str[p] == '\t'))) p++;
+
+    // detect opening quote
+    char quote = ((str[p] == '\'') || (str[p] == '\"')) ? str[p] : 0;
+    
+    // skip quote, if any
+    if (quote) p++;
+
+    // save string start
+    uint_t p1 = p;
+
+    // advance until either end of string, delimiter is found or closing quote is found
+    while ((p < l) && ((!quote && (str[p] != delim)) || (quote && (str[p] != quote)))) p++;
+
+    // save string end
+    uint_t p2 = p;
+
+    // if quotes were *not* used, move string end back over any whitespace
+    if (!quote)
+    {
+      while ((p2 > p1) && ((str[p2 - 1] == ' ') || (str[p2 - 1] == '\t'))) p2--;
+    }
+
+    // if string is not empty, add it to the list
+    if (p2 > p1) list.push_back(str.substr(p1, p2 - p1));
+
+    // if a closing quote was found, skip quote and then find delimiter
+    if ((p < l) && quote && (str[p] == quote))
+    {
+      p++;
+
+      while ((p < l) && (str[p] != delim)) p++;
+    }
+
+    // skip over delimiters
+    while ((p < l) && (str[p] == delim)) p++;
+
+    // ignore whitespace at end
+    while ((p < l) && ((str[p] == ' ') || (str[p] == '\t'))) p++;
+  }
+
+  return p;
+}
+
 /*--------------------------------------------------------------------------------*/
 /** Interpolate current towards target at rate coeff, protecting against denormals
  */
