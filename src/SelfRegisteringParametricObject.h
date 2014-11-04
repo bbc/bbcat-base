@@ -66,7 +66,7 @@ public:
    * @param match a string that *must* appear at the start of the name for it to be entered into the list
    */
   /*--------------------------------------------------------------------------------*/
-  static void GetList(std::vector<const std::string>& list, const char *match = ""); 
+  static void GetList(std::vector<std::string>& list, const char *match = ""); 
 
   /*--------------------------------------------------------------------------------*/
   /** Return whether a previously created object is of the specified type
@@ -80,7 +80,7 @@ protected:
     ISOBJECTOFTYPE isobjectoftype;
   } OBJECTDATA;
 
-  typedef std::map<const std::string,OBJECTDATA>::const_iterator Iterator;
+  typedef std::map<std::string,OBJECTDATA>::const_iterator Iterator;
 
 protected:
   std::string registeredobjectid;
@@ -89,7 +89,7 @@ protected:
   /** this is deliberately a pointer, see code for reasons 
    */
   /*--------------------------------------------------------------------------------*/
-  static const std::map<const std::string,OBJECTDATA> *creators;
+  static const std::map<std::string,OBJECTDATA> *creators;
 };
 
 /*--------------------------------------------------------------------------------*/

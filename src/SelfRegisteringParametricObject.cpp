@@ -9,7 +9,7 @@
 BBC_AUDIOTOOLBOX_START
 
 // a pointer to the map of creators, see ::Register() for an explanation of why this is a pointer
-const std::map<const std::string,SelfRegisteringParametricObject::OBJECTDATA> *SelfRegisteringParametricObject::creators = NULL;
+const std::map<std::string,SelfRegisteringParametricObject::OBJECTDATA> *SelfRegisteringParametricObject::creators = NULL;
 
 
 /*--------------------------------------------------------------------------------*/
@@ -32,7 +32,7 @@ uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creat
   // static objects in this class are created
   // therefore we create the map here and then set an external pointer to it
   // ::Create() is safe to call BEFORE this 
-  static std::map<const std::string,OBJECTDATA> _creators;
+  static std::map<std::string,OBJECTDATA> _creators;
   OBJECTDATA data = {creator, isobjectoftype};
 
   DEBUG1(("Registering object type '%s'", type));
@@ -72,7 +72,7 @@ SelfRegisteringParametricObject *SelfRegisteringParametricObject::CreateObject(c
  * @param match a string that *must* appear at the start of the name for it to be entered into the list
  */
 /*--------------------------------------------------------------------------------*/
-void SelfRegisteringParametricObject::GetList(std::vector<const std::string>& list, const char *match)
+void SelfRegisteringParametricObject::GetList(std::vector<std::string>& list, const char *match)
 {
   if (creators)
   {
