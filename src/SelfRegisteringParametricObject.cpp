@@ -33,7 +33,7 @@ uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creat
   static std::map<std::string,OBJECTDATA> _creators;
   OBJECTDATA data = {creator, isobjectoftype};
 
-  DEBUG1(("Registering object type '%s'", type));
+  DEBUG2(("Registering object type '%s'", type));
 
   // set creator in map
   _creators[type] = data;
