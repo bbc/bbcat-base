@@ -1,8 +1,4 @@
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #define DEBUG_LEVEL 1
 #include "SelfRegisteringParametricObject.h"
 

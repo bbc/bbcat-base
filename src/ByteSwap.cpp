@@ -1,8 +1,4 @@
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "ByteSwap.h"
 
 BBC_AUDIOTOOLBOX_START
