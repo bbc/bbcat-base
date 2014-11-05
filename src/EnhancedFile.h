@@ -1,6 +1,7 @@
 #ifndef __ENHANCED_FILE__
 #define __ENHANCED_FILE__
 
+#include <stdio.h>
 #include <stdarg.h>
 
 #include <string>
