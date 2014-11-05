@@ -1,4 +1,6 @@
 
+#include <string.h>
+
 #define DEBUG_LEVEL 1
 #include "SelfRegisteringParametricObject.h"
 
