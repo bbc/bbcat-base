@@ -115,6 +115,16 @@ public:
   bool Get(const std::string& name, double&       val) const;
   bool Get(const std::string& name, ParameterSet& val) const;
 
+  /*--------------------------------------------------------------------------------*/
+  /** Delete a parameter
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool Delete(const std::string& name);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return raw value (as stored) for given type or default if it does not exists
+   */
+  /*--------------------------------------------------------------------------------*/
   std::string Raw(const std::string& name, const std::string& defval = "") const;
 
   /*--------------------------------------------------------------------------------*/

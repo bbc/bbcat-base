@@ -219,6 +219,28 @@ bool ParameterSet::Get(const std::string& name, double& val) const
   return false;
 }
 
+
+/*--------------------------------------------------------------------------------*/
+/** Delete a parameter
+ */
+/*--------------------------------------------------------------------------------*/
+bool ParameterSet::Delete(const std::string& name)
+{
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
+
+  if (it != values.end())
+  {
+    values.erase(it);
+    return true;
+  }
+
+  return false;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Return raw value (as stored) for given type or default if it does not exists
+ */
+/*--------------------------------------------------------------------------------*/
 std::string ParameterSet::Raw(const std::string& name, const std::string& defval) const
 {
   const std::map<std::string,std::string>::const_iterator it = values.find(name);
