@@ -226,7 +226,7 @@ bool ParameterSet::Get(const std::string& name, double& val) const
 /*--------------------------------------------------------------------------------*/
 bool ParameterSet::Delete(const std::string& name)
 {
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
+  const std::map<std::string,std::string>::iterator it = values.find(name);
 
   if (it != values.end())
   {
