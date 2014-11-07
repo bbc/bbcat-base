@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 #include "ParameterSet.h"
 
@@ -31,6 +32,12 @@ public:
   virtual void SetParameters(const ParameterSet& parameters);
 
   /*--------------------------------------------------------------------------------*/
+  /** Get a list of parameters for this object
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list);
+
+  /*--------------------------------------------------------------------------------*/
   /** Return user-supplied ID for this object
    */
   /*--------------------------------------------------------------------------------*/
@@ -49,10 +56,16 @@ public:
   typedef bool (*ISOBJECTOFTYPE)(const SelfRegisteringParametricObject *obj);
 
   /*--------------------------------------------------------------------------------*/
+  /** typedef for GetParameterDescriptions function
+   */
+  /*--------------------------------------------------------------------------------*/
+  typedef void (*GETPARAMETERS)(std::vector<const PARAMETERDESC *>& list);
+
+  /*--------------------------------------------------------------------------------*/
   /** registration function (called by SELF_REGISTER macro below)
    */
   /*--------------------------------------------------------------------------------*/
-  static uint_t Register(const char *type, CREATOR creator, ISOBJECTOFTYPE isobjectoftype);
+  static uint_t Register(const char *type, CREATOR creator, ISOBJECTOFTYPE isobjectoftype, GETPARAMETERS getparameters);
 
   /*--------------------------------------------------------------------------------*/
   /** create an instance of the specified type
@@ -78,6 +91,7 @@ protected:
   typedef struct {
     CREATOR        creator;
     ISOBJECTOFTYPE isobjectoftype;
+    GETPARAMETERS  getparameters;
   } OBJECTDATA;
 
   typedef std::map<std::string,OBJECTDATA>::const_iterator Iterator;
@@ -103,7 +117,7 @@ protected:
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTER(type, name)                                       \
 const char *type::GetRegisteredObjectTypeName() const {return name;}    \
-const volatile uint_t type::_dummy = SelfRegisteringParametricObject::Register(name, &type::CreateRegisteredObjectImplementation, &type::IsRegisteredObjectOfTypeImplementation);
+ const volatile uint_t type::_dummy = SelfRegisteringParametricObject::Register(name, &type::CreateRegisteredObjectImplementation, &type::IsRegisteredObjectOfTypeImplementation, &type::GetParameterDescriptions);
 
 /*--------------------------------------------------------------------------------*/
 /** Creator macro

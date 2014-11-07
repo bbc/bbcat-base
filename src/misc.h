@@ -309,6 +309,17 @@ bool map_compare (Map const &lhs, Map const &rhs)
 extern float  fix_denormal(float val);
 extern double fix_denormal(double val);
 
+typedef struct {
+  const char *name;
+  const char *desc;
+} PARAMETERDESC;
+
+/*--------------------------------------------------------------------------------*/
+/** Convert dB to gain assuming <=-120 is cut
+ */
+/*--------------------------------------------------------------------------------*/
+extern double dBToGain(double db);
+
 BBC_AUDIOTOOLBOX_END
 
 #endif

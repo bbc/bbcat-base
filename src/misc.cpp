@@ -559,4 +559,15 @@ double fix_denormal(double val)
   return res;
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Convert dB to gain assuming <=-120 is cut
+ */
+/*--------------------------------------------------------------------------------*/
+double dBToGain(double db)
+{
+  // treat -120 as cut
+  if (db > -120.0) return pow(10.0, .05 * db);
+  return 0;
+}
+
 BBC_AUDIOTOOLBOX_END

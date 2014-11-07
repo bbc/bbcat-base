@@ -1,7 +1,7 @@
 
 #include <string.h>
 
-#define DEBUG_LEVEL 1
+#define DEBUG_LEVEL 3
 #include "SelfRegisteringParametricObject.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -9,6 +9,12 @@ BBC_AUDIOTOOLBOX_START
 // a pointer to the map of creators, see ::Register() for an explanation of why this is a pointer
 const std::map<std::string,SelfRegisteringParametricObject::OBJECTDATA> *SelfRegisteringParametricObject::creators = NULL;
 
+static const struct {
+  PARAMETERDESC id;
+} _parameters = 
+{
+  {"id", "User specified ID for this object"},
+};
 
 /*--------------------------------------------------------------------------------*/
 /** Set parameters within object
@@ -16,14 +22,26 @@ const std::map<std::string,SelfRegisteringParametricObject::OBJECTDATA> *SelfReg
 /*--------------------------------------------------------------------------------*/
 void SelfRegisteringParametricObject::SetParameters(const ParameterSet& parameters)
 {
-  parameters.Get("id", registeredobjectid);
+  parameters.Get(_parameters.id.name, registeredobjectid);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Get a list of parameters for this object
+ */
+/*--------------------------------------------------------------------------------*/
+void SelfRegisteringParametricObject::GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list)
+{
+  const PARAMETERDESC *pparameters = (const PARAMETERDESC *)&_parameters;
+  uint_t i, n = sizeof(_parameters) / sizeof(pparameters[0]);
+
+  for (i = 0; i < n; i++) list.push_back(pparameters + i);
 }
 
 /*--------------------------------------------------------------------------------*/
 /** registration function (called by SELF_REGISTER macro below)
  */
 /*--------------------------------------------------------------------------------*/
-uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creator, ISOBJECTOFTYPE isobjectoftype)
+uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creator, ISOBJECTOFTYPE isobjectoftype, GETPARAMETERS getparameters)
 {
   // because we can't control the order of static creation (dictated by link order), we
   // cannot control whether individual registration functions will be called BEFORE any
@@ -31,9 +49,22 @@ uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creat
   // therefore we create the map here and then set an external pointer to it
   // ::Create() is safe to call BEFORE this 
   static std::map<std::string,OBJECTDATA> _creators;
-  OBJECTDATA data = {creator, isobjectoftype};
+  OBJECTDATA data = {creator, isobjectoftype, getparameters};
 
   DEBUG2(("Registering object type '%s'", type));
+#if DEBUG_LEVEL >= 3
+  {
+    std::vector<const PARAMETERDESC *> list;
+    uint_t i;
+
+    (*getparameters)(list);
+  
+    for (i = 0; i < list.size(); i++)
+    {
+      DEBUG("   Parameter '%s': %s", list[i]->name, list[i]->desc);
+    }
+  }
+#endif
 
   // set creator in map
   _creators[type] = data;
