@@ -50,12 +50,6 @@ public:
   typedef SelfRegisteringParametricObject *(*CREATOR)(const ParameterSet& parameters);
 
   /*--------------------------------------------------------------------------------*/
-  /** typedef for IsObjectOfType function
-   */
-  /*--------------------------------------------------------------------------------*/
-  typedef bool (*ISOBJECTOFTYPE)(const SelfRegisteringParametricObject *obj);
-
-  /*--------------------------------------------------------------------------------*/
   /** typedef for GetParameterDescriptions function
    */
   /*--------------------------------------------------------------------------------*/
@@ -65,7 +59,15 @@ public:
   /** registration function (called by SELF_REGISTER macro below)
    */
   /*--------------------------------------------------------------------------------*/
-  static uint_t Register(const char *type, CREATOR creator, ISOBJECTOFTYPE isobjectoftype, GETPARAMETERS getparameters);
+  static uint_t RegisterSelfRegisteringParameterObjectCreator(const char *type, CREATOR creator, GETPARAMETERS getparameters);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Get a list of objects that can be created (optionally restricted)
+   *
+   * @param match a string that *must* appear at the start of the name for it to be entered into the list
+   */
+  /*--------------------------------------------------------------------------------*/
+  static void GetList(std::vector<std::string>& list, const char *match = NULL); 
 
   /*--------------------------------------------------------------------------------*/
   /** create an instance of the specified type
@@ -74,24 +76,16 @@ public:
   static SelfRegisteringParametricObject *CreateObject(const char *type, const ParameterSet& parameters);
 
   /*--------------------------------------------------------------------------------*/
-  /** Get a list of objects that can be created (optionally restricted)
-   *
-   * @param match a string that *must* appear at the start of the name for it to be entered into the list
+  /** Get a list of parameters for a type
    */
   /*--------------------------------------------------------------------------------*/
-  static void GetList(std::vector<std::string>& list, const char *match = ""); 
-
-  /*--------------------------------------------------------------------------------*/
-  /** Return whether a previously created object is of the specified type
-   */
-  /*--------------------------------------------------------------------------------*/
-  static bool IsObjectOfType(const SelfRegisteringParametricObject *obj, const char *type);
+  static void GetParameters(const char *type, std::vector<const PARAMETERDESC *>& list);
 
 protected:
   typedef struct {
-    CREATOR        creator;
-    ISOBJECTOFTYPE isobjectoftype;
-    GETPARAMETERS  getparameters;
+    std::string   name;
+    CREATOR       creator;
+    GETPARAMETERS getparameters;
   } OBJECTDATA;
 
   typedef std::map<std::string,OBJECTDATA>::const_iterator Iterator;
@@ -117,7 +111,7 @@ protected:
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTER(type, name)                                       \
 const char *type::GetRegisteredObjectTypeName() const {return name;}    \
- const volatile uint_t type::_dummy = SelfRegisteringParametricObject::Register(name, &type::CreateRegisteredObjectImplementation, &type::IsRegisteredObjectOfTypeImplementation, &type::GetParameterDescriptions);
+const uint_t type::_selfregisteringparametricobject_dummy = SelfRegisteringParametricObject::RegisterSelfRegisteringParameterObjectCreator(name, &type::CreateRegisteredObjectImplementation, &type::GetParameterDescriptions);
 
 /*--------------------------------------------------------------------------------*/
 /** Creator macro
@@ -130,9 +124,8 @@ const char *type::GetRegisteredObjectTypeName() const {return name;}    \
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTER_CREATOR(type)                                     \
 private:                                                                \
-  static const volatile uint_t _dummy;                                  \
+  static const uint_t _selfregisteringparametricobject_dummy;           \
   static SelfRegisteringParametricObject *CreateRegisteredObjectImplementation(const ParameterSet& parameters) {return new type(parameters);} \
-  static bool                            IsRegisteredObjectOfTypeImplementation(const SelfRegisteringParametricObject *obj) {return (dynamic_cast<const type *>(obj) != NULL);} \
 public:                                                                 \
   type(const ParameterSet& parameters);                                 \
   virtual const char *GetRegisteredObjectTypeName() const;

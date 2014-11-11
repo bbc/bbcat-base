@@ -1,7 +1,7 @@
 
 #include <string.h>
 
-#define DEBUG_LEVEL 3
+#define DEBUG_LEVEL 1
 #include "SelfRegisteringParametricObject.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -41,7 +41,7 @@ void SelfRegisteringParametricObject::GetParameterDescriptions(std::vector<const
 /** registration function (called by SELF_REGISTER macro below)
  */
 /*--------------------------------------------------------------------------------*/
-uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creator, ISOBJECTOFTYPE isobjectoftype, GETPARAMETERS getparameters)
+uint_t SelfRegisteringParametricObject::RegisterSelfRegisteringParameterObjectCreator(const char *type, CREATOR creator, GETPARAMETERS getparameters)
 {
   // because we can't control the order of static creation (dictated by link order), we
   // cannot control whether individual registration functions will be called BEFORE any
@@ -49,7 +49,7 @@ uint_t SelfRegisteringParametricObject::Register(const char *type, CREATOR creat
   // therefore we create the map here and then set an external pointer to it
   // ::Create() is safe to call BEFORE this 
   static std::map<std::string,OBJECTDATA> _creators;
-  OBJECTDATA data = {creator, isobjectoftype, getparameters};
+  OBJECTDATA data = {type, creator, getparameters};
 
   DEBUG2(("Registering object type '%s'", type));
 #if DEBUG_LEVEL >= 3
@@ -88,7 +88,8 @@ SelfRegisteringParametricObject *SelfRegisteringParametricObject::CreateObject(c
   if (creators && ((it = creators->find(type)) != creators->end()))
   {
     // call creator with parameters
-    obj = (*it->second.creator)(parameters);
+    if (it->second.creator) obj = (*it->second.creator)(parameters);
+    else ERROR("Type '%s' cannot be created", type);
   }
   else ERROR("Failed to find creator for object '%s'", type);
 
@@ -110,26 +111,26 @@ void SelfRegisteringParametricObject::GetList(std::vector<std::string>& list, co
 
     for (it = creators->begin(); it != creators->end(); ++it)
     {
-      if (!match || (l && (strncasecmp(it->first.c_str(), match, l) == 0))) list.push_back(it->first);
+      if (!match || !l || (l && (strncasecmp(it->first.c_str(), match, l) == 0))) list.push_back(it->first);
     }
   }
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Return whether a previously created object is of the specified type
+/** create an instance of the specified type
  */
 /*--------------------------------------------------------------------------------*/
-bool SelfRegisteringParametricObject::IsObjectOfType(const SelfRegisteringParametricObject *obj, const char *type)
+void SelfRegisteringParametricObject::GetParameters(const char *type, std::vector<const PARAMETERDESC *>& list)
 {
   Iterator it;
 
   if (creators && ((it = creators->find(type)) != creators->end()))
   {
-    // call IsObjectOfTypeImplementation() function
-    return (*it->second.isobjectoftype)(obj);
+    // call GetParameters()
+    if (it->second.getparameters) (*it->second.getparameters)(list);
+    else ERROR("Type '%s' has no function to get its parameters", type);
   }
-
-  return false;
+  else DEBUG2(("Failed to find entry for object '%s'", type));
 }
 
 BBC_AUDIOTOOLBOX_END
