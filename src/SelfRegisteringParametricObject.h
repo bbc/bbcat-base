@@ -111,7 +111,8 @@ protected:
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTER(type, name)                                       \
 const char *type::GetRegisteredObjectTypeName() const {return name;}    \
-const uint_t type::_selfregisteringparametricobject_dummy = SelfRegisteringParametricObject::RegisterSelfRegisteringParameterObjectCreator(name, &type::CreateRegisteredObjectImplementation, &type::GetParameterDescriptions);
+const char *type##_GetRegisteredObjectTypeName() {return name;} \
+const volatile uint_t selfregisteringparametricobject_##type##_index = SelfRegisteringParametricObject::RegisterSelfRegisteringParameterObjectCreator(name, &type::CreateRegisteredObjectImplementation, &type::GetParameterDescriptions);
 
 /*--------------------------------------------------------------------------------*/
 /** Creator macro
@@ -124,7 +125,6 @@ const uint_t type::_selfregisteringparametricobject_dummy = SelfRegisteringParam
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTER_CREATOR(type)                                     \
 private:                                                                \
-  static const uint_t _selfregisteringparametricobject_dummy;           \
   static SelfRegisteringParametricObject *CreateRegisteredObjectImplementation(const ParameterSet& parameters) {return new type(parameters);} \
 public:                                                                 \
   type(const ParameterSet& parameters);                                 \
