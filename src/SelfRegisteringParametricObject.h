@@ -124,11 +124,10 @@ const volatile uint_t selfregisteringparametricobject_##type##_index = SelfRegis
  */
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTER_CREATOR(type)                                     \
-private:                                                                \
-  static SelfRegisteringParametricObject *CreateRegisteredObjectImplementation(const ParameterSet& parameters) {return new type(parameters);} \
 public:                                                                 \
   type(const ParameterSet& parameters);                                 \
-  virtual const char *GetRegisteredObjectTypeName() const;
+  virtual const char *GetRegisteredObjectTypeName() const;              \
+  static SelfRegisteringParametricObject *CreateRegisteredObjectImplementation(const ParameterSet& parameters) {return new type(parameters);}
 
 BBC_AUDIOTOOLBOX_END
 
