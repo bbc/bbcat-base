@@ -23,6 +23,7 @@ libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_SOURCES =	\
 	DistanceModel.cpp								\
 	EnhancedFile.cpp								\
 	misc.cpp										\
+	ObjectRegistry.cpp								\
 	ParameterSet.cpp								\
 	PerformanceMonitor.cpp							\
 	SelfRegisteringParametricObject.cpp				\
@@ -34,6 +35,7 @@ pkginclude_HEADERS =							\
 	ByteSwap.h									\
 	DistanceModel.h								\
 	EnhancedFile.h								\
+	ObjectRegistry.h							\
 	ParameterSet.h								\
 	PerformanceMonitor.h						\
 	PositionCursor.h							\

@@ -6,8 +6,7 @@
 
 BBC_AUDIOTOOLBOX_START
 
-// a pointer to the map of creators, see ::Register() for an explanation of why this is a pointer
-const std::map<std::string,SelfRegisteringParametricObject::OBJECTDATA> *SelfRegisteringParametricObject::creators = NULL;
+/*----------------------------------------------------------------------------------------------------*/
 
 static const struct {
   PARAMETERDESC id;
@@ -37,100 +36,53 @@ void SelfRegisteringParametricObject::GetParameterDescriptions(std::vector<const
   for (i = 0; i < n; i++) list.push_back(pparameters + i);
 }
 
+/*----------------------------------------------------------------------------------------------------*/
+
 /*--------------------------------------------------------------------------------*/
-/** registration function (called by SELF_REGISTER macro below)
+/** Create an object of the specified type
  */
 /*--------------------------------------------------------------------------------*/
-uint_t SelfRegisteringParametricObject::RegisterSelfRegisteringParameterObjectCreator(const char *type, CREATOR creator, GETPARAMETERS getparameters)
+SelfRegisteringParametricObject *SelfRegisteringParametricObjectContainer::CreateObject(const char *name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory)
 {
-  // because we can't control the order of static creation (dictated by link order), we
-  // cannot control whether individual registration functions will be called BEFORE any
-  // static objects in this class are created
-  // therefore we create the map here and then set an external pointer to it
-  // ::Create() is safe to call BEFORE this 
-  static std::map<std::string,OBJECTDATA> _creators;
-  OBJECTDATA data = {type, creator, getparameters};
-
-  DEBUG2(("Registering object type '%s'", type));
-#if DEBUG_LEVEL >= 3
-  {
-    std::vector<const PARAMETERDESC *> list;
-    uint_t i;
-
-    (*getparameters)(list);
-  
-    for (i = 0; i < list.size(); i++)
-    {
-      DEBUG("   Parameter '%s': %s", list[i]->name, list[i]->desc);
-    }
-  }
-#endif
-
-  // set creator in map
-  _creators[type] = data;
-
-  // set external pointer to static object
-  creators = &_creators;
-
-  // return arbitrary value, doesn't matter what it is just as long as a value is returned
-  return _creators.size();
-}
-
-/*--------------------------------------------------------------------------------*/
-/** create an instance of the specified type
- */
-/*--------------------------------------------------------------------------------*/
-SelfRegisteringParametricObject *SelfRegisteringParametricObject::CreateObject(const char *type, const ParameterSet& parameters)
-{
+  SelfRegisteringParametricObjectFactoryBase *_factory;
   SelfRegisteringParametricObject *obj = NULL;
-  Iterator it;
 
-  if (creators && ((it = creators->find(type)) != creators->end()))
+  if ((_factory = dynamic_cast<SelfRegisteringParametricObjectFactoryBase *>(ObjectRegistry::Get().GetFactory(name))) != NULL)
   {
-    // call creator with parameters
-    if (it->second.creator) obj = (*it->second.creator)(parameters);
-    else ERROR("Type '%s' cannot be created", type);
+    if (factory) *factory = _factory;
+
+    obj = _factory->Create(parameters);
   }
-  else ERROR("Failed to find creator for object '%s'", type);
 
   return obj;
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Get a list of objects that can be created (optionally restricted)
- *
- * @param match a string that *must* appear at the start of the name for it to be entered into the list
+/** Create (self-registered-parametric) object of given name and add it to this object
  */
 /*--------------------------------------------------------------------------------*/
-void SelfRegisteringParametricObject::GetList(std::vector<std::string>& list, const char *match)
+int SelfRegisteringParametricObjectContainer::Create(const char *name, const ParameterSet& parameters)
 {
-  if (creators)
-  {
-    Iterator it;
-    uint_t l = match ? strlen(match) : 0;
+  SelfRegisteringParametricObjectFactoryBase *factory;
+  SelfRegisteringParametricObject *obj;
+  int index = -1;
 
-    for (it = creators->begin(); it != creators->end(); ++it)
+  if ((obj = CreateObject(name, parameters, &factory)) != NULL)
+  {
+    // don't attempt to register singletons!
+    if (!factory->IsSingleton())
     {
-      if (!match || !l || (l && (strncasecmp(it->first.c_str(), match, l) == 0))) list.push_back(it->first);
+      // object was created, find out what type it is
+      if ((index = Register(obj, parameters)) < 0)
+      {
+        ERROR("Unknown type '%s' (don't known what to do with it)", name);
+        delete obj;
+      }
     }
   }
-}
+  else ERROR("Unknown type '%s' (cannot create)", name);
 
-/*--------------------------------------------------------------------------------*/
-/** create an instance of the specified type
- */
-/*--------------------------------------------------------------------------------*/
-void SelfRegisteringParametricObject::GetParameters(const char *type, std::vector<const PARAMETERDESC *>& list)
-{
-  Iterator it;
-
-  if (creators && ((it = creators->find(type)) != creators->end()))
-  {
-    // call GetParameters()
-    if (it->second.getparameters) (*it->second.getparameters)(list);
-    else ERROR("Type '%s' has no function to get its parameters", type);
-  }
-  else DEBUG2(("Failed to find entry for object '%s'", type));
+  return index;
 }
 
 BBC_AUDIOTOOLBOX_END

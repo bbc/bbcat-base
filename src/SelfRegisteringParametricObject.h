@@ -6,24 +6,107 @@
 #include <vector>
 
 #include "ParameterSet.h"
+#include "ObjectRegistry.h"
 
 BBC_AUDIOTOOLBOX_START
+
+class SelfRegisteringParametricObject;
+class SelfRegisteringParametricObjectFactoryBase {
+public:
+  SelfRegisteringParametricObjectFactoryBase() {}
+  virtual ~SelfRegisteringParametricObjectFactoryBase() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether the object this factory makes is a singleton
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual bool IsSingleton() const {return false;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** create an instance of the specified type
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters) = 0;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Get a list of parameters for this object
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list) const = 0;
+};
+
+/*--------------------------------------------------------------------------------*/
+/** Template for self-registering parametric object factory
+ */
+/*--------------------------------------------------------------------------------*/
+template<class TYPE>
+class SelfRegisteringParametricObjectFactory : public SelfRegisteringParametricObjectFactoryBase, public RegisteredObjectFactory {
+public:
+  SelfRegisteringParametricObjectFactory(const char *_name) : SelfRegisteringParametricObjectFactoryBase(),
+                                                              RegisteredObjectFactory(_name) {}
+  virtual ~SelfRegisteringParametricObjectFactory() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** create an instance of the specified type
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters) {return new TYPE(parameters);}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Get a list of parameters for this object
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list) const {return TYPE::GetParameterDescriptions(list);}
+};
+
+/*--------------------------------------------------------------------------------*/
+/** Template for singleton self-registering parametric object factory
+ */
+/*--------------------------------------------------------------------------------*/
+template<class TYPE>
+class SelfRegisteringParametricSingletonFactory : public SelfRegisteringParametricObjectFactory<TYPE> {
+public:
+  SelfRegisteringParametricSingletonFactory(const char *_name) : SelfRegisteringParametricObjectFactory<TYPE>(_name) {}
+  virtual ~SelfRegisteringParametricSingletonFactory() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether the object this factory makes is a singleton
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual bool IsSingleton() const {return true;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** create a singleton instance of the specified type and return its address
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters)
+  {
+    // create single instance of object only if this function is called
+    static TYPE   obj(parameters); 
+    static uint_t count = 0;    // reference count
+    // on second and subsequent calls, update the parameters of the object 
+    if ((++count) > 1) obj.SetParameters(parameters);
+    return &obj;
+  }
+};
 
 /*--------------------------------------------------------------------------------*/
 /** Base objects for self-registering objects that can all be created with parameters
  *
- * Derive an object from this, then:
- * 1. Put the SELF_REGISTER_CREATOR() macro in the class definition, straight after the opening brace
- * 2. Put the SELF_REGISTER() macro in the cpp file
- *
- * From then on, anything can create an instance of your object with parameters!
  */
 /*--------------------------------------------------------------------------------*/
 class SelfRegisteringParametricObject
 {
 public:
   SelfRegisteringParametricObject() {}
+  SelfRegisteringParametricObject(const ParameterSet& parameters) {SetParameters(parameters);}
   virtual ~SelfRegisteringParametricObject() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return user-supplied ID for this object
+   */
+  /*--------------------------------------------------------------------------------*/
+  const std::string& GetRegisteredObjectID() const {return registeredobjectid;}
 
   /*--------------------------------------------------------------------------------*/
   /** Set parameters within object
@@ -37,67 +120,8 @@ public:
   /*--------------------------------------------------------------------------------*/
   static void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list);
 
-  /*--------------------------------------------------------------------------------*/
-  /** Return user-supplied ID for this object
-   */
-  /*--------------------------------------------------------------------------------*/
-  const std::string& GetRegisteredObjectID() const {return registeredobjectid;}
-
-  /*--------------------------------------------------------------------------------*/
-  /** typedef for creator function
-   */
-  /*--------------------------------------------------------------------------------*/
-  typedef SelfRegisteringParametricObject *(*CREATOR)(const ParameterSet& parameters);
-
-  /*--------------------------------------------------------------------------------*/
-  /** typedef for GetParameterDescriptions function
-   */
-  /*--------------------------------------------------------------------------------*/
-  typedef void (*GETPARAMETERS)(std::vector<const PARAMETERDESC *>& list);
-
-  /*--------------------------------------------------------------------------------*/
-  /** registration function (called by SELF_REGISTER macro below)
-   */
-  /*--------------------------------------------------------------------------------*/
-  static uint_t RegisterSelfRegisteringParameterObjectCreator(const char *type, CREATOR creator, GETPARAMETERS getparameters);
-
-  /*--------------------------------------------------------------------------------*/
-  /** Get a list of objects that can be created (optionally restricted)
-   *
-   * @param match a string that *must* appear at the start of the name for it to be entered into the list
-   */
-  /*--------------------------------------------------------------------------------*/
-  static void GetList(std::vector<std::string>& list, const char *match = NULL); 
-
-  /*--------------------------------------------------------------------------------*/
-  /** create an instance of the specified type
-   */
-  /*--------------------------------------------------------------------------------*/
-  static SelfRegisteringParametricObject *CreateObject(const char *type, const ParameterSet& parameters);
-
-  /*--------------------------------------------------------------------------------*/
-  /** Get a list of parameters for a type
-   */
-  /*--------------------------------------------------------------------------------*/
-  static void GetParameters(const char *type, std::vector<const PARAMETERDESC *>& list);
-
-protected:
-  typedef struct {
-    std::string   name;
-    CREATOR       creator;
-    GETPARAMETERS getparameters;
-  } OBJECTDATA;
-
-  typedef std::map<std::string,OBJECTDATA>::const_iterator Iterator;
-
 protected:
   std::string registeredobjectid;
-
-  /*--------------------------------------------------------------------------------*/
-  /** this is deliberately a pointer, see code for reasons 
-   */
-  /*--------------------------------------------------------------------------------*/
-  static const std::map<std::string,OBJECTDATA> *creators;
 };
 
 /*--------------------------------------------------------------------------------*/
@@ -109,28 +133,43 @@ protected:
  * @note this should be put in the cpp file *only*
  */
 /*--------------------------------------------------------------------------------*/
-#define SELF_REGISTER(type, name)                                       \
-const char *type::GetRegisteredObjectTypeName() const {return name;}    \
-const char *type##_GetRegisteredObjectTypeName() {return name;} \
-const volatile uint_t selfregisteringparametricobject_##type##_index = SelfRegisteringParametricObject::RegisterSelfRegisteringParameterObjectCreator(name, &type::CreateRegisteredObjectImplementation, &type::GetParameterDescriptions);
+#define SELF_REGISTERING_PARAMETRIC_OBJECT(type, name)                  \
+static   SelfRegisteringParametricObjectFactory<type> __factory_##type(name); \
+volatile RegisteredObjectFactory *factory_##type = &__factory_##type;
 
-/*--------------------------------------------------------------------------------*/
-/** Creator macro
- *
- * @param type class name of type to be registered
- *
- * @note this should appear once in the class definition, preferrably near the top as
- * @note it includes a public: access descriptor
- */
-/*--------------------------------------------------------------------------------*/
-#define SELF_REGISTER_CREATOR(type)                                     \
-public:                                                                 \
-  type(const ParameterSet& parameters);                                 \
-  virtual const char *GetRegisteredObjectTypeName() const;              \
-  static SelfRegisteringParametricObject *CreateRegisteredObjectImplementation(const ParameterSet& parameters) {return new type(parameters);}
+#define SELF_REGISTERING_PARAMETRIC_SINGLETON(type, name)               \
+static   SelfRegisteringParametricSingletonFactory<type> __factory_##type(name); \
+volatile RegisteredObjectFactory *factory_##type = &__factory_##type;
+
+/*----------------------------------------------------------------------------------------------------*/
+
+class SelfRegisteringParametricObjectContainer {
+public:
+  SelfRegisteringParametricObjectContainer() {}
+  virtual ~SelfRegisteringParametricObjectContainer() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Create (self-registered-parametric) object of given name and add it to this object
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual int Create(const char *name, const ParameterSet& parameters);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Create an object of the specified type
+   */
+  /*--------------------------------------------------------------------------------*/
+  static SelfRegisteringParametricObject *CreateObject(const char *name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory = NULL);
+  
+protected:
+  /*--------------------------------------------------------------------------------*/
+  /** Register a self-registering-parametric-object or return -1
+   *
+   * @return index (if applicable) or -1 for unrecognized type
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual int Register(SelfRegisteringParametricObject *obj, const ParameterSet& parameters) = 0;
+};
 
 BBC_AUDIOTOOLBOX_END
 
 #endif
-
-
