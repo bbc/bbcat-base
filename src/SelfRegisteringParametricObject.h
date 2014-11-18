@@ -149,18 +149,17 @@ public:
   virtual ~SelfRegisteringParametricObjectContainer() {}
 
   /*--------------------------------------------------------------------------------*/
-  /** Create (self-registered-parametric) object of given name and add it to this object
-   */
-  /*--------------------------------------------------------------------------------*/
-  virtual int Create(const char *name, const ParameterSet& parameters);
-
-  /*--------------------------------------------------------------------------------*/
   /** Create an object of the specified type
    */
   /*--------------------------------------------------------------------------------*/
   static SelfRegisteringParametricObject *CreateObject(const char *name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory = NULL);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Create (self-registered-parametric) object of given name and add it to this object
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual int Create(const char *name, const ParameterSet& parameters);
   
-protected:
   /*--------------------------------------------------------------------------------*/
   /** Register a self-registering-parametric-object or return -1
    *
