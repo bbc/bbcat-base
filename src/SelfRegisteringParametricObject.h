@@ -98,8 +98,10 @@ public:
 class SelfRegisteringParametricObject
 {
 public:
-  SelfRegisteringParametricObject() {}
-  SelfRegisteringParametricObject(const ParameterSet& parameters) {SetParameters(parameters);}
+  SelfRegisteringParametricObject() : objectvalid(true) {}
+  SelfRegisteringParametricObject(const ParameterSet& parameters) : objectvalid(true) {
+    SetParameters(parameters);
+  }
   virtual ~SelfRegisteringParametricObject() {}
 
   /*--------------------------------------------------------------------------------*/
@@ -107,6 +109,12 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   const std::string& GetRegisteredObjectID() const {return registeredobjectid;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether object is valid/constructed successfully      
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool IsObjectValid() const {return objectvalid;}
 
   /*--------------------------------------------------------------------------------*/
   /** Set parameters within object
@@ -121,7 +129,15 @@ public:
   static void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list);
 
 protected:
+  /*--------------------------------------------------------------------------------*/
+  /** Invalidate object (usually during construction)
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void InvalidateObject(); 
+
+protected:
   std::string registeredobjectid;
+  bool        objectvalid;
 };
 
 /*--------------------------------------------------------------------------------*/

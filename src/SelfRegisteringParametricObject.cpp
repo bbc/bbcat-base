@@ -16,6 +16,15 @@ static const struct {
 };
 
 /*--------------------------------------------------------------------------------*/
+/** Invalidate object (usually during construction)
+ */
+/*--------------------------------------------------------------------------------*/
+void SelfRegisteringParametricObject::InvalidateObject()
+{
+  objectvalid = false;
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Set parameters within object
  */
 /*--------------------------------------------------------------------------------*/
@@ -69,13 +78,21 @@ int SelfRegisteringParametricObjectContainer::Create(const char *name, const Par
 
   if ((obj = CreateObject(name, parameters, &factory)) != NULL)
   {
+    if (!obj->IsObjectValid())
+    {
+      // object construction failed for some reason
+      ERROR("Failed to create object '%s' correctly", name);
+
+      // ONLY delete object if it is not a singleton
+      if (!factory->IsSingleton()) delete obj;
+    }
     // don't attempt to register singletons!
-    if (!factory->IsSingleton())
+    else if (!factory->IsSingleton())
     {
       // object was created, find out what type it is
       if ((index = Register(obj, parameters)) < 0)
       {
-        ERROR("Unknown type '%s' (don't known what to do with it)", name);
+        ERROR("Unknown type '%s' (unable to register with container)", name);
         delete obj;
       }
     }
