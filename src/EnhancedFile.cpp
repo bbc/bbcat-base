@@ -13,6 +13,12 @@ EnhancedFile::EnhancedFile() : fp(NULL),
 {
 }
 
+EnhancedFile::EnhancedFile(const char *filename, const char *mode) : fp(NULL),
+                                                                     allowclose(false)
+{
+  fopen(filename, mode);
+}
+
 EnhancedFile::EnhancedFile(const EnhancedFile& obj) : fp(NULL),
                                                       allowclose(false)
 {
@@ -81,7 +87,7 @@ bool EnhancedFile::fopen(const char *filename, const char *mode)
       allowclose     = true;
       success        = true;
     }
-    else DEBUG2(("Failed to open '%s' for '%s'", filename, mode));
+    else ERROR("Failed to open '%s' for '%s'", filename, mode);
   }
 
   return success;

@@ -18,6 +18,7 @@ class EnhancedFile
 {
 public:
   EnhancedFile();
+  EnhancedFile(const char *filename, const char *mode = "rb");
   EnhancedFile(const EnhancedFile& obj);
   virtual ~EnhancedFile();
 
