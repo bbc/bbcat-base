@@ -17,6 +17,7 @@
 #include "misc.h"
 #include "ByteSwap.h"
 #include "ThreadLock.h"
+#include "EnhancedFile.h"
 
 BBC_AUDIOTOOLBOX_START
 
@@ -99,6 +100,11 @@ void debug_err(const char *fmt, ...)
 
   {
     ThreadLock lock(debuglock);
+    static EnhancedFile file(EnhancedFile::catpath(getenv("HOME"), "bbcat-errors.txt").c_str(), "w");
+
+    file.fprintf("%s\n", str.c_str());
+    file.fflush();
+    
     if (errorhandler)
     {
       (*errorhandler)(str.c_str(), errorhandler_context);
