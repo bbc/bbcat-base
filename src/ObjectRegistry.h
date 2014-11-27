@@ -20,6 +20,12 @@ public:
   /*--------------------------------------------------------------------------------*/
   const std::string& GetName() const {return name;}
 
+  /*--------------------------------------------------------------------------------*/
+  /** Return relative priority of this factory
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual int GetPriority() const {return 0;}
+
 protected:
   std::string name;
 };

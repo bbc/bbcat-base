@@ -57,6 +57,12 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   virtual void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list) const {return TYPE::GetParameterDescriptions(list);}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return relative priority of this factory
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual int GetPriority() const {return TYPE::GetFactoryPriority();}
 };
 
 /*--------------------------------------------------------------------------------*/
@@ -88,6 +94,12 @@ public:
     if ((++count) > 1) obj.SetParameters(parameters);
     return &obj;
   }
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return relative priority of this factory
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual int GetPriority() const {return TYPE::GetFactoryPriority();}
 };
 
 /*--------------------------------------------------------------------------------*/
@@ -128,6 +140,12 @@ public:
   /*--------------------------------------------------------------------------------*/
   static void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list);
 
+  /*--------------------------------------------------------------------------------*/
+  /** Return relative priority of this object's factory
+   */
+  /*--------------------------------------------------------------------------------*/
+  static int GetFactoryPriority() {return 0;}
+
 protected:
   /*--------------------------------------------------------------------------------*/
   /** Invalidate object (usually during construction)
@@ -150,12 +168,12 @@ protected:
  */
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTERING_PARAMETRIC_OBJECT(type, name)                  \
-static   SelfRegisteringParametricObjectFactory<type> __factory_##type(name); \
-volatile RegisteredObjectFactory *factory_##type = &__factory_##type;
+static SelfRegisteringParametricObjectFactory<type> __factory_##type(name); \
+const RegisteredObjectFactory *factory_##type = &__factory_##type;
 
 #define SELF_REGISTERING_PARAMETRIC_SINGLETON(type, name)               \
-static   SelfRegisteringParametricSingletonFactory<type> __factory_##type(name); \
-volatile RegisteredObjectFactory *factory_##type = &__factory_##type;
+static SelfRegisteringParametricSingletonFactory<type> __factory_##type(name); \
+const RegisteredObjectFactory *factory_##type = &__factory_##type;
 
 /*----------------------------------------------------------------------------------------------------*/
 

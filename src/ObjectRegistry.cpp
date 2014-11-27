@@ -19,7 +19,17 @@ RegisteredObjectFactory::~RegisteredObjectFactory()
 /*--------------------------------------------------------------------------------*/
 void ObjectRegistry::Register(RegisteredObjectFactory *factory)
 {
-  objects[factory->GetName()] = factory;
+  std::map<std::string,RegisteredObjectFactory *>::iterator it;
+  const std::string& name = factory->GetName();
+
+  // if a factory of this name doesn't exist OR
+  // the new one is a higher priority than the existing one,
+  // set the factory for this name
+  if (((it = objects.find(name)) == objects.end()) ||
+      (factory->GetPriority() > it->second->GetPriority()))
+  {
+    objects[name] = factory;
+  }
 }
 
 /*--------------------------------------------------------------------------------*/
