@@ -49,6 +49,12 @@ void SelfRegisteringParametricObject::GetParameterDescriptions(std::vector<const
 
 /*--------------------------------------------------------------------------------*/
 /** Create an object of the specified type
+ *
+ * @param name object type name
+ * @param parameters a set of parameters to create the object with
+ * @param factory a pointer to a variable to receive the factory used to create the object
+ *
+ * @return pointer to object or NULL
  */
 /*--------------------------------------------------------------------------------*/
 SelfRegisteringParametricObject *SelfRegisteringParametricObjectContainer::CreateObject(const char *name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory)
@@ -68,6 +74,11 @@ SelfRegisteringParametricObject *SelfRegisteringParametricObjectContainer::Creat
 
 /*--------------------------------------------------------------------------------*/
 /** Create (self-registered-parametric) object of given name and add it to this object
+ *
+ * @param name object type name
+ * @param parameters a set of parameters to create the object with
+ *
+ * @return index that object was registered using (may be global or local to a category)
  */
 /*--------------------------------------------------------------------------------*/
 int SelfRegisteringParametricObjectContainer::Create(const char *name, const ParameterSet& parameters)

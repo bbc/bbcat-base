@@ -24,7 +24,7 @@ public:
   /** Return relative priority of this factory
    */
   /*--------------------------------------------------------------------------------*/
-  virtual int GetPriority() const {return 0;}
+  virtual int GetPriority() const = 0;
 
 protected:
   std::string name;

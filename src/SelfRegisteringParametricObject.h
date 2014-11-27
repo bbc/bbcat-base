@@ -10,6 +10,11 @@
 
 BBC_AUDIOTOOLBOX_START
 
+/*--------------------------------------------------------------------------------*/
+/** Base class for SelfRegisteringParametricObject factories which provide the
+ * interface for creating such objects
+ */
+/*--------------------------------------------------------------------------------*/
 class SelfRegisteringParametricObject;
 class SelfRegisteringParametricObjectFactoryBase {
 public:
@@ -23,7 +28,7 @@ public:
   virtual bool IsSingleton() const {return false;}
 
   /*--------------------------------------------------------------------------------*/
-  /** create an instance of the specified type
+  /** Create an instance of the correct type
    */
   /*--------------------------------------------------------------------------------*/
   virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters) = 0;
@@ -36,7 +41,7 @@ public:
 };
 
 /*--------------------------------------------------------------------------------*/
-/** Template for self-registering parametric object factory
+/** Template for self-registering parametric object factory (non-singleton)
  */
 /*--------------------------------------------------------------------------------*/
 template<class TYPE>
@@ -47,19 +52,19 @@ public:
   virtual ~SelfRegisteringParametricObjectFactory() {}
 
   /*--------------------------------------------------------------------------------*/
-  /** create an instance of the specified type
+  /** Create an instance of the correct type
    */
   /*--------------------------------------------------------------------------------*/
   virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters) {return new TYPE(parameters);}
 
   /*--------------------------------------------------------------------------------*/
-  /** Get a list of parameters for this object
+  /** Get a list of parameters for object
    */
   /*--------------------------------------------------------------------------------*/
   virtual void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list) const {return TYPE::GetParameterDescriptions(list);}
 
   /*--------------------------------------------------------------------------------*/
-  /** Return relative priority of this factory
+  /** Return relative priority of this factory over other factories using the same name
    */
   /*--------------------------------------------------------------------------------*/
   virtual int GetPriority() const {return TYPE::GetFactoryPriority();}
@@ -82,7 +87,7 @@ public:
   virtual bool IsSingleton() const {return true;}
 
   /*--------------------------------------------------------------------------------*/
-  /** create a singleton instance of the specified type and return its address
+  /** Create a singleton instance of the correct type and return its address
    */
   /*--------------------------------------------------------------------------------*/
   virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters)
@@ -96,7 +101,7 @@ public:
   }
 
   /*--------------------------------------------------------------------------------*/
-  /** Return relative priority of this factory
+  /** Return relative priority of this factory over other factories using the same name
    */
   /*--------------------------------------------------------------------------------*/
   virtual int GetPriority() const {return TYPE::GetFactoryPriority();}
@@ -105,6 +110,7 @@ public:
 /*--------------------------------------------------------------------------------*/
 /** Base objects for self-registering objects that can all be created with parameters
  *
+ * @note this is the base class for objects created by the factories above
  */
 /*--------------------------------------------------------------------------------*/
 class SelfRegisteringParametricObject
@@ -177,6 +183,10 @@ const RegisteredObjectFactory *factory_##type = &__factory_##type;
 
 /*----------------------------------------------------------------------------------------------------*/
 
+/*--------------------------------------------------------------------------------*/
+/** Useful base class for objects that create and register SelfRegisteringParamtricObject objects
+ */
+/*--------------------------------------------------------------------------------*/
 class SelfRegisteringParametricObjectContainer {
 public:
   SelfRegisteringParametricObjectContainer() {}
@@ -184,12 +194,23 @@ public:
 
   /*--------------------------------------------------------------------------------*/
   /** Create an object of the specified type
+   *
+   * @param name object type name
+   * @param parameters a set of parameters to create the object with
+   * @param factory a pointer to a variable to receive the factory used to create the object
+   *
+   * @return pointer to object or NULL
    */
   /*--------------------------------------------------------------------------------*/
   static SelfRegisteringParametricObject *CreateObject(const char *name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory = NULL);
 
   /*--------------------------------------------------------------------------------*/
   /** Create (self-registered-parametric) object of given name and add it to this object
+   *
+   * @param name object type name
+   * @param parameters a set of parameters to create the object with
+   *
+   * @return index that object was registered using (may be global or local to a category) or -1 for failure
    */
   /*--------------------------------------------------------------------------------*/
   virtual int Create(const char *name, const ParameterSet& parameters);
@@ -197,7 +218,10 @@ public:
   /*--------------------------------------------------------------------------------*/
   /** Register a self-registering-parametric-object or return -1
    *
-   * @return index (if applicable) or -1 for unrecognized type
+   * @param obj object created by the above
+   * @param parameters the set of parameters used to create the object with
+   *
+   * @return index that object was registered using (may be global or local to a category) or -1 for failure
    */
   /*--------------------------------------------------------------------------------*/
   virtual int Register(SelfRegisteringParametricObject *obj, const ParameterSet& parameters) = 0;
