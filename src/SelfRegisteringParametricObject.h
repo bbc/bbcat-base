@@ -48,7 +48,7 @@ template<class TYPE>
 class SelfRegisteringParametricObjectFactory : public SelfRegisteringParametricObjectFactoryBase, public RegisteredObjectFactory {
 public:
   SelfRegisteringParametricObjectFactory(const char *_name) : SelfRegisteringParametricObjectFactoryBase(),
-                                                              RegisteredObjectFactory(_name) {}
+                                                              RegisteredObjectFactory(_name) {Register();}
   virtual ~SelfRegisteringParametricObjectFactory() {}
 
   /*--------------------------------------------------------------------------------*/

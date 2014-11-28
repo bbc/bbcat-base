@@ -27,6 +27,13 @@ public:
   virtual int GetPriority() const = 0;
 
 protected:
+  /*--------------------------------------------------------------------------------*/
+  /** Register this object with object registry (MUST be called AFTER construction is complete!)
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void Register();
+
+protected:
   std::string name;
 };
 

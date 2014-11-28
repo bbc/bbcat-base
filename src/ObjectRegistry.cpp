@@ -5,13 +5,22 @@ BBC_AUDIOTOOLBOX_START
 
 RegisteredObjectFactory::RegisteredObjectFactory(const char *_name) : name(_name)
 {
-  DEBUG2(("Registering object type '%s'", _name));
-  ObjectRegistry::Get().Register(this);
 }
 
 RegisteredObjectFactory::~RegisteredObjectFactory()
 {
 }
+
+/*--------------------------------------------------------------------------------*/
+/** Register this object with object registry (MUST be called AFTER construction is complete!)
+ */
+/*--------------------------------------------------------------------------------*/
+void RegisteredObjectFactory::Register()
+{
+  ObjectRegistry::Get().Register(this);
+}
+
+/*----------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------*/
 /** Register a factory with this registry
