@@ -25,7 +25,7 @@ void SelfRegisteringParametricObject::InvalidateObject()
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Set parameters within object
+/** Set parameters within object (*only* parameters that can be set more than once)
  */
 /*--------------------------------------------------------------------------------*/
 void SelfRegisteringParametricObject::SetParameters(const ParameterSet& parameters)

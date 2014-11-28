@@ -135,7 +135,7 @@ public:
   bool IsObjectValid() const {return objectvalid;}
 
   /*--------------------------------------------------------------------------------*/
-  /** Set parameters within object
+  /** Set parameters within object (*only* parameters that can be set more than once)
    */
   /*--------------------------------------------------------------------------------*/
   virtual void SetParameters(const ParameterSet& parameters);
