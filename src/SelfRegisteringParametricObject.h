@@ -184,7 +184,7 @@ const RegisteredObjectFactory *factory_##type = &__factory_##type;
 /*----------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------*/
-/** Useful base class for objects that create and register SelfRegisteringParamtricObject objects
+/** Useful base class for objects that create and register SelfRegisteringParametricObject objects
  */
 /*--------------------------------------------------------------------------------*/
 class SelfRegisteringParametricObjectContainer {
