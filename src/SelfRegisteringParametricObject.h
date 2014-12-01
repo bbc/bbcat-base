@@ -41,7 +41,7 @@ public:
 };
 
 /*--------------------------------------------------------------------------------*/
-/** Template for self-registering parametric object factory (non-singleton)
+/** Template for self-registering parametric object factory
  */
 /*--------------------------------------------------------------------------------*/
 template<class TYPE>
@@ -52,53 +52,34 @@ public:
   virtual ~SelfRegisteringParametricObjectFactory() {}
 
   /*--------------------------------------------------------------------------------*/
+  /** Return whether the object this factory makes is a singleton
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual bool IsSingleton() const {return TYPE::IsTypeSingleton();}
+
+  /*--------------------------------------------------------------------------------*/
   /** Create an instance of the correct type
    */
   /*--------------------------------------------------------------------------------*/
-  virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters) {return new TYPE(parameters);}
+  virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters)
+  {
+    if (IsSingleton())
+    {
+      // create single instance of object only if this function is called
+      static TYPE   obj(parameters); 
+      static uint_t count = 0;    // reference count
+      // on second and subsequent calls, update the parameters of the object 
+      if ((++count) > 1) obj.SetParameters(parameters);
+      return &obj;
+    }
+    else return new TYPE(parameters);
+  }
 
   /*--------------------------------------------------------------------------------*/
   /** Get a list of parameters for object
    */
   /*--------------------------------------------------------------------------------*/
   virtual void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list) const {return TYPE::GetParameterDescriptions(list);}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Return relative priority of this factory over other factories using the same name
-   */
-  /*--------------------------------------------------------------------------------*/
-  virtual int GetPriority() const {return TYPE::GetFactoryPriority();}
-};
-
-/*--------------------------------------------------------------------------------*/
-/** Template for singleton self-registering parametric object factory
- */
-/*--------------------------------------------------------------------------------*/
-template<class TYPE>
-class SelfRegisteringParametricSingletonFactory : public SelfRegisteringParametricObjectFactory<TYPE> {
-public:
-  SelfRegisteringParametricSingletonFactory(const char *_name) : SelfRegisteringParametricObjectFactory<TYPE>(_name) {}
-  virtual ~SelfRegisteringParametricSingletonFactory() {}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Return whether the object this factory makes is a singleton
-   */
-  /*--------------------------------------------------------------------------------*/
-  virtual bool IsSingleton() const {return true;}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Create a singleton instance of the correct type and return its address
-   */
-  /*--------------------------------------------------------------------------------*/
-  virtual SelfRegisteringParametricObject *Create(const ParameterSet& parameters)
-  {
-    // create single instance of object only if this function is called
-    static TYPE   obj(parameters); 
-    static uint_t count = 0;    // reference count
-    // on second and subsequent calls, update the parameters of the object 
-    if ((++count) > 1) obj.SetParameters(parameters);
-    return &obj;
-  }
 
   /*--------------------------------------------------------------------------------*/
   /** Return relative priority of this factory over other factories using the same name
@@ -121,6 +102,18 @@ public:
     SetParameters(parameters);
   }
   virtual ~SelfRegisteringParametricObject() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether this object type is a singleton
+   */
+  /*--------------------------------------------------------------------------------*/
+  static bool IsTypeSingleton() {return false;}
+  
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether this object is a singleton
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual bool IsSingleton() const {return IsTypeSingleton();}
 
   /*--------------------------------------------------------------------------------*/
   /** Return user-supplied ID for this object
@@ -177,9 +170,13 @@ protected:
 static SelfRegisteringParametricObjectFactory<type> __factory_##type(name); \
 const RegisteredObjectFactory *factory_##type = &__factory_##type;
 
-#define SELF_REGISTERING_PARAMETRIC_SINGLETON(type, name)               \
-static SelfRegisteringParametricSingletonFactory<type> __factory_##type(name); \
-const RegisteredObjectFactory *factory_##type = &__factory_##type;
+/*--------------------------------------------------------------------------------*/
+/** Add this to any classes that should be singleton
+ */
+/*--------------------------------------------------------------------------------*/
+#define SELF_REGISTERING_PARAMETRIC_OBJECT_IS_SINGLETON()       \
+  static  bool IsTypeSingleton() {return true;}                 \
+  virtual bool IsSingleton() const {return IsTypeSingleton();}
 
 /*----------------------------------------------------------------------------------------------------*/
 

@@ -83,11 +83,10 @@ SelfRegisteringParametricObject *SelfRegisteringParametricObjectContainer::Creat
 /*--------------------------------------------------------------------------------*/
 int SelfRegisteringParametricObjectContainer::Create(const char *name, const ParameterSet& parameters)
 {
-  SelfRegisteringParametricObjectFactoryBase *factory;
   SelfRegisteringParametricObject *obj;
   int index = -1;
 
-  if ((obj = CreateObject(name, parameters, &factory)) != NULL)
+  if ((obj = CreateObject(name, parameters)) != NULL)
   {
     if (!obj->IsObjectValid())
     {
@@ -95,10 +94,10 @@ int SelfRegisteringParametricObjectContainer::Create(const char *name, const Par
       ERROR("Failed to create object '%s' correctly", name);
 
       // ONLY delete object if it is not a singleton
-      if (!factory->IsSingleton()) delete obj;
+      if (!obj->IsSingleton()) delete obj;
     }
     // don't attempt to register singletons!
-    else if (!factory->IsSingleton())
+    else if (!obj->IsSingleton())
     {
       // object was created, find out what type it is
       if ((index = Register(obj, parameters)) < 0)
