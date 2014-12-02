@@ -566,6 +566,17 @@ double fix_denormal(double val)
 }
 
 /*--------------------------------------------------------------------------------*/
+/** Add a list of parameters/controls to a list
+ */
+/*--------------------------------------------------------------------------------*/
+void AddParametersToList(const PARAMETERDESC *parameters, uint_t n, std::vector<const PARAMETERDESC *>& list)
+{
+  uint_t i;
+
+  for (i = 0; i < n; i++) list.push_back(parameters + i);
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Convert dB to gain assuming <=-120 is cut
  */
 /*--------------------------------------------------------------------------------*/

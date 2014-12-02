@@ -315,6 +315,12 @@ typedef struct {
 } PARAMETERDESC;
 
 /*--------------------------------------------------------------------------------*/
+/** Add a list of parameters/controls to a list
+ */
+/*--------------------------------------------------------------------------------*/
+extern void AddParametersToList(const PARAMETERDESC *parameters, uint_t n, std::vector<const PARAMETERDESC *>& list);
+
+/*--------------------------------------------------------------------------------*/
 /** Convert dB to gain assuming <=-120 is cut
  */
 /*--------------------------------------------------------------------------------*/

@@ -8,11 +8,14 @@ BBC_AUDIOTOOLBOX_START
 
 /*----------------------------------------------------------------------------------------------------*/
 
-static const struct {
-  PARAMETERDESC id;
-} _parameters = 
+static const PARAMETERDESC _parameters[] = 
 {
   {"id", "User specified ID for this object"},
+};
+
+enum
+{
+  Parameter_id = 0,
 };
 
 /*--------------------------------------------------------------------------------*/
@@ -30,7 +33,7 @@ void SelfRegisteringParametricObject::InvalidateObject()
 /*--------------------------------------------------------------------------------*/
 void SelfRegisteringParametricObject::SetParameters(const ParameterSet& parameters)
 {
-  parameters.Get(_parameters.id.name, registeredobjectid);
+  parameters.Get(_parameters[Parameter_id].name, registeredobjectid);
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -39,10 +42,7 @@ void SelfRegisteringParametricObject::SetParameters(const ParameterSet& paramete
 /*--------------------------------------------------------------------------------*/
 void SelfRegisteringParametricObject::GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list)
 {
-  const PARAMETERDESC *pparameters = (const PARAMETERDESC *)&_parameters;
-  uint_t i, n = sizeof(_parameters) / sizeof(pparameters[0]);
-
-  for (i = 0; i < n; i++) list.push_back(pparameters + i);
+  AddParametersToList(_parameters, NUMBEROF(_parameters), list);
 }
 
 /*----------------------------------------------------------------------------------------------------*/
