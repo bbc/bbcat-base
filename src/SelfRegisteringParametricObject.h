@@ -49,6 +49,9 @@ class SelfRegisteringParametricObjectFactory : public SelfRegisteringParametricO
 public:
   SelfRegisteringParametricObjectFactory(const char *_name) : SelfRegisteringParametricObjectFactoryBase(),
                                                               RegisteredObjectFactory(_name) {Register();}
+  // alternate constructor to avoid Register() being called
+  SelfRegisteringParametricObjectFactory(const char *_name, bool dummy) : SelfRegisteringParametricObjectFactoryBase(),
+                                                                          RegisteredObjectFactory(_name) {UNUSED_PARAMETER(dummy);}
   virtual ~SelfRegisteringParametricObjectFactory() {}
 
   /*--------------------------------------------------------------------------------*/
