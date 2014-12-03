@@ -75,6 +75,9 @@ class Foo : public SelfRegisteringParametricObject
     Foo(const ParameterSet& parameters);
     virtual void SetParameters(const ParameterSet& parameters);
     static void GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list);
+
+    // enable if this class is a singleton
+    // SELF_REGISTERING_PARAMETRIC_OBJECT_IS_SINGLETON()
 };
 
 BBC_AUDIOTOOLBOX_END
