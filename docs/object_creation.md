@@ -103,7 +103,9 @@ enum
   
 SELF_REGISTERING_PARAMETRIC_OBJECT(Foo, "foo");
 
-Foo::Foo(const ParameterSet& parameters) : SelfRegisteringParametricObject(parameters)
+Foo::Foo(const ParameterSet& parameters)
+  :SelfRegisteringParametricObject(parameters)
+  ,bar(5) // default value of bar if no parameter is given
 {
   // extract and process any parameters here that
   // can ONLY be set at construction
