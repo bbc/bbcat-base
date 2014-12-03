@@ -174,7 +174,7 @@ static SelfRegisteringParametricObjectFactory<type> __factory_##type(name); \
 const RegisteredObjectFactory *factory_##type = &__factory_##type;
 
 /*--------------------------------------------------------------------------------*/
-/** Add this to any classes that should be singleton
+/** Add this to any class definitions that should be singletons
  */
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTERING_PARAMETRIC_OBJECT_IS_SINGLETON()       \
