@@ -1,0 +1,20 @@
+Source: bbcat-base
+Priority: optional
+Maintainer: Richard Day <richard.day@bbc.co.uk>
+Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 9), pkg-config
+
+Package: libbbcat-base
+Section: libs
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Base library for BBC Audio Toolbox, shared library
+
+Package: libbbcat-base-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libbbcat-base (=${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Base library for BBC Audio Toolbox, development library
