@@ -22,8 +22,6 @@
 
 BBC_AUDIOTOOLBOX_START
 
-static std::vector<char *> allocatedStrings;
-
 static ThreadLockObject debuglock;
 
 static DEBUGHANDLER debughandler = NULL;
@@ -67,6 +65,31 @@ void SetErrorHandler(DEBUGHANDLER handler, void *context)
   errorhandler_context = context;
 }
 
+/*--------------------------------------------------------------------------------*/
+/** By default, errors are NOT logged to a file
+ */
+/*--------------------------------------------------------------------------------*/
+static bool error_logging_enabled = false;
+
+/*--------------------------------------------------------------------------------*/
+/** Enable logging to file (in a file returned by GetErrorLoggingFile())
+ */
+/*--------------------------------------------------------------------------------*/
+void EnableErrorLogging(bool enable)
+{
+  error_logging_enabled = enable;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Return filename used to log errors to
+ */
+/*--------------------------------------------------------------------------------*/
+const std::string& GetErrorLoggingFile()
+{
+  static const std::string filename = EnhancedFile::catpath(getenv("HOME"), "bbcat-errors.txt").c_str();
+  return filename;
+}
+
 void debug_msg(const char *fmt, ...)
 {
   va_list     ap;
@@ -87,8 +110,6 @@ void debug_msg(const char *fmt, ...)
       printf("%s\n", str.c_str());
       fflush(stdout);
     }
-
-    FreeStrings();
   }
 }
 
@@ -109,9 +130,10 @@ void debug_err(const char *fmt, ...)
 
     _within = true;
 
-    if (!within)
+    // MUST NOT allow this section to be called recursively!
+    if (!within && error_logging_enabled)
     {
-      static EnhancedFile file(EnhancedFile::catpath(getenv("HOME"), "bbcat-errors.txt").c_str(), "w");
+      static EnhancedFile file(GetErrorLoggingFile().c_str(), "w");
 
       file.fprintf("%s\n", str.c_str());
       file.fflush();
@@ -127,84 +149,11 @@ void debug_err(const char *fmt, ...)
       fflush(errstr);
     }
 
-    FreeStrings();
-
     _within = false;
   }
 }
 
-static bool pipe_enabled = false;
-void enable_pipe(bool enable)
-{
-  pipe_enabled = enable;
-}
-
-bool is_pipe_enabled()
-{
-  return pipe_enabled;
-}
-
-void pipe_msg(const char *fmt, ...)
-{
-  if (pipe_enabled) {
-    va_list     ap;
-    std::string str;
-
-    va_start(ap, fmt);
-    VPrintf(str, fmt, ap);
-    va_end(ap);
-
-    ThreadLock lock(debuglock);
-    static ulong_t tick0 = GetTickCount();
-    ulong_t tick = GetTickCount() - tick0;
-
-    printf("INFO[%010lu]: %s\n", tick, str.c_str());
-    fflush(stdout);
-
-    FreeStrings();
-  }
-}
-
-bool get_pipe_msg(const char *str, ulong_t& tick, std::string& str2)
-{
-  bool ispipemsg = false;
-
-  if (sscanf(str, "INFO[%lu]: ", &tick) > 0)
-  {
-    str2.assign(strstr(str, ": ") + 2);
-    ispipemsg = true;
-  }
-
-  return ispipemsg;
-}
-
-const char *CreateString(const char *data, uint_t len)
-{
-  char *str;
-
-  if ((str = new char[len + 1]) != NULL)
-  {
-    memcpy(str, data, len);
-    str[len] = 0;
-
-    allocatedStrings.push_back(str);
-  }
-
-  return str;
-}
-
-void FreeStrings()
-{
-  uint_t i;
-
-  for (i = 0; i < allocatedStrings.size(); i++)
-  {
-    delete[] allocatedStrings[i];
-  }
-
-  allocatedStrings.clear();
-}
-
+#ifndef TARGET_OS_WINDOWS
 ulong_t GetTickCount()
 {
 #ifdef __MACH__
@@ -233,6 +182,67 @@ ulong_t GetTickCount()
 #endif
 
   return timespec.tv_sec * 1000UL + (timespec.tv_nsec / 1000000UL);
+#endif
+}
+#endif
+
+/*--------------------------------------------------------------------------------*/
+/** Return machine time on in nanoseconds
+ */
+/*--------------------------------------------------------------------------------*/
+uint64_t GetNanosecondTicks()
+{
+#ifdef TARGET_OS_WINDOWS
+  static uint64_t mul = 0, div = 0;
+  LARGE_INTEGER time;
+
+  if (!mul)
+  {
+    LARGE_INTEGER freq;
+    
+    // calculate multiplier and divisor to get from ns from performance counter
+    QueryPerformanceFrequency(&freq);
+
+    mul = 1000000000ULL;
+    div = freq.QuadPart;
+
+    // try to reduce mul/div fraction
+
+    // first, find first one in both mul and div and divide both a minimum
+    uint64_t _div = MIN(mul & -mul, div & -div);
+    mul /= _div;
+    div /= _div;
+
+    DEBUG("Final counter mul/div = %lu/%lu", (ulong_t)mul, (ulong_t)div);
+  }
+  
+  QueryPerformanceCounter(&time);
+
+  return (mul * (uint64_t)time.QuadPart) / div;
+#elif __MACH__
+  static mach_timebase_info_data_t timebase;
+  static bool inited = false;
+
+  if (!inited)
+  {
+    mach_timebase_info(&timebase);
+    inited = true;
+  }
+
+  uint64_t tick = mach_absolute_time();
+  return (tick * timebase.numer) / timebase.denom;
+#else
+  struct timespec timespec;
+
+#ifdef ANDROID
+  clock_gettime(CLOCK_MONOTONIC_HR, &timespec);
+#elif defined(__CYGWIN__)
+  clock_gettime(CLOCK_MONOTONIC, &timespec);
+#else
+  clock_gettime(CLOCK_MONOTONIC_RAW, &timespec);
+#endif
+
+  return (uint64_t)timespec.tv_sec * 1000000000ULL + (uint64_t)timespec.tv_nsec;
 #endif
 }
 
@@ -302,7 +312,7 @@ void INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num)
 
 std::string CreateIndent(const std::string& indent, uint_t count)
 {
-  uint_t len = indent.size();
+  uint_t len = (uint_t)indent.size();
   std::string str;
   char *buf;
 
@@ -345,6 +355,26 @@ void Printf(std::string& str, const char *fmt, ...)
   va_end(ap);
 }
 
+#ifdef COMPILER_MSVC
+/*--------------------------------------------------------------------------------*/
+/** vasprintf doesn't exist in Windows
+ */
+/*--------------------------------------------------------------------------------*/
+int vasprintf(char **buf, const char *fmt, va_list ap)
+{
+  *buf = NULL;
+    
+  int l = vsnprintf(NULL, 0, fmt, ap);
+  if (l >= 0) {
+    if ((*buf = (char *)malloc(l + 1)) != NULL)
+    {
+      l = vsnprintf(*buf, l + 1, fmt, ap);
+    }
+  }
+  return l;
+}
+#endif
+
 /*--------------------------------------------------------------------------------*/
 /** vprintf for std::string
  *
@@ -380,7 +410,7 @@ void VPrintf(std::string& str, const char *fmt, va_list ap)
 /*--------------------------------------------------------------------------------*/
 uint_t SplitString(const std::string& str, std::vector<std::string>& list, char delim, uint_t maxstrings)
 {
-  uint_t p = 0, l = str.length();
+  uint_t p = 0, l = (uint_t)str.length();
 
   while ((p < l) && (!maxstrings || (list.size() < maxstrings)))
   {
@@ -522,7 +552,6 @@ void debug_msg(StringStream& str)
     fflush(stdout);
   }
 
-  FreeStrings();
   str.clear();
 }
 
@@ -540,7 +569,6 @@ void debug_err(StringStream& str)
     fflush(stdout);
   }
 
-  FreeStrings();
   str.clear();
 }
 
@@ -554,8 +582,8 @@ float fix_denormal(float val)
 
   // by adding and subtracting a small value, if the value is significantly less than the small value
   // the result will become zero instead of being a denormalized number
-  res += 1.0e-31;
-  res -= 1.0e-31;
+  res += 1.0e-31f;
+  res -= 1.0e-31f;
 
   return res;
 }
@@ -570,6 +598,16 @@ double fix_denormal(double val)
   res -= 1.0e-291;
 
   return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Factorial of an unsigned integer.
+ *
+ */
+/*--------------------------------------------------------------------------------*/
+uint_t factorial(uint_t n)
+{
+  return (n == 0) ? 1 : (factorial(n-1)*n);
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -663,6 +701,16 @@ bool Evaluate(const std::string& str, ulong_t& val)
   return (sscanf(str.c_str(), "%lu", &val) > 0);
 }
 
+bool Evaluate(const std::string& str, sllong_t& val)
+{
+  return (sscanf(str.c_str(), "%lld", &val) > 0);
+}
+
+bool Evaluate(const std::string& str, ullong_t& val)
+{
+  return (sscanf(str.c_str(), "%llu", &val) > 0);
+}
+
 bool Evaluate(const std::string& str, double& val)
 {
   // this will FAIL to compile as 32-bit code
@@ -671,6 +719,12 @@ bool Evaluate(const std::string& str, double& val)
   // otherwise try to scan the string as a double
   return (((str[0] == '#') && (sscanf(str.c_str() + 1, "%lx", (ulong_t *)&val) > 0)) ||
           ((str[0] != '#') && (sscanf(str.c_str(),     "%lf", &val) > 0)));
+}
+
+bool Evaluate(const std::string& str, std::string& val)
+{
+  val = str;
+  return true;
 }
 
 std::string StringFrom(bool val)
@@ -708,6 +762,20 @@ std::string StringFrom(ulong_t val, const char *fmt)
   return str;
 }
 
+std::string StringFrom(sllong_t val, const char *fmt)
+{
+  std::string str;
+  Printf(str, fmt, val);
+  return str;
+}
+
+std::string StringFrom(ullong_t val, const char *fmt)
+{
+  std::string str;
+  Printf(str, fmt, val);
+  return str;
+}
+
 std::string StringFrom(double val, const char *fmt)
 {
   std::string str;
@@ -715,6 +783,18 @@ std::string StringFrom(double val, const char *fmt)
   // print double as hex encoded double
   Printf(str, fmt, val);
   return str;
+}
+
+std::string StringFrom(const void *val)
+{
+  std::string str;
+  Printf(str, "$016" PRINTF_64BIT "x", (uint64_t)val);
+  return str;
+}
+
+std::string StringFrom(const std::string& val)
+{
+  return val;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -756,6 +836,139 @@ bool matchstring(const char *pat, const char *str)
   else if (pat[0] == '?') return matchstring(pat + 1, str + 1);
 
   return ((pat[0] == str[0]) && matchstring(pat + 1, str + 1));
+}
+
+#if ENABLE_JSON
+bool FromJSON(const json_spirit::mValue& _val, bool& val)
+{
+  bool success = false;
+  if (_val.type() == json_spirit::bool_type)
+  {
+    val = _val.get_bool();
+    success = true;
+  }
+  else if (_val.type() == json_spirit::int_type)
+  {
+    val = (_val.get_int() != 0);
+    success = true;
+  }
+  return success;
+}
+
+bool FromJSON(const json_spirit::mValue& _val, sint_t& val)
+{
+  bool success = (_val.type() == json_spirit::int_type);
+  if (success) val = _val.get_int();
+  return success;
+}
+
+bool FromJSON(const json_spirit::mValue& _val, sint64_t& val)
+{
+  bool success = (_val.type() == json_spirit::int_type);
+  if (success) val = _val.get_int64();
+  return success;
+}
+
+bool FromJSON(const json_spirit::mValue& _val, double& val)
+{
+  bool success = false;
+  if (_val.type() == json_spirit::real_type)
+  {
+    val = _val.get_real();
+    success = true;
+  }
+  else if (_val.type() == json_spirit::int_type)
+  {
+    val = (double)_val.get_int();
+    success = true;
+  }
+  return success;
+}
+
+bool FromJSON(const json_spirit::mValue& _val, std::string& val)
+{
+  bool success = (_val.type() == json_spirit::str_type);
+  if (success) val = _val.get_str();
+  return success;
+}
+
+json_spirit::mValue ToJSON(const bool& val)
+{
+  return json_spirit::mValue(val);
+}
+
+json_spirit::mValue ToJSON(const sint_t& val)
+{
+  return json_spirit::mValue(val);
+}
+
+json_spirit::mValue ToJSON(const sint64_t& val)
+{
+  return json_spirit::mValue(val);
+}
+
+json_spirit::mValue ToJSON(const double& val)
+{
+  return json_spirit::mValue(val);
+}
+
+json_spirit::mValue ToJSON(const std::string& val)
+{
+  return json_spirit::mValue(val);
+}
+#endif
+
+/*--------------------------------------------------------------------------------*/
+/** Return ns-resolution time from textual hh:mm:ss.SSSSS
+ *
+ * @param str time in ASCII format
+ *
+ * @return ns time
+ */
+/*--------------------------------------------------------------------------------*/
+bool CalcTime(uint64_t& t, const std::string& str)
+{
+  uint_t hr, mn, s, ss;
+  bool   success = false;
+
+  if (sscanf(str.c_str(), "%u:%u:%u.%u", &hr, &mn, &s, &ss) == 4)
+  {
+    t = hr;                 // hours
+    t = (t * 60) + mn;      // minutes
+    t = (t * 60) + s;       // seconds
+    t = (t * 100000) + ss;  // 100000ths of second
+    t *= 10000;             // nanoseconds
+    success = true;
+  }
+
+  return success;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Convert ns time to text time
+ *
+ * @param t ns time
+ *
+ * @return str time in text format 'hh:mm:ss.SSSSS'
+ */
+/*--------------------------------------------------------------------------------*/
+std::string GenerateTime(uint64_t t)
+{
+  std::string str;
+  uint_t hr, mn, s, ss;
+
+  t /= 10000;
+  ss = (uint_t)(t % 100000);
+  t /= 100000;
+  s  = (uint_t)(t % 60);
+  t /= 60;
+  mn = (uint_t)(t % 60);
+  t /= 60;
+  hr = (uint_t)t;
+
+  Printf(str, "%02u:%02u:%02u.%05u", hr, mn, s, ss);
+
+  return str;
 }
 
 BBC_AUDIOTOOLBOX_END

@@ -1,9 +1,7 @@
 #ifndef __SIMPLE_THREAD_LOCK__
 #define __SIMPLE_THREAD_LOCK__
 
-#include <pthread.h>
-
-#include "misc.h"
+#include "Thread.h"
 
 BBC_AUDIOTOOLBOX_START
 

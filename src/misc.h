@@ -7,6 +7,19 @@
 #include <vector>
 #include <string>
 
+#include "OSCompiler.h"
+
+#ifdef TARGET_OS_WINDOWS
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#include "windows.h"
+// windows.h unfortuantely defines ERROR so undef it now
+#undef ERROR
+#endif
+
+#if ENABLE_JSON
+#include <json_spirit/json_spirit.h>
+#endif
+
 #ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
@@ -23,6 +36,10 @@
 #define RANGE(a, b, c) (((a) >= (b)) && ((b) <= (c)))
 #endif
 
+#ifndef M_PI
+#define M_PI 3.141592653589793238462643383279502884
+#endif
+
 #define IFFID(name) (((uint32_t)name[0] << 24) | ((uint32_t)name[1] << 16) | ((uint32_t)name[2] << 8) | (uint32_t)name[3])
 
 #define UNUSED_PARAMETER(name) ((void)(name))
@@ -30,6 +47,28 @@
 #define USE_BBC_AUDIOTOOLBOX using namespace bbcat;
 #define BBC_AUDIOTOOLBOX_START namespace bbcat {
 #define BBC_AUDIOTOOLBOX_END }
+
+typedef int16_t       sint16_t;
+typedef int32_t       sint32_t;
+typedef int64_t       sint64_t;
+typedef signed   int  sint_t;
+typedef unsigned int  uint_t;
+typedef signed   long slong_t;
+typedef unsigned long ulong_t;
+typedef signed   long long sllong_t;
+typedef unsigned long long ullong_t;
+
+#ifdef GCC_BUILD
+#define PACKEDSTRUCT   struct __attribute__ ((packed))
+#define PRINTF_FORMAT  __attribute__ ((format (printf,1,2)))
+#define PRINTF_FORMAT2 __attribute__ ((format (printf,2,3)))
+#else
+#define PACKEDSTRUCT   struct
+#define PRINTF_FORMAT
+#define PRINTF_FORMAT2
+#endif
+
+BBC_AUDIOTOOLBOX_START
 
 #ifdef __BYTE_ORDER__
 // endianness can be determined at compile time
@@ -44,38 +83,45 @@
 #endif
 #else
 // endianness cannot be determined at compile time, determine at run-time
-// stored in ByteSwap.cpp
+// defined in ByteSwap.cpp
 extern const bool MACHINE_IS_BIG_ENDIAN;
 #endif
 
-typedef int16_t       sint16_t;
-typedef int32_t       sint32_t;
-typedef int64_t       sint64_t;
-typedef signed   int  sint_t;
-typedef unsigned int  uint_t;
-typedef signed   long slong_t;
-typedef unsigned long ulong_t;
-typedef signed   long long sllong_t;
-typedef unsigned long long ullong_t;
-
-#define PACKEDSTRUCT   struct __attribute__ ((packed))
-#define PRINTF_FORMAT  __attribute__ ((format (printf,1,2)))
-#define PRINTF_FORMAT2 __attribute__ ((format (printf,2,3)))
-
-BBC_AUDIOTOOLBOX_START
+/*--------------------------------------------------------------------------------*/
+/** Static library linking causes objects not explicitly referenced to be STRIPPED from the final executable
+ *
+ * This causes problems for some auto-registering mechanisms
+ *
+ * Therefore, any objects files in rthis category MUST include:
+ * 1.  BBC_AUDIOTOOLBOX_KEEP(<file-id>) in the .h file
+ * 2.  BBC_AUDIOTOOLBOX_KEEP_IMPL(<file-id>) in the .c/.cpp file
+ * 3.  BBC_AUDIOTOOLBOX_REQUIRE(<file-id>) in an APPLICATION .c/.cpp file
+ */
+/*--------------------------------------------------------------------------------*/
+#define BBC_AUDIOTOOLBOX_KEEP(x) extern const bool __keep_##x
+#define BBC_AUDIOTOOLBOX_KEEP_IMPL(x) const bool __keep_##x = true
+#define BBC_AUDIOTOOLBOX_REQUIRE(x) extern bool __keep_##x; const bool __keep_##x##_in_app = __keep_##x
 
 typedef void (*DEBUGHANDLER)(const char *str, void *context);
 
+/*--------------------------------------------------------------------------------*/
+/** Enable logging to file (in a file returned by GetErrorLoggingFile())
+ */
+/*--------------------------------------------------------------------------------*/
+extern void EnableErrorLogging(bool enable = true);
+
+/*--------------------------------------------------------------------------------*/
+/** Return filename used to log errors to
+ */
+/*--------------------------------------------------------------------------------*/
+extern const std::string& GetErrorLoggingFile();
+
+/*--------------------------------------------------------------------------------*/
+/** These are called by macros and do not need to be called explicitly
+ */
+/*--------------------------------------------------------------------------------*/
 extern void debug_msg(const char *fmt, ...) PRINTF_FORMAT;
 extern void debug_err(const char *fmt, ...) PRINTF_FORMAT;
-
-extern void enable_pipe(bool enable = true);
-extern bool is_pipe_enabled();
-extern void pipe_msg(const char *fmt, ...) PRINTF_FORMAT;
-extern bool get_pipe_msg(const char *str, ulong_t& tick, std::string& str2);
-
-extern const char *CreateString(const char *data, uint_t len);
-extern void FreeStrings();
 
 #define ERROR debug_err
 #define DEBUG debug_msg
@@ -168,7 +214,19 @@ typedef PACKEDSTRUCT
   uint8_t b[10];
 } IEEEEXTENDED;
 
+#ifndef TARGET_OS_WINDOWS
+/*--------------------------------------------------------------------------------*/
+/** Return machine time on in milliseconds
+ */
+/*--------------------------------------------------------------------------------*/
 extern ulong_t  GetTickCount();
+#endif
+
+/*--------------------------------------------------------------------------------*/
+/** Return machine time on in nanoseconds
+ */
+/*--------------------------------------------------------------------------------*/
+extern uint64_t GetNanosecondTicks();
 
 extern uint32_t IEEEExtendedToINT32u(const IEEEEXTENDED *num);
 extern void     INT32uToIEEEExtended(uint32_t val, IEEEEXTENDED *num);
@@ -299,6 +357,12 @@ bool map_compare (Map const &lhs, Map const &rhs)
 extern float  fix_denormal(float val);
 extern double fix_denormal(double val);
 
+/*--------------------------------------------------------------------------------*/
+/** Factorial of an unsigned integer.
+ */
+/*--------------------------------------------------------------------------------*/
+extern uint_t factorial(uint_t n);
+
 typedef struct {
   const char *name;
   const char *desc;
@@ -322,6 +386,13 @@ extern double dBToGain(double db);
 /*--------------------------------------------------------------------------------*/
 extern double GainTodB(double gain);
 
+#ifdef COMPILER_MSVC
+// MSDev using %I64d etc
+#define PRINTF_64BIT "I64"
+#else
+#define PRINTF_64BIT "ll"
+#endif
+
 /*--------------------------------------------------------------------------------*/
 /** Attempt to evaluate values from strings
  */
@@ -331,7 +402,10 @@ extern bool Evaluate(const std::string& str, sint_t& val);
 extern bool Evaluate(const std::string& str, uint_t& val);
 extern bool Evaluate(const std::string& str, slong_t& val);
 extern bool Evaluate(const std::string& str, ulong_t& val);
+extern bool Evaluate(const std::string& str, sllong_t& val);
+extern bool Evaluate(const std::string& str, ullong_t& val);
 extern bool Evaluate(const std::string& str, double& val);
+extern bool Evaluate(const std::string& str, std::string& val);
 
 extern const char *DoubleFormatHuman;         // format as human-readable, scientific format with 32 decimal places
 extern const char *DoubleFormatExact;         // format as hex-encoded double (exact)
@@ -340,7 +414,11 @@ extern std::string StringFrom(sint_t val, const char *fmt = "%d");
 extern std::string StringFrom(uint_t val, const char *fmt = "%u");
 extern std::string StringFrom(slong_t val, const char *fmt = "%ld");
 extern std::string StringFrom(ulong_t val, const char *fmt = "%lu");
+extern std::string StringFrom(sllong_t val, const char *fmt = "%" PRINTF_64BIT "d");
+extern std::string StringFrom(ullong_t val, const char *fmt = "%" PRINTF_64BIT "u");
 extern std::string StringFrom(double val, const char *fmt = DoubleFormatHuman);
+extern std::string StringFrom(const void *val);
+extern std::string StringFrom(const std::string& val); 
 
 /*--------------------------------------------------------------------------------*/
 /** Bog-standard string search and replace that *should* be in std::string!
@@ -360,6 +438,93 @@ extern std::string SearchAndReplace(const std::string& str, const std::string& s
  */
 /*--------------------------------------------------------------------------------*/
 extern bool matchstring(const char *pat, const char *str);
+
+#if ENABLE_JSON
+extern bool                FromJSON(const json_spirit::mValue& _val, bool& val);
+extern bool                FromJSON(const json_spirit::mValue& _val, sint_t& val);
+extern bool                FromJSON(const json_spirit::mValue& _val, sint64_t& val);
+extern bool                FromJSON(const json_spirit::mValue& _val, double& val);
+extern bool                FromJSON(const json_spirit::mValue& _val, std::string& val);
+extern json_spirit::mValue ToJSON(const bool& val);
+extern json_spirit::mValue ToJSON(const sint_t& val);
+extern json_spirit::mValue ToJSON(const sint64_t& val);
+extern json_spirit::mValue ToJSON(const double& val);
+extern json_spirit::mValue ToJSON(const std::string& val);
+#endif
+
+/*--------------------------------------------------------------------------------*/
+/** Convert text time to ns time
+ *
+ * @param t ns time variable to be modified
+ * @param str time in text format 'hh:mm:ss.SSSSS'
+ *
+ * @return true if conversion was successful
+ */
+/*--------------------------------------------------------------------------------*/
+extern bool CalcTime(uint64_t& t, const std::string& str);
+
+/*--------------------------------------------------------------------------------*/
+/** Convert ns time to text time
+ *
+ * @param t ns time
+ *
+ * @return str time in text format 'hh:mm:ss.SSSSS'
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string GenerateTime(uint64_t t);
+
+/*--------------------------------------------------------------------------------*/
+/** Safe (limited) addition for *unsigned* types (DOES NOT work for signed types)
+ */
+/*--------------------------------------------------------------------------------*/
+template<typename T>
+T addm(const T& a, const T& b)
+{
+  T c = a + b;
+  return (c >= a) ? c : (T)-1;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Safe (limited) subtraction for *unsigned* types (DOES NOT work for signed types)
+ */
+/*--------------------------------------------------------------------------------*/
+template<typename T>
+T subz(const T& a, const T& b)
+{
+  return (a >= b) ? a - b : 0;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Convert a vector of pointers to a vector of pointers of another [compatible] type
+ */
+/*--------------------------------------------------------------------------------*/
+template<typename T1,typename T2>
+std::vector<T1 *> ConvertList(const std::vector<T2 *>& vec) {
+  std::vector<T1 *> res(vec.size());
+  uint_t i;
+  for (i = 0; i < vec.size(); i++) res[i] = vec[i];
+  return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Convert a vector of pointers to a vector of pointers of another [compatible] type
+ */
+/*--------------------------------------------------------------------------------*/
+template<typename T1,typename T2>
+void ConvertList(const std::vector<T2 *>& vec, std::vector<T1 *>& res) {
+  uint_t i;
+  for (i = 0; i < vec.size(); i++) res.push_back(vec[i]);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Convert a vector of pointers to a vector of pointers of another [compatible] type
+ */
+/*--------------------------------------------------------------------------------*/
+template<typename T1,typename T2>
+void ConvertList(const std::vector<T2 *>& vec, std::vector<const T1 *>& res) {
+  uint_t i;
+  for (i = 0; i < vec.size(); i++) res.push_back(vec[i]);
+}
 
 BBC_AUDIOTOOLBOX_END
 

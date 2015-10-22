@@ -1,9 +1,27 @@
 #ifndef __UNIVERSAL_TIME__
 #define __UNIVERSAL_TIME__
 
+#include <vector>
+#include <algorithm>
+
 #include "misc.h"
 
 BBC_AUDIOTOOLBOX_START
+
+/*--------------------------------------------------------------------------------*/
+/** Interface class for notifcation of timebase updates
+ */
+/*--------------------------------------------------------------------------------*/
+class UniversalTime;
+class UniversalTimeUpdateReceiver
+{
+public:
+  /*--------------------------------------------------------------------------------*/
+  /** Timebase had changed
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void TimebaseUpdated(const UniversalTime *timebase) = 0;
+};
 
 /*--------------------------------------------------------------------------------*/
 /** A simple class to provide a ns universal time handler
@@ -31,6 +49,25 @@ public:
                                             time_numerator(obj.time_numerator),
                                             time_denominator(obj.time_denominator) {}
   virtual ~UniversalTime() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Add update receiver
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void AddUpdateReceiver(UniversalTimeUpdateReceiver *receiver)
+  {
+    if (std::find(updatelist.begin(), updatelist.end(), receiver) == updatelist.end()) updatelist.push_back(receiver);
+  }
+
+  /*--------------------------------------------------------------------------------*/
+  /** Remove update receiver
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void RemoveUpdateReceiver(UniversalTimeUpdateReceiver *receiver)
+  {
+    std::vector<UniversalTimeUpdateReceiver *>::iterator it;
+    if ((it = std::find(updatelist.begin(), updatelist.end(), receiver)) != updatelist.end()) updatelist.erase(it);
+  }
 
   /*--------------------------------------------------------------------------------*/
   /** Assignment operator
@@ -139,13 +176,19 @@ public:
   friend uint64_t operator / (uint64_t time, const UniversalTime& timebase) {return timebase.Invert(time);}
 
 protected:
-  void UpdateTime() {time_current = time_offset + (uint64_t)((1000000000ULL * (ullong_t)time_numerator) / time_denominator);}
+  void UpdateTime()
+  {
+    uint_t i;
+    time_current = time_offset + (uint64_t)((1000000000ULL * (ullong_t)time_numerator) / time_denominator);
+    for (i = 0; i < updatelist.size(); i++) updatelist[i]->TimebaseUpdated(this);
+  }
 
 protected:
   uint64_t time_current;
   uint64_t time_offset;
   uint64_t time_numerator;
   uint64_t time_denominator;
+  std::vector<UniversalTimeUpdateReceiver *> updatelist;
 };
 
 BBC_AUDIOTOOLBOX_END

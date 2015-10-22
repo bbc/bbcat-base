@@ -24,12 +24,14 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   void SetDecayPower(double power)   {decaypower   = power;}
+  double GetDecayPower() const       {return decaypower;}
 
   /*--------------------------------------------------------------------------------*/
   /** Set speed of sound in m/s (set to 0 for no delay)
    */
   /*--------------------------------------------------------------------------------*/
   void SetSpeedOfSound(double speed) {speedofsound = speed;}
+  double GetSpeedOfSound() const     {return speedofsound;}
 
   /*--------------------------------------------------------------------------------*/
   /** Get level due to distance

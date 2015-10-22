@@ -4,7 +4,15 @@
 #include <string.h>
 #include <errno.h>
 
+#include "OSCompiler.h"
+
+#ifdef TARGET_OS_UNIXBSD
 #include <unistd.h>
+#endif
+
+#ifdef TARGET_OS_WINDOWS
+#include "Windows_uSleep.h"
+#endif
 
 #define DEBUG_LEVEL 2
 #include "BackgroundFile.h"
@@ -13,8 +21,6 @@ BBC_AUDIOTOOLBOX_START
 
 BackgroundFile::BackgroundFile() : EnhancedFile(),
                                    enablebackground(false),
-                                   thread(0),
-                                   quitthread(false),
                                    first(NULL),
                                    last(NULL)
 {
@@ -22,8 +28,6 @@ BackgroundFile::BackgroundFile() : EnhancedFile(),
 
 BackgroundFile::BackgroundFile(const char *filename, const char *mode) : EnhancedFile(),
                                                                          enablebackground(false),
-                                                                         thread(0),
-                                                                         quitthread(false),
                                                                          first(NULL),
                                                                          last(NULL)
 {
@@ -32,8 +36,6 @@ BackgroundFile::BackgroundFile(const char *filename, const char *mode) : Enhance
 
 BackgroundFile::BackgroundFile(const BackgroundFile& obj) : EnhancedFile(),
                                                             enablebackground(false),
-                                                            thread(0),
-                                                            quitthread(false),
                                                             first(NULL),
                                                             last(NULL)
 {
@@ -78,20 +80,12 @@ void BackgroundFile::WriteBlock()
 /*--------------------------------------------------------------------------------*/
 void BackgroundFile::FlushToDisk()
 {
-  if (thread || first)
+  if (thread.IsRunning() || first)
   {
     DEBUG2(("Flushing queued blocks to disk"));
 
     // tell thread to quit
-    if (thread)
-    {
-      quitthread = true;
-		
-      // wait for completion
-      donesignal.Wait();
-
-      thread = 0;
-    }
+    thread.Stop();
 
     // write remaining (including last) blocks
     while (first)
@@ -99,7 +93,6 @@ void BackgroundFile::FlushToDisk()
       WriteBlock();
     }
 
-    quitthread = false;
     first = last = NULL;
 
     DEBUG2(("Flushed all queued blocks to disk"));
@@ -112,7 +105,7 @@ void BackgroundFile::FlushToDisk()
 /*--------------------------------------------------------------------------------*/
 void *BackgroundFile::Run()
 {
-  while (!quitthread)
+  while (!thread.StopRequested())
   {
     // ONLY write block if there is a next block to become first
     // (the last block will be handled by FlushToDisk())
@@ -124,9 +117,6 @@ void *BackgroundFile::Run()
     // thread yielding sleep
     usleep(10000);
   }
-
-  // signal to parent thread
-  donesignal.Signal();
   
   return NULL;
 }
@@ -169,17 +159,15 @@ size_t BackgroundFile::fwrite(const void *ptr, size_t size, size_t count)
       if (!first) first = block;
 
       // if the thread is not running, start it
-      if (!thread)
+      if (!thread.IsRunning())
       {
-		// create thread
-		if (pthread_create(&thread, NULL, &__ThreadStart, (void *)this) == 0)
+        if (thread.Start(&__ThreadStart, (void *)this))
         {
           DEBUG2(("Created thread for background file writing"));
         }
         else
 		{
           ERROR("Failed to create thread (%s)", strerror(errno));
-          thread = 0;
 		}
       }
 

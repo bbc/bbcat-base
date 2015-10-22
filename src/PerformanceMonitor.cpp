@@ -67,7 +67,7 @@ PerformanceMonitor::~PerformanceMonitor()
 
       for (i = 0; i < timingslist.size(); i++)
       {
-        file.fprintf("  'perf-%u.dat' using 1:11:(($2<0)?$8:0) with linespoints title '%s (%u)', \\\n", i, timingslist[i]->id.c_str(), i);
+        file.fprintf("  'perf-%u.dat' using 1:($11+.25*$2):(($2<0)?$8:0) with linespoints title '%s (%u)', \\\n", i, timingslist[i]->id.c_str(), i);
       }
 
       file.fprintf("  0 lt 0\n");
@@ -107,7 +107,7 @@ std::string PerformanceMonitor::GetReportEx()
     {
       const std::string& id = timingslist[i]->id;
 
-      maxlen = MAX(maxlen, id.length());
+      maxlen = MAX(maxlen, (uint_t)id.length());
     }
 
     // create format string (with ID length fround above)
@@ -220,33 +220,7 @@ void PerformanceMonitor::EnableGNUPlotFile(bool enable)
 
 PerformanceMonitor::perftime_t PerformanceMonitor::GetCurrent()
 {
-#ifdef __MACH__
-  static mach_timebase_info_data_t timebase;
-  static bool inited = false;
-
-  if (!inited)
-  {
-    mach_timebase_info(&timebase);
-    inited = true;
-  }
-
-  uint64_t tick = mach_absolute_time();
-  tick = (tick * timebase.numer) / timebase.denom;
-
-  perftime_t t = tick;
-#else
-  struct timespec timespec;
-
-#ifdef ANDROID
-  clock_gettime(CLOCK_MONOTONIC_HR, &timespec);
-#elif defined(__CYGWIN__)
-  clock_gettime(CLOCK_MONOTONIC, &timespec);
-#else
-  clock_gettime(CLOCK_MONOTONIC_RAW, &timespec);
-#endif
-
-  perftime_t t = (perftime_t)timespec.tv_sec * (perftime_t)1000000000 + (perftime_t)timespec.tv_nsec;
-#endif
+  perftime_t t = (perftime_t)GetNanosecondTicks();
 
   if (!t0) t0 = t;
 
@@ -265,7 +239,13 @@ void PerformanceMonitor::LogToFile(FILE *fp, perftime_t t, const TIMING_DATA& da
       fprintf(fp, "Time Start/Stop \"Start Time\" \"Stop Time\" \"Average Elapsed\" \"Average Taken\" \"This Elapsed\" \"This Taken\" \"Last Start/Stop\" Utilization Instance ID Thread\n");
     }
 
-    fprintf(fp, "%0.9lf %2d %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.3lf %u \"%s (%s)\" \"Thread<0x%lx>\"\n",
+#ifdef TARGET_OS_WINDOWS
+    const void *self = pthread_self().p;
+#else
+    const void *self = (const void *)pthread_self();
+#endif
+    
+    fprintf(fp, "%0.9lf %2d %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.3lf %u \"%s (%s)\" \"Thread<%s>\"\n",
             DISP(t),
             start ? 1 : -1,
             DISP(this_timing.start),
@@ -279,7 +259,7 @@ void PerformanceMonitor::LogToFile(FILE *fp, perftime_t t, const TIMING_DATA& da
             data.config.instance,
             id.c_str(),
             start ? "Start" : "Stop",
-            (ulong_t)pthread_self());
+            StringFrom(self).c_str());
   }
 }
 
@@ -304,7 +284,7 @@ void PerformanceMonitor::Start(const std::string& id)
     memset(&timing.config, 0, sizeof(timing.config));
     memset(&timing.stats,  0, sizeof(timing.stats));
 
-    timing.config.instance = timings.size();
+    timing.config.instance = (uint_t)timings.size();
 
     timing.index    = 0;
     timing.wrapped  = false;

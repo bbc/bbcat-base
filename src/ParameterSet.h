@@ -3,6 +3,11 @@
 
 #include <string>
 #include <map>
+#include <vector>
+
+#if ENABLE_JSON
+#include <json_spirit/json_spirit.h>
+#endif
 
 #include "misc.h"
 
@@ -17,13 +22,20 @@ class ParameterSet
 {
 public:
   ParameterSet() {}
+  ParameterSet(const std::string& values);                      // lines of key=value strings
+  ParameterSet(const std::vector<std::string>& values);         // array of key=value strings
   ParameterSet(const ParameterSet& obj);
+#if ENABLE_JSON
+  ParameterSet(const json_spirit::mObject& obj) {FromJSON(obj);}
+#endif
   ~ParameterSet() {}
 
   /*--------------------------------------------------------------------------------*/
-  /** Assignment operator
+  /** Assignment operators
    */
   /*--------------------------------------------------------------------------------*/
+  ParameterSet& operator = (const std::string& values);                      // lines of key=value strings
+  ParameterSet& operator = (const std::vector<std::string>& values);         // array of key=value strings
   ParameterSet& operator = (const ParameterSet& obj);
 
   /*--------------------------------------------------------------------------------*/
@@ -86,6 +98,7 @@ public:
   ParameterSet& Set(const std::string& name, uint_t              val, const char *fmt = "%u") {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, sint_t              val, const char *fmt = "%d") {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, slong_t             val, const char *fmt = "%ld") {return Set(name, StringFrom(val, fmt));}
+  ParameterSet& Set(const std::string& name, sllong_t            val, const char *fmt = "%lld") {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, double              val, const char *fmt = DoubleFormatHuman) {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, const ParameterSet& val);
 
@@ -119,6 +132,8 @@ public:
   bool Get(const std::string& name, uint_t&       val) const;
   bool Get(const std::string& name, slong_t&      val) const;
   bool Get(const std::string& name, ulong_t&      val) const;
+  bool Get(const std::string& name, sllong_t&     val) const;
+  bool Get(const std::string& name, ullong_t&     val) const;
   bool Get(const std::string& name, double&       val) const;
   bool Get(const std::string& name, ParameterSet& val) const;
 
@@ -177,9 +192,79 @@ public:
   /*--------------------------------------------------------------------------------*/
   std::string GenerateMessage(const std::string& format, bool allowempty = true) const;
 
+  /*--------------------------------------------------------------------------------*/
+  /** Find combinations of string array in hierarchical parameter sets 
+   *
+   * @param strings a list of strings to search for
+   * @param res the resultant string
+   *
+   * @return true if combination found
+   *
+   * @note this function is recursive with a maximum depth governed by the depth of the ParameterSet
+   *
+   * It aims to find a combination of strings[] in the current parameter set and return the value using
+   * the following strategy:
+   *
+   * For each string in strings[]:
+   *   if that key exists and is not a stub for sub-values then return the value for that key
+   *   if that key exists and is a stub for sub-values then start the search again on the sub-values
+   *   if no results found at each level but 'default' key exists return the value for that key 
+   *
+   * e.g. for the ParameterSet:
+   *
+   *   values.a       red
+   *   values.a.b     green
+   *   values.a.b.c   blue
+   *   values.a.c.b   pink
+   *   values.a.c     yellow
+   *   values.default black
+   *
+   * Would give the following for the specified arrays:
+   *
+   *   ['a']         : 'red'
+   *   ['b']         : 'black' (because of 'default')
+   *   ['a','b']     : 'green' ('a' then 'b')
+   *   ['a','c']     : 'yellow' ('a' then 'c')
+   *   ['a','b','c'] : 'blue' ('a' then 'b' then 'c')
+   *   ['a','c','b'] : 'pink' ('a' then 'c' then 'b')
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool FindCombination(const std::vector<std::string>& strings, std::string& res) const;
+
+#if ENABLE_JSON
+  /*--------------------------------------------------------------------------------*/
+  /** Return object as JSON object
+   */
+  /*--------------------------------------------------------------------------------*/
+  json_spirit::mObject ToJSON() const;
+  void ToJSON(json_spirit::mObject& obj) const;
+  bool Get(const std::string& name, json_spirit::mObject& obj) const;
+  operator json_spirit::mObject () const {return ToJSON();}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Convert parameters to a JSON string
+   */
+  /*--------------------------------------------------------------------------------*/
+  std::string ToJSONString() const {return json_spirit::write(ToJSON(), json_spirit::pretty_print);}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Set object from JSON
+   */
+  /*--------------------------------------------------------------------------------*/
+  void FromJSON(const json_spirit::mObject& obj);
+  ParameterSet& Set(const std::string& name, const json_spirit::mObject& obj);
+  ParameterSet& Set(const std::string& name, const json_spirit::mValue& value);
+  ParameterSet& operator = (const json_spirit::mObject& obj) {FromJSON(obj); return *this;}
+#endif
+
 protected:
   std::map<std::string,std::string> values;
 };
+
+#if ENABLE_JSON
+extern bool                FromJSON(const json_spirit::mValue& _val, ParameterSet& val);
+extern json_spirit::mValue ToJSON(const ParameterSet& val);
+#endif
 
 BBC_AUDIOTOOLBOX_END
 

@@ -47,11 +47,11 @@ public:
 template<class TYPE>
 class SelfRegisteringParametricObjectFactory : public SelfRegisteringParametricObjectFactoryBase, public RegisteredObjectFactory {
 public:
-  SelfRegisteringParametricObjectFactory(const char *_name) : SelfRegisteringParametricObjectFactoryBase(),
-                                                              RegisteredObjectFactory(_name) {Register();}
+  SelfRegisteringParametricObjectFactory(const std::string& _name) : SelfRegisteringParametricObjectFactoryBase(),
+                                                                     RegisteredObjectFactory(_name) {Register();}
   // alternate constructor to avoid Register() being called
-  SelfRegisteringParametricObjectFactory(const char *_name, bool dummy) : SelfRegisteringParametricObjectFactoryBase(),
-                                                                          RegisteredObjectFactory(_name) {UNUSED_PARAMETER(dummy);}
+  SelfRegisteringParametricObjectFactory(const std::string& _name, bool dummy) : SelfRegisteringParametricObjectFactoryBase(),
+                                                                                 RegisteredObjectFactory(_name) {UNUSED_PARAMETER(dummy);}
   virtual ~SelfRegisteringParametricObjectFactory() {}
 
   /*--------------------------------------------------------------------------------*/
@@ -202,7 +202,7 @@ public:
    * @return pointer to object or NULL
    */
   /*--------------------------------------------------------------------------------*/
-  static SelfRegisteringParametricObject *CreateObject(const char *name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory = NULL);
+  static SelfRegisteringParametricObject *CreateObject(const std::string& name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory = NULL);
 
   /*--------------------------------------------------------------------------------*/
   /** Create (self-registered-parametric) object of given name and add it to this object
@@ -213,7 +213,7 @@ public:
    * @return index that object was registered using (may be global or local to a category) or -1 for failure
    */
   /*--------------------------------------------------------------------------------*/
-  virtual int Create(const char *name, const ParameterSet& parameters);
+  virtual int Create(const std::string& name, const ParameterSet& parameters);
   
   /*--------------------------------------------------------------------------------*/
   /** Register a self-registering-parametric-object or return -1

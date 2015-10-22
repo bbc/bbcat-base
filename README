@@ -4,6 +4,11 @@ Base library for BBC Audio Toolbox
 
 Contains miscellaneous debug, file and position functions
 
+Dependencies
+
+boost - http://www.boost.org/ [optional, for JSON support]
+json_spirit-4.0 [optional]
+
 Files
 
 autogen.sh - simple autotools script
@@ -34,12 +39,18 @@ src/DistanceModel.h                     |
 src/EnhancedFile.cpp                    | A wrapper for FILE * operations which provides some extra functionality 
 src/EnhancedFile.h                      |
 
+src/LoadedVersions.cpp					| A singleton class to hold a list of the loaded versions of libraries and applications
+src/LoadedVersions.h					|
+
 src/LockFreeBuffer.h                    | A simple lock-free circular buffer mechanism
 
 src/Makefile.am                         | Makefile for automake
 
 src/misc.cpp                            | Miscelleanous functions and definitions, especially debugging functions
 src/misc.h                              |
+
+src/NamedParameter.cpp					| An interface, template and macro that create a named parameter with an optional default value with JSON support
+src/NamedParameter.h					|
 
 src/ObjectRegistry.cpp                  | A register of objects that can create themselves (see SelfRegisteringParametricObject.h)
 src/ObjectRegistry.h                    |
@@ -50,8 +61,13 @@ src/ParameterSet.h                      |
 src/PerformanceMonitor.cpp              | A multi-point logging runtime performance monitor (with outputs suitable for gnuplot)
 src/PerformanceMonitor.h                |
 
+src/RefCount.h							| A simple ref-counting template that allows easy ref-counting object support
+
 src/SelfRegisteringParametricObject.cpp | A base class for objects that can be created from a textual name and parameters (using ParameterSet objects)
 src/SelfRegisteringParametricObject.h   |
+
+src/Thread.cpp							| Simple thread class that can run a thread via a derived class or callback
+src/Thread.h							|
 
 src/ThreadLock.cpp                      | Thread locking classes
 src/ThreadLock.h                        |

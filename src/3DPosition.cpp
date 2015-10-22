@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -511,6 +512,17 @@ void Quaternion::SetParameters(ParameterSet& parameters, const std::string& name
   parameters.Set(name + ".x", x);
   parameters.Set(name + ".y", y);
   parameters.Set(name + ".z", z);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Generate friendly text string
+ */
+/*--------------------------------------------------------------------------------*/
+std::string Quaternion::ToString() const
+{
+  std::string res;
+  Printf(res, "%0.14le,%0.14le,%0.14le,%0.14le", w, x, y, z);
+  return res;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -1153,5 +1165,157 @@ std::string Position::ToString() const
     
   return str;
 }
+
+bool Evaluate(const std::string& str, Position& val)
+{
+  Position pos;
+  bool success = false;
+
+  if (sscanf(str.c_str(), "polar (%lf,%lf) x%lfm", &pos.pos.az, &pos.pos.el, &pos.pos.d) == 3)
+  {
+    pos.polar = true;
+    success = true;
+  }
+  else if (sscanf(str.c_str(), "cart (%lfm,%lfm,%lfm)", &pos.pos.x, &pos.pos.y, &pos.pos.z) == 3)
+  {
+    pos.polar = false;
+    success = true;
+  }
+
+  if (success) val = pos;
+
+  return success;
+}
+
+std::string StringFrom(const Position& val)
+{
+  return val.ToString();
+}
+
+std::string StringFrom(const Quaternion& val)
+{
+  return val.ToString();
+}
+
+#if ENABLE_JSON
+bool FromJSON(const json_spirit::mValue& _val, Position& val)
+{
+  bool success = (_val.type() == json_spirit::obj_type);
+
+  if (success)
+  {
+    json_spirit::mObject::iterator it;
+    json_spirit::mObject obj = _val.get_obj();
+    Position pos;
+
+    if ((it = obj.find("polar")) != obj.end())
+    {
+      FromJSON(it->second, pos.polar);
+    }
+
+    if (pos.polar)
+    {
+      if (success && ((it = obj.find("az")) != obj.end()))
+      {
+        success = FromJSON(it->second, pos.pos.az);
+      }
+      if (success && ((it = obj.find("el")) != obj.end()))
+      {
+        success = FromJSON(it->second, pos.pos.el);
+      }
+      if (success && ((it = obj.find("d")) != obj.end()))
+      {
+        success = FromJSON(it->second, pos.pos.d);
+      }
+    }
+    else
+    {
+      if (success && ((it = obj.find("x")) != obj.end()))
+      {
+        success = FromJSON(it->second, pos.pos.x);
+      }
+      if (success && ((it = obj.find("y")) != obj.end()))
+      {
+        success = FromJSON(it->second, pos.pos.y);
+      }
+      if (success && ((it = obj.find("z")) != obj.end()))
+      {
+        success = FromJSON(it->second, pos.pos.z);
+      }
+    }
+
+    if (success) val = pos;
+  }
+
+  return success;
+}
+
+json_spirit::mValue ToJSON(const Position& val)
+{
+  json_spirit::mObject obj;
+
+  obj["polar"] = val.polar;
+  if (val.polar)
+  {
+    obj["az"] = val.pos.az;
+    obj["el"] = val.pos.el;
+    obj["d"]  = val.pos.d;
+  }
+  else
+  {
+    obj["x"] = val.pos.x;
+    obj["y"] = val.pos.y;
+    obj["z"] = val.pos.z;
+  }
+
+  return obj;
+}
+
+bool FromJSON(const json_spirit::mValue& _val, Quaternion& val)
+{
+  bool success = (_val.type() == json_spirit::obj_type);
+
+  if (success)
+  {
+    json_spirit::mObject::iterator it;
+    json_spirit::mObject obj = _val.get_obj();
+    Quaternion rot;
+
+    if (success && ((it = obj.find("w")) != obj.end()))
+    {
+      success = FromJSON(it->second, rot.w);
+    }
+    if (success && ((it = obj.find("x")) != obj.end()))
+    {
+      success = FromJSON(it->second, rot.x);
+    }
+    if (success && ((it = obj.find("y")) != obj.end()))
+    {
+      success = FromJSON(it->second, rot.y);
+    }
+    if (success && ((it = obj.find("z")) != obj.end()))
+    {
+      success = FromJSON(it->second, rot.z);
+    }
+
+    if (success) val = rot;
+  }
+
+  return success;
+}
+
+json_spirit::mValue ToJSON(const Quaternion& val)
+{
+  json_spirit::mObject obj;
+
+  obj["w"] = val.w;
+  obj["x"] = val.x;
+  obj["y"] = val.y;
+  obj["z"] = val.z;
+
+  return obj;
+}
+
+#endif
 
 BBC_AUDIOTOOLBOX_END

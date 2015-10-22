@@ -1,0 +1,3 @@
+/* Auto-generated: DO NOT EDIT! */
+#include "LoadedVersions.h"
+static volatile const uint_t library_id = bbcat::LoadedVersions::Get().Register("@PROJECT_NAME@", "@LIBRARY_VERSION@");

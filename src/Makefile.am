@@ -23,13 +23,17 @@ libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_SOURCES =	\
 	ByteSwap.cpp									\
 	DistanceModel.cpp								\
 	EnhancedFile.cpp								\
+	LoadedVersions.cpp								\
 	misc.cpp										\
+	NamedParameter.cpp								\
 	ObjectRegistry.cpp								\
 	ParameterSet.cpp								\
 	PerformanceMonitor.cpp							\
 	SelfRegisteringParametricObject.cpp				\
+	Thread.cpp										\
 	ThreadLock.cpp									\
-	UDPSocket.cpp
+	UDPSocket.cpp									\
+	version.cpp
 
 pkginclude_HEADERS =							\
 	3DPosition.h								\
@@ -38,11 +42,16 @@ pkginclude_HEADERS =							\
 	CallbackHook.h								\
 	DistanceModel.h								\
 	EnhancedFile.h								\
+	LoadedVersions.h							\
 	LockFreeBuffer.h							\
+	NamedParameter.h							\
 	ObjectRegistry.h							\
+	OSCompiler.h								\
 	ParameterSet.h								\
 	PerformanceMonitor.h						\
+	RefCount.h									\
 	SelfRegisteringParametricObject.h			\
+	Thread.h									\
 	ThreadLock.h								\
 	UniversalTime.h								\
 	UDPSocket.h									\
@@ -51,7 +60,12 @@ pkginclude_HEADERS =							\
 
 noinst_HEADERS =
 
-CLEANFILES = version.h
+CLEANFILES = version.h version.cpp
 
-version.h: Makefile ../config.h
-	echo "{\"@PACKAGE@\", \"@VERSION@\"}," >version.h
+version.h: Makefile ../config.h ../gitbranch.txt
+	echo "{\"@PACKAGE@\", \"@VERSION@-`cat ../gitbranch.txt`\"}," >version.h
+
+version.cpp: Makefile ../config.h ../gitbranch.txt
+	echo "/* Auto-generated: DO NOT EDIT! */" >version.cpp
+	echo "#include \"LoadedVersions.h\"" >>version.cpp
+	echo "static volatile const uint_t library_id = bbcat::LoadedVersions::Get().Register(\"@PACKAGE@\", \"@VERSION@-`cat ../gitbranch.txt`\");" >>version.cpp

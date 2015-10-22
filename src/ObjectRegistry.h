@@ -11,7 +11,7 @@ BBC_AUDIOTOOLBOX_START
 class RegisteredObjectFactory
 {
 public:
-  RegisteredObjectFactory(const char *_name);
+  RegisteredObjectFactory(const std::string& _name);
   virtual ~RegisteredObjectFactory();
 
   /*--------------------------------------------------------------------------------*/
@@ -51,7 +51,7 @@ public:
   /** Return the factory for the specified type name or NULL
    */
   /*--------------------------------------------------------------------------------*/
-  RegisteredObjectFactory *GetFactory(const char *name);
+  RegisteredObjectFactory *GetFactory(const std::string& name);
 
   /*--------------------------------------------------------------------------------*/
   /** Typedefs

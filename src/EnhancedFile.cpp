@@ -4,23 +4,26 @@
 #include <string.h>
 #include <errno.h>
 
-#define DEBUG_LEVEL 1
+#define DEBUG_LEVEL 2
 #include "EnhancedFile.h"
 
 BBC_AUDIOTOOLBOX_START
 
-EnhancedFile::EnhancedFile() : fp(NULL),
+EnhancedFile::EnhancedFile() : RefCountedObject(),
+                               fp(NULL),
                                allowclose(false)
 {
 }
 
-EnhancedFile::EnhancedFile(const char *filename, const char *mode) : fp(NULL),
+EnhancedFile::EnhancedFile(const char *filename, const char *mode) : RefCountedObject(),
+                                                                     fp(NULL),
                                                                      allowclose(false)
 {
   fopen(filename, mode);
 }
 
-EnhancedFile::EnhancedFile(const EnhancedFile& obj) : fp(NULL),
+EnhancedFile::EnhancedFile(const EnhancedFile& obj) : RefCountedObject(),
+                                                      fp(NULL),
                                                       allowclose(false)
 {
   operator = (obj);
@@ -105,6 +108,33 @@ void EnhancedFile::fclose()
     filename = "";
     mode     = "";
   }
+}
+
+off_t EnhancedFile::ftell() const
+{
+#ifdef COMPILER_MSVC
+  return ::_ftelli64(fp);
+#else  
+  return ::ftello(fp);
+#endif
+}
+
+off_t EnhancedFile::ftell()
+{
+#ifdef COMPILER_MSVC
+  return ::_ftelli64(fp);
+#else  
+  return ::ftello(fp);
+#endif
+}
+
+int EnhancedFile::fseek(off_t offset, int origin)
+{
+#ifdef COMPILER_MSVC
+  return ::_fseeki64(fp, offset, origin);
+#else  
+  return ::fseeko(fp, offset, origin);
+#endif
 }
 
 int EnhancedFile::fprintf(const char *fmt, ...)
