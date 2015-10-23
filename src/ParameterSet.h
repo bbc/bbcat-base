@@ -97,7 +97,9 @@ public:
   ParameterSet& Set(const std::string& name, bool                val) {return Set(name, StringFrom(val));}
   ParameterSet& Set(const std::string& name, uint_t              val, const char *fmt = "%u") {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, sint_t              val, const char *fmt = "%d") {return Set(name, StringFrom(val, fmt));}
+  ParameterSet& Set(const std::string& name, ulong_t             val, const char *fmt = "%lu") {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, slong_t             val, const char *fmt = "%ld") {return Set(name, StringFrom(val, fmt));}
+  ParameterSet& Set(const std::string& name, ullong_t            val, const char *fmt = "%llu") {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, sllong_t            val, const char *fmt = "%lld") {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, double              val, const char *fmt = DoubleFormatHuman) {return Set(name, StringFrom(val, fmt));}
   ParameterSet& Set(const std::string& name, const ParameterSet& val);
