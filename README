@@ -84,9 +84,8 @@ Building on Windows (Visual Studio)
 
 mkdir build
 cd build
-cmake -G "Visual Studio 14 2015 Win64" .. (or whatever version of Visual Studio you are using)
-
-A .sln file will be created, load this into Visual Studio and build the INSTALL project (both Debug and Release builds are supported but must be consistent across the libraries)
+cmake -G "Visual Studio 14 2015 Win64" .. && cmake --build . --target INSTALL --config Release
+(or whatever version of Visual Studio you are using)
 
 Notes on Windows builds
 
