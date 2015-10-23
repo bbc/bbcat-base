@@ -77,6 +77,34 @@ src/UDPSocket.h                         |
 
 src/UniversalTime.h                     | A simple fraction based timebase with arbitrary numerator and denominator
 
-Building (dynamic libraries)
+NOTE: JSON support is currently disabled
 
+--------------------------------------------------------------------------------
+Building on Windows (Visual Studio)
+
+mkdir build
+cd build
+cmake -G "Visual Studio 14 2015 Win64" .. (or whatever version of Visual Studio you are using)
+
+A .sln file will be created, load this into Visual Studio and build the INSTALL project (both Debug and Release builds are supported but must be consistent across the libraries)
+
+Notes on Windows builds
+
+As there is no standardised directories for cmake files, libraries, etc. the build *assumes* that:
+1. Library includes, libs and shared files will be stored in c:\local\bbcat
+2. CMake configuration files will be stored in c:\local\cmake
+3. http://sourceforge.net/projects/pthreads4w/ has been downloaded and extracted to c:\local\pthreads (rename unzip folder to 'pthreads')
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Building on Mac and Linux
+
+There are two build mechanisms supported: autotools and cmake
+
+autotools:
 ./autogen.sh && configure && make && sudo make install
+
+cmake:
+mkdir build ; cd build ; cmake .. && make && sudo make install
+--------------------------------------------------------------------------------
+
