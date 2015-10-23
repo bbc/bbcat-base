@@ -49,7 +49,7 @@ else()
 	set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for binaries")
 	set(INSTALL_INCLUDE_DIR include/${_version_dir} CACHE PATH "Installation directory for header files")
 	set(INSTALL_SHARE_DIR share/${PROJECT_NAME} CACHE PATH "Installation directory for shared files")
-	set(INSTALL_CMAKE_DIR lib/CMake/${PROJECT_NAME})
+	set(INSTALL_CMAKE_DIR lib/cmake)
 endif()
 
 # Make relative paths absolute

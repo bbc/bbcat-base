@@ -92,15 +92,17 @@ extern const bool MACHINE_IS_BIG_ENDIAN;
  *
  * This causes problems for some auto-registering mechanisms
  *
- * Therefore, any objects files in rthis category MUST include:
- * 1.  BBC_AUDIOTOOLBOX_KEEP(<file-id>) in the .h file
- * 2.  BBC_AUDIOTOOLBOX_KEEP_IMPL(<file-id>) in the .c/.cpp file
- * 3.  BBC_AUDIOTOOLBOX_REQUIRE(<file-id>) in an APPLICATION .c/.cpp file
+ * Therefore, any objects files in this category MUST include:
+ * 1.  BBC_AUDIOTOOLBOX_KEEP(<id>) in the LIBRARY .c/.cpp file
+ * 2.  BBC_AUDIOTOOLBOX_REQUIRE(<id>) in an APPLICATION .c/.cpp file
  */
 /*--------------------------------------------------------------------------------*/
-#define BBC_AUDIOTOOLBOX_KEEP(x) extern const bool __keep_##x
-#define BBC_AUDIOTOOLBOX_KEEP_IMPL(x) const bool __keep_##x = true
-#define BBC_AUDIOTOOLBOX_REQUIRE(x) extern bool __keep_##x; const bool __keep_##x##_in_app = __keep_##x
+#define BBC_AUDIOTOOLBOX_KEEP(x) volatile uint_t __keep_##x = 0
+#define BBC_AUDIOTOOLBOX_REQUIRE(x)                 \
+BBC_AUDIOTOOLBOX_START                              \
+extern volatile uint_t __keep_##x;                  \
+volatile uint_t __keep_##x##_in_app = __keep_##x;   \
+BBC_AUDIOTOOLBOX_END
 
 typedef void (*DEBUGHANDLER)(const char *str, void *context);
 

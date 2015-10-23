@@ -68,4 +68,6 @@ version.h: Makefile ../config.h ../gitbranch.txt
 version.cpp: Makefile ../config.h ../gitbranch.txt
 	echo "/* Auto-generated: DO NOT EDIT! */" >version.cpp
 	echo "#include \"LoadedVersions.h\"" >>version.cpp
-	echo "static volatile const uint_t library_id = bbcat::LoadedVersions::Get().Register(\"@PACKAGE@\", \"@VERSION@-`cat ../gitbranch.txt`\");" >>version.cpp
+	echo "BBC_AUDIOTOOLBOX_START" >>version.cpp
+	echo "volatile uint_t __keep_@PACKAGE@_version = bbcat::LoadedVersions::Get().Register(\"@PACKAGE@\", \"@VERSION@-`cat ../gitbranch.txt`\");" >>version.cpp
+	echo "BBC_AUDIOTOOLBOX_END" >>version.cpp
