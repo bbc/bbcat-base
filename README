@@ -55,6 +55,8 @@ src/NamedParameter.h					|
 src/ObjectRegistry.cpp                  | A register of objects that can create themselves (see SelfRegisteringParametricObject.h)
 src/ObjectRegistry.h                    |
 
+src/OSCompiler.h                        | Header for determining compiler and OS
+
 src/ParameterSet.cpp                    | A generic key=value handler with operators and comparators
 src/ParameterSet.h                      |
 
@@ -76,6 +78,11 @@ src/UDPSocket.cpp                       | Simple UDP transmitter/receiver
 src/UDPSocket.h                         |
 
 src/UniversalTime.h                     | A simple fraction based timebase with arbitrary numerator and denominator
+
+src/WindowsNet.h                        | Windows network intialisation
+
+src/Windows_uSleep.cpp                  | Windows implementation of usleep()
+src/Windows_uSleep.h                    |
 
 NOTE: JSON support is currently disabled
 
