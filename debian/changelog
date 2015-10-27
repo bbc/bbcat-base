@@ -1,4 +1,4 @@
-bbcat-base (0.1.1.1) quantal; urgency=low
+bbcat-base (0.1.2.0) quantal; urgency=low
 
   * Added Windows build support using CMake
   * Added CMake build support for Mac and Linux
@@ -19,12 +19,6 @@ bbcat-base (0.1.1.1) quantal; urgency=low
   * Added mechanism to keep object files in final application, even if nothing references them directly
 
  -- Richard Day <richard.day@bbc.co.uk>  Mon, 26 Oct 2015 10:30:00 +0000
-
-bbcat-base (0.1.1.0) quantal; urgency=low
-
-  * Improved handling of audio object parameters.
-
- -- Richard Day <richard.day@bbc.co.uk>  Fri, 13 Feb 2015 08:10:00 +0000
 
 bbcat-base (0.1.0.0) quantal; urgency=low
 
