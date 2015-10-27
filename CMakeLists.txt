@@ -33,6 +33,7 @@ set(GLOBAL_INCLUDE_DIRS
 	${THREADS_PTHREADS_INCLUDE_DIR}
 	${INSTALL_INCLUDE_DIR})
 
+# JSON support is currently disabled
 set(GLOBAL_FLAGS
 	"-DENABLE_JSON=0")
 	
