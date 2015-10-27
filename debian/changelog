@@ -1,3 +1,25 @@
+bbcat-base (0.1.1.1) quantal; urgency=low
+
+  * Added Windows build support using CMake
+  * Added CMake build support for Mac and Linux
+  * Added LoadedVersions singleton, a way to keeping track of the loaded versions of compatible libraries
+  * REMOVED CreateStrings()/FreeString() mechanism to prevent string lifetime problems
+  * REMOVED unused data piping scheme in misc.cpp
+  * Added NamedParameter template to provide named, typed parameter handling
+  * Added facility for ParameterSet objects to be constructed via an array or vector of values
+  * Added RefCount template to provide simple ref-counting for objects
+  * Added Thread class to ease creation of threads
+  * Modified BackgroundFile to use Thread class
+  * Added GetNanosecondTicks() to misc.h to return nanoseconds since machine powerup
+  * Expanded Evaluate()/StringFrom() pairs to more types
+  * Added CalcTime()/GenarateTime() for conversion back and forth between ns and hh:mm:ss.SSSSS text forms
+  * Added addm<> and subz<> to perform safe adding and subtracting for *unsigned* types
+  * Added ConvertList<> for converting a vector of pointers to a vector of pointers of another [compatible] type
+  * Added version number and git branch embedding using versions.cpp/h
+  * Added mechanism to keep object files in final application, even if nothing references them directly
+
+ -- Richard Day <richard.day@bbc.co.uk>  Mon, 26 Oct 2015 10:30:00 +0000
+
 bbcat-base (0.1.1.0) quantal; urgency=low
 
   * Improved handling of audio object parameters.

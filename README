@@ -4,11 +4,6 @@ Base library for BBC Audio Toolbox
 
 Contains miscellaneous debug, file and position functions
 
-Dependencies
-
-boost - http://www.boost.org/ [optional, for JSON support]
-json_spirit-4.0 [optional]
-
 Files
 
 autogen.sh - simple autotools script
@@ -49,7 +44,7 @@ src/Makefile.am                         | Makefile for automake
 src/misc.cpp                            | Miscelleanous functions and definitions, especially debugging functions
 src/misc.h                              |
 
-src/NamedParameter.cpp					| An interface, template and macro that create a named parameter with an optional default value with JSON support
+src/NamedParameter.cpp					| An interface, template and macro that create a named parameter with an optional default value
 src/NamedParameter.h					|
 
 src/ObjectRegistry.cpp                  | A register of objects that can create themselves (see SelfRegisteringParametricObject.h)
