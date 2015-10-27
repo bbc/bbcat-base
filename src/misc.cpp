@@ -213,7 +213,7 @@ uint64_t GetNanosecondTicks()
     mul /= _div;
     div /= _div;
 
-    DEBUG("Final counter mul/div = %lu/%lu", (ulong_t)mul, (ulong_t)div);
+    DEBUG2(("Final counter mul/div = %lu/%lu", (ulong_t)mul, (ulong_t)div));
   }
   
   QueryPerformanceCounter(&time);
