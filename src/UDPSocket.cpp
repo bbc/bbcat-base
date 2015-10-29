@@ -142,7 +142,7 @@ bool UDPSocket::send(const void *data, uint_t bytes)
 #ifndef COMPILER_MSVC
     success = (::send(socket, data, bytes, 0) >= 0);
 #else
-	  success = (::send(socket, (const char*)data, bytes, 0) >= 0);
+    success = (::send(socket, (const char*)data, bytes, 0) >= 0);
 #endif
     if (!success) debug_err("Failed to send %u bytes to socket (%s)", bytes, strerror(errno));
   }
@@ -159,7 +159,7 @@ sint_t UDPSocket::recv(void *data, uint_t maxbytes)
 #ifndef COMPILER_MSVC
     bytes = ::recv(socket, data, maxbytes, data ? 0 : MSG_PEEK);
 #else
-	  bytes = ::recv(socket, (char*)data, maxbytes, data ? 0 : MSG_PEEK);
+    bytes = ::recv(socket, (char*)data, maxbytes, data ? 0 : MSG_PEEK);
 #endif
     if (bytes < 0) debug_err("Failed to receive %u from socket (%s)", maxbytes, strerror(errno));
   }
