@@ -26,7 +26,7 @@
 #define DEBUG_LEVEL 1
 #include "UDPSocket.h"
 
-#ifdef COMPILER_MSVC
+#ifdef TARGET_OS_WINDOWS
 #include "WindowsNet.h"
 #endif
 
@@ -35,6 +35,11 @@ BBC_AUDIOTOOLBOX_START
 static bool resolve(const char *address, uint_t port, struct sockaddr_in* sockaddr)
 {
   bool success = false;
+
+#ifdef TARGET_OS_WINDOWS
+  // ensure Windows networking initialised
+  WindowsNet::Init();
+#endif
 
   memset(sockaddr, 0, sizeof(*sockaddr));
   sockaddr->sin_family = AF_INET;
@@ -61,6 +66,11 @@ static bool resolve(const char *address, uint_t port, struct sockaddr_in* sockad
 
 UDPSocket::UDPSocket() : socket(-1)
 {
+#ifdef TARGET_OS_WINDOWS
+  // ensure Windows networking initialised
+  WindowsNet::Init();
+#endif
+  
   readfds = (void *)new fd_set;
 }
 
@@ -139,11 +149,7 @@ bool UDPSocket::send(const void *data, uint_t bytes)
 
   if (socket >= 0)
   {
-#ifndef COMPILER_MSVC
-    success = (::send(socket, data, bytes, 0) >= 0);
-#else
     success = (::send(socket, (const char*)data, bytes, 0) >= 0);
-#endif
     if (!success) debug_err("Failed to send %u bytes to socket (%s)", bytes, strerror(errno));
   }
 
@@ -156,12 +162,14 @@ sint_t UDPSocket::recv(void *data, uint_t maxbytes)
 
   if (socket >= 0)
   {
-#ifndef COMPILER_MSVC
-    bytes = ::recv(socket, data, maxbytes, data ? 0 : MSG_PEEK);
-#else
-    bytes = ::recv(socket, (char*)data, maxbytes, data ? 0 : MSG_PEEK);
-#endif
-    if (bytes < 0) debug_err("Failed to receive %u from socket (%s)", maxbytes, strerror(errno));
+    // recv() with MSG_PEEK doesn't work propely unless *some* buffer is supplied so this buffer is just used
+    // as a dumping point for the data
+    // it *still* means recv()  is thread-safe because we don't care about the data
+    static char _staticbuf[16384];
+    
+    bytes = ::recv(socket, data ? (char *)data : _staticbuf, data ? maxbytes : sizeof(_staticbuf), data ? 0 : MSG_PEEK);
+    
+    if (bytes < 0) debug_err("Failed to receive %u bytes from socket (%s)", maxbytes, strerror(errno));
   }
 
   return bytes;
