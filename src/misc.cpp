@@ -187,38 +187,73 @@ ulong_t GetTickCount()
 #endif
 
 /*--------------------------------------------------------------------------------*/
+/** Multiply 64-bit unsigned integer by 32-bit fraction without overflow
+ */
+/*--------------------------------------------------------------------------------*/
+uint64_t muldiv(uint64_t val, uint32_t mul, uint32_t div)
+{
+  // split val into 32-bit parts for multiplying
+  uint32_t parts[] = {(uint32_t)val, (uint32_t)(val >> 32)};
+
+  // result (3 x 32 bits)
+  uint32_t res[NUMBEROF(parts) + 1];    // maximum number of 32-bit parts required for product
+
+  uint64_t carry = 0;                   // accumulator
+  uint_t i;
+  
+  // first, multiply up by multiplier
+  for (i = 0; i < NUMBEROF(parts); i++)
+  {
+    carry += mul * (uint64_t)parts[i];  // 64-bit multiply of 32-bit parts
+    res[i] = (uint32_t)carry;           // save lower 32-bits of result
+    carry >>= 32;                       // and shift down to carry to next stage
+  }
+  // save final value
+  res[i] = (uint32_t)carry;
+
+  DEBUG2(("Mul-result:%08lx:%08lx:%08lx", (ulong_t)res[2], (ulong_t)res[1], (ulong_t)res[0]));
+  
+  // now divide by divider
+  carry = 0;
+  for (i = NUMBEROF(res); i > 0; /* i pre-decremented below */)
+  {
+    carry <<= 32;                           // shift carry up
+    carry  += res[--i];                     // add value
+    res[i]  = (uint32_t)(carry / div);      // store result of divide
+    carry  %= div;                          // save remainder
+  }
+
+  DEBUG2(("Div-result:%08lx:%08lx:%08lx", (ulong_t)res[2], (ulong_t)res[1], (ulong_t)res[0]));
+
+  return res[0] + ((uint64_t)res[1] << 32);
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Return machine time on in nanoseconds
  */
 /*--------------------------------------------------------------------------------*/
 uint64_t GetNanosecondTicks()
 {
 #ifdef TARGET_OS_WINDOWS
-  static uint64_t mul = 0, div = 0;
+  static uint32_t div = 0;
   LARGE_INTEGER time;
 
-  if (!mul)
+  // find divider if not known
+  if (!div)
   {
     LARGE_INTEGER freq;
     
-    // calculate multiplier and divisor to get from ns from performance counter
+    // calculate divisor to get from ns from performance counter
     QueryPerformanceFrequency(&freq);
 
-    mul = 1000000000ULL;
-    div = freq.QuadPart;
-
-    // try to reduce mul/div fraction
-
-    // first, find first one in both mul and div and divide both a minimum
-    uint64_t _div = MIN(mul & -mul, div & -div);
-    mul /= _div;
-    div /= _div;
-
-    DEBUG2(("Final counter mul/div = %lu/%lu", (ulong_t)mul, (ulong_t)div));
+    // assume divider is 32-bits or less
+    div = (uint32_t)freq.QuadPart;
   }
   
   QueryPerformanceCounter(&time);
 
-  return (mul * (uint64_t)time.QuadPart) / div;
+  // multiply time by 1e9 (s->ns) then divide by divisor
+  return muldiv(time.QuadPart, 1000000000, div);
 #elif __MACH__
   static mach_timebase_info_data_t timebase;
   static bool inited = false;
