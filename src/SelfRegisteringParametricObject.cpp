@@ -57,7 +57,7 @@ void SelfRegisteringParametricObject::GetParameterDescriptions(std::vector<const
  * @return pointer to object or NULL
  */
 /*--------------------------------------------------------------------------------*/
-SelfRegisteringParametricObject *SelfRegisteringParametricObjectContainer::CreateObject(const char *name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory)
+SelfRegisteringParametricObject *SelfRegisteringParametricObjectContainer::CreateObject(const std::string& name, const ParameterSet& parameters, SelfRegisteringParametricObjectFactoryBase **factory)
 {
   SelfRegisteringParametricObjectFactoryBase *_factory;
   SelfRegisteringParametricObject *obj = NULL;
@@ -81,7 +81,7 @@ SelfRegisteringParametricObject *SelfRegisteringParametricObjectContainer::Creat
  * @return index that object was registered using (may be global or local to a category)
  */
 /*--------------------------------------------------------------------------------*/
-int SelfRegisteringParametricObjectContainer::Create(const char *name, const ParameterSet& parameters)
+int SelfRegisteringParametricObjectContainer::Create(const std::string& name, const ParameterSet& parameters)
 {
   SelfRegisteringParametricObject *obj;
   int index = -1;
@@ -91,7 +91,7 @@ int SelfRegisteringParametricObjectContainer::Create(const char *name, const Par
     if (!obj->IsObjectValid())
     {
       // object construction failed for some reason
-      ERROR("Failed to create object '%s' correctly", name);
+      ERROR("Failed to create object '%s' correctly", name.c_str());
 
       // ONLY delete object if it is not a singleton
       if (!obj->IsSingleton()) delete obj;
@@ -102,12 +102,12 @@ int SelfRegisteringParametricObjectContainer::Create(const char *name, const Par
       // object was created, find out what type it is
       if ((index = Register(obj, parameters)) < 0)
       {
-        ERROR("Unknown type '%s' (unable to register with container)", name);
+        ERROR("Unknown type '%s' (unable to register with container)", name.c_str());
         delete obj;
       }
     }
   }
-  else ERROR("Unknown type '%s' (cannot create)", name);
+  else ERROR("Unknown type '%s' (cannot create)", name.c_str());
 
   return index;
 }

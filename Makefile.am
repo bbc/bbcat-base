@@ -19,8 +19,15 @@ bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc: bbcat-base.pc
 bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc: bbcat-base-uninstalled.pc
 	cp bbcat-base-uninstalled.pc bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc
 
-BUILT_SOURCES = bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc
+BUILT_SOURCES = bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc gitbranch.txt
 
-CLEANFILES = bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc src/version.h
+CLEANFILES = bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc src/version.h src/version.cpp gitbranch.txt .branch
 
 ACLOCAL_FLAGS = -I m4
+
+.PHONY: gitbranch.txt
+
+gitbranch.txt:
+	@-git rev-parse --abbrev-ref HEAD >.branch && (diff gitbranch.txt .branch >/dev/null || cp .branch gitbranch.txt)
+	@if [ ! -e "gitbranch.txt" ] ; then touch "gitbranch.txt" ; fi
+	@echo "Branch: `cat gitbranch.txt`"

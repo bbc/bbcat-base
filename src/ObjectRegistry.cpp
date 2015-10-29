@@ -3,7 +3,7 @@
 
 BBC_AUDIOTOOLBOX_START
 
-RegisteredObjectFactory::RegisteredObjectFactory(const char *_name) : name(_name)
+RegisteredObjectFactory::RegisteredObjectFactory(const std::string& _name) : name(_name)
 {
 }
 
@@ -45,7 +45,7 @@ void ObjectRegistry::Register(RegisteredObjectFactory *factory)
 /** Return the factory for the specified type name or NULL
  */
 /*--------------------------------------------------------------------------------*/
-RegisteredObjectFactory *ObjectRegistry::GetFactory(const char *name)
+RegisteredObjectFactory *ObjectRegistry::GetFactory(const std::string& name)
 {
   RegisteredObjectFactory *factory = NULL;
   std::map<std::string,RegisteredObjectFactory *>::iterator it;

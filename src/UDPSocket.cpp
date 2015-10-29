@@ -1,20 +1,24 @@
 
 #include <string.h>
 
-#include <math.h>
+#include "OSCompiler.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef COMPILER_MSVC
 #include <sys/param.h>
-#include <limits.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#include <signal.h>
 #include <netdb.h>
+#endif
+
+#include <limits.h>
+#include <signal.h>
+
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -22,11 +26,20 @@
 #define DEBUG_LEVEL 1
 #include "UDPSocket.h"
 
+#ifdef TARGET_OS_WINDOWS
+#include "WindowsNet.h"
+#endif
+
 BBC_AUDIOTOOLBOX_START
 
 static bool resolve(const char *address, uint_t port, struct sockaddr_in* sockaddr)
 {
   bool success = false;
+
+#ifdef TARGET_OS_WINDOWS
+  // ensure Windows networking initialised
+  WindowsNet::Init();
+#endif
 
   memset(sockaddr, 0, sizeof(*sockaddr));
   sockaddr->sin_family = AF_INET;
@@ -44,7 +57,7 @@ static bool resolve(const char *address, uint_t port, struct sockaddr_in* sockad
       sockaddr->sin_family = hp->h_addrtype;
       success = true;
     }
-    else ERROR("Host '%s' not found", address);
+    else debug_err("Host '%s' not found", address);
   }
   else success = true;
 
@@ -53,6 +66,11 @@ static bool resolve(const char *address, uint_t port, struct sockaddr_in* sockad
 
 UDPSocket::UDPSocket() : socket(-1)
 {
+#ifdef TARGET_OS_WINDOWS
+  // ensure Windows networking initialised
+  WindowsNet::Init();
+#endif
+  
   readfds = (void *)new fd_set;
 }
 
@@ -70,7 +88,7 @@ bool UDPSocket::bind(const char *bindaddress, uint_t port)
 
   if (!resolve(bindaddress, port, &sockaddr)) return success;
 
-  if ((socket = ::socket(sockaddr.sin_family, SOCK_DGRAM, 0)) >= 0)
+  if ((socket = (int)::socket(sockaddr.sin_family, SOCK_DGRAM, 0)) >= 0)
   {
     int rc = 1;
 
@@ -80,9 +98,9 @@ bool UDPSocket::bind(const char *bindaddress, uint_t port)
     {
       success = true;
     }
-    else ERROR("Failed to bind to %s:%u (%s)", bindaddress, port, strerror(errno));
+    else debug_err("Failed to bind to %s:%u (%s)", bindaddress, port, strerror(errno));
   }
-  else ERROR("Failed to create socket (%s)", strerror(errno));
+  else debug_err("Failed to create socket (%s)", strerror(errno));
 
   if (!success) close();
 
@@ -96,15 +114,15 @@ bool UDPSocket::connect(const char *address, uint_t port)
 
   if (!resolve(address, port, &sockaddr)) return success;
 
-  if ((socket = ::socket(sockaddr.sin_family, SOCK_DGRAM, 0)) >= 0)
+  if ((socket = (int)::socket(sockaddr.sin_family, SOCK_DGRAM, 0)) >= 0)
   {
     if (::connect(socket, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) >= 0)
     {
       success = true;
     }
-    else ERROR("Failed to connect to %s:%u (%s)", address, port, strerror(errno));
+    else debug_err("Failed to connect to %s:%u (%s)", address, port, strerror(errno));
   }
-  else ERROR("Failed to create socket (%s)", strerror(errno));
+  else debug_err("Failed to create socket (%s)", strerror(errno));
   
   if (!success) close();
 
@@ -116,7 +134,11 @@ void UDPSocket::close()
   // close down socket
   if (socket >= 0)
   {
+#ifdef COMPILER_MSVC
+	closesocket(socket);
+#else
     ::close(socket);
+#endif
     socket = -1;
   }
 }
@@ -127,8 +149,8 @@ bool UDPSocket::send(const void *data, uint_t bytes)
 
   if (socket >= 0)
   {
-    success = (::send(socket, data, bytes, 0) >= 0);
-    if (!success) ERROR("Failed to send %u bytes to socket (%s)", bytes, strerror(errno));
+    success = (::send(socket, (const char*)data, bytes, 0) >= 0);
+    if (!success) debug_err("Failed to send %u bytes to socket (%s)", bytes, strerror(errno));
   }
 
   return success;
@@ -140,8 +162,14 @@ sint_t UDPSocket::recv(void *data, uint_t maxbytes)
 
   if (socket >= 0)
   {
-    bytes = ::recv(socket, data, maxbytes, data ? 0 : MSG_PEEK);
-    if (bytes < 0) ERROR("Failed to receive %u from socket (%s)", maxbytes, strerror(errno));
+    // recv() with MSG_PEEK doesn't work propely unless *some* buffer is supplied so this buffer is just used
+    // as a dumping point for the data
+    // it *still* means recv()  is thread-safe because we don't care about the data
+    static char _staticbuf[16384];
+    
+    bytes = ::recv(socket, data ? (char *)data : _staticbuf, data ? maxbytes : sizeof(_staticbuf), data ? 0 : MSG_PEEK);
+    
+    if (bytes < 0) debug_err("Failed to receive %u bytes from socket (%s)", maxbytes, strerror(errno));
   }
 
   return bytes;
@@ -167,7 +195,7 @@ bool UDPSocket::wait(uint_t timeout)
 
     if (::select(socket + 1, (fd_set *)readfds, NULL, NULL, &tv) >= 0)
     {
-      success = FD_ISSET(socket, (fd_set *)readfds);
+      success = (FD_ISSET(socket, (fd_set *)readfds) != 0);
     }
   }
 

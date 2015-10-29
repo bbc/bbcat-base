@@ -9,18 +9,58 @@
 
 BBC_AUDIOTOOLBOX_START
 
+ParameterSet::ParameterSet(const std::string& values)
+{
+  operator = (values);
+}
+
+ParameterSet::ParameterSet(const std::vector<std::string>& values)
+{
+  operator = (values);
+}
+
 ParameterSet::ParameterSet(const ParameterSet& obj)
 {
   operator = (obj);
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Assignment operator
+/** Assignment operators
  */
 /*--------------------------------------------------------------------------------*/
+ParameterSet& ParameterSet::operator = (const std::string& values)
+{
+  std::vector<std::string> valueslist;
+
+  // split lines into an list
+  SplitString(values, valueslist, '\n');
+
+  return operator = (valueslist);
+}
+
+ParameterSet& ParameterSet::operator = (const std::vector<std::string>& values)
+{
+  uint_t i;
+
+  for (i = 0; i < values.size(); i++)
+  {
+    const std::string& str = values[i];
+    size_t p;
+
+    if ((p = str.find("=")) < std::string::npos)
+    {
+      // set as key=value
+      Set(str.substr(0, p), str.substr(p + 1));
+    }
+  }
+
+  return *this;
+}
+
 ParameterSet& ParameterSet::operator = (const ParameterSet& obj)
 {
-  values = obj.values;
+  // do not copy oneself
+  if (&obj != this) values = obj.values;
 
   return *this;
 }
@@ -169,6 +209,18 @@ bool ParameterSet::Get(const std::string& name, slong_t& val) const
 }
 
 bool ParameterSet::Get(const std::string& name, ulong_t& val) const
+{
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
+  return ((it != values.end()) && Evaluate(it->second, val));
+}
+
+bool ParameterSet::Get(const std::string& name, sllong_t& val) const
+{
+  const std::map<std::string,std::string>::const_iterator it = values.find(name);
+  return ((it != values.end()) && Evaluate(it->second, val));
+}
+
+bool ParameterSet::Get(const std::string& name, ullong_t& val) const
 {
   const std::map<std::string,std::string>::const_iterator it = values.find(name);
   return ((it != values.end()) && Evaluate(it->second, val));
@@ -368,5 +420,189 @@ std::string ParameterSet::GenerateMessage(const std::string& format, bool allowe
   
   return msg;
 }
+
+/*--------------------------------------------------------------------------------*/
+/** Find combinations of string array in hierarchical parameter sets 
+ *
+ * @param strings a list of strings to search for
+ * @param res the resultant string
+ *
+ * @return true if combination found
+ *
+ * @note this function is recursive with a maximum depth governed by the depth of the ParameterSet
+ *
+ * It aims to find a combination of strings[] in the current parameter set and return the value using
+ * the following strategy:
+ *
+ * For each string in strings[]:
+ *   if that key exists and is not a stub for sub-values then return the value for that key
+ *   if that key exists and is a stub for sub-values then start the search again on the sub-values
+ *   if no results found at each level but 'default' key exists return the value for that key 
+ *
+ * e.g. for the ParameterSet:
+ *
+ *   values.a       red
+ *   values.a.b     green
+ *   values.a.b.c   blue
+ *   values.a.c.b   pink
+ *   values.a.c     yellow
+ *   values.default black
+ *
+ * Would give the following for the specified arrays:
+ *
+ *   ['a']         : 'red'
+ *   ['b']         : 'black' (because of 'default')
+ *   ['a','b']     : 'green' ('a' then 'b')
+ *   ['a','c']     : 'yellow' ('a' then 'c')
+ *   ['a','b','c'] : 'blue' ('a' then 'b' then 'c')
+ *   ['a','c','b'] : 'pink' ('a' then 'c' then 'b')
+ */
+/*--------------------------------------------------------------------------------*/
+bool ParameterSet::FindCombination(const std::vector<std::string>& strings, std::string& res) const
+{
+  uint_t i;
+  bool   found = false;
+
+  for (i = 0; !found && (i < strings.size()); i++)
+  {
+    ParameterSet subvars;
+
+    if (Get(strings[i], res))
+    {
+      DEBUG2(("Found '%s' in {%s}: %s", strings[i], ToString().c_str(), res.c_str())); 
+      found = true;
+    }
+    else if (Get(strings[i], subvars))
+    {
+      found = subvars.FindCombination(strings, res);
+    }
+  }
+
+  if (!found) found = Get("default", res);
+
+  return found;
+}
+
+#if ENABLE_JSON
+/*--------------------------------------------------------------------------------*/
+/** Return object as JSON object
+ */
+/*--------------------------------------------------------------------------------*/
+json_spirit::mObject ParameterSet::ToJSON() const
+{
+  json_spirit::mObject obj;
+  ToJSON(obj);
+  return obj;
+}
+
+void ParameterSet::ToJSON(json_spirit::mObject& obj) const
+{
+  Iterator it;
+    
+  for (it = GetBegin(); it != GetEnd(); ++it)
+  {
+    const std::string& name = it->first;
+    size_t pos;
+
+    // detect sub-objects using '.' in name
+    if ((pos = name.find(".")) != std::string::npos)
+    {
+      std::string subname = name.substr(0, pos);
+
+      // only process sub-object for FIRST entry!
+      if (obj.find(name) == obj.end())
+      {
+        ParameterSet subset;
+        if (Get(subname, subset)) obj[subname] = subset.ToJSON();
+      }
+    }
+    else obj[name] = it->second;
+  }
+}
+
+bool ParameterSet::Get(const std::string& name, json_spirit::mObject& obj) const
+{
+  ParameterSet subset;
+  bool success = false;
+
+  if (Get(name, subset))
+  {
+    obj[name] = subset.ToJSON();
+    success = true;
+  }
+
+  return success;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Set object from JSON
+ */
+/*--------------------------------------------------------------------------------*/
+void ParameterSet::FromJSON(const json_spirit::mObject& obj)
+{
+  json_spirit::mObject::const_iterator it;
+
+  for (it = obj.begin(); it != obj.end(); ++it)
+  {
+    Set(it->first, it->second);
+  }
+}
+
+ParameterSet& ParameterSet::Set(const std::string& name, const json_spirit::mValue& value)
+{
+  switch (value.type())
+  {
+    case json_spirit::obj_type:
+      Set(name, value.get_obj());
+      break;
+
+    case json_spirit::array_type:
+    {
+      const json_spirit::mArray& array = value.get_array();
+      json_spirit::mArray::const_iterator it;
+      uint_t i;
+
+      for (i = 0, it = array.begin(); it != array.end(); ++it, ++i)
+      {
+        std::string name1;
+        Printf(name1, "%s.%u", name.c_str(), i);
+        Set(name1, *it);
+      }
+      break;
+    }
+
+    default:
+      Set(name, value.get_str());
+      break;
+  }
+
+  return *this;
+}
+
+ParameterSet& ParameterSet::Set(const std::string& name, const json_spirit::mObject& obj)
+{
+  ParameterSet subset;
+  subset.FromJSON(obj);
+  Set(name, subset);
+  return *this;
+}
+
+bool FromJSON(const json_spirit::mValue& _val, ParameterSet& val)
+{
+  bool success = (_val.type() == json_spirit::obj_type);
+
+  if (success)
+  {
+    val.FromJSON(_val.get_obj());
+  }
+  
+  return success;
+}
+
+json_spirit::mValue ToJSON(const ParameterSet& val)
+{
+  return val.ToJSON();
+}
+#endif
 
 BBC_AUDIOTOOLBOX_END

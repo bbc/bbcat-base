@@ -2,7 +2,7 @@
 #define __BACKGROUND_FILE__
 
 #include "EnhancedFile.h"
-#include "ThreadLock.h"
+#include "Thread.h"
 
 BBC_AUDIOTOOLBOX_START
 
@@ -65,8 +65,9 @@ protected:
   /** Thread entry point
    */
   /*--------------------------------------------------------------------------------*/
-  static void *__ThreadStart(void *arg)
+  static void *__ThreadStart(Thread& thread, void *arg)
   {
+    UNUSED_PARAMETER(thread);
     BackgroundFile& writer = *(BackgroundFile *)arg;
     return writer.Run();
   }
@@ -87,9 +88,7 @@ protected:
   
 protected:
   bool                   enablebackground;
-  pthread_t      	     thread;
-  volatile bool		     quitthread;
-  ThreadBoolSignalObject donesignal;
+  Thread                 thread;
   volatile BLOCK		 *first, *last;
 };
 

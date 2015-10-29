@@ -6,15 +6,19 @@
 
 #include <string>
 
-#include "misc.h"
+#include "RefCount.h"
 
 BBC_AUDIOTOOLBOX_START
+
+#ifdef COMPILER_MSVC
+typedef sint64_t off_t;
+#endif
 
 /*--------------------------------------------------------------------------------*/
 /** Class mimicking FILE functions but which keeps the filename and open mode allowing duplication 
  */
 /*--------------------------------------------------------------------------------*/
-class EnhancedFile
+class EnhancedFile : public RefCountedObject
 {
 public:
   EnhancedFile();
@@ -24,12 +28,16 @@ public:
 
   /*--------------------------------------------------------------------------------*/
   /** Duplicate file by assignment
+   *
+   * @note this will open the same file again!
    */
   /*--------------------------------------------------------------------------------*/
   EnhancedFile& operator = (const EnhancedFile& obj);
 
   /*--------------------------------------------------------------------------------*/
   /** Explicit duplication via copy-constructor
+   *
+   * @note this will open the same file again!
    */
   /*--------------------------------------------------------------------------------*/
   virtual EnhancedFile *dup() const {return new EnhancedFile(*this);}
@@ -44,9 +52,9 @@ public:
 
   virtual size_t fread(void *ptr, size_t size, size_t count)        {return ::fread(ptr, size, count, fp);}
   virtual size_t fwrite(const void *ptr, size_t size, size_t count) {return ::fwrite(ptr, size, count, fp);}
-  virtual off_t  ftell() const {return ::ftello(fp);}
-  virtual off_t  ftell() {return ::ftello(fp);}
-  virtual int    fseek(off_t offset, int origin) {return ::fseeko(fp, offset, origin);}
+  virtual off_t  ftell() const;
+  virtual off_t  ftell();
+  virtual int    fseek(off_t offset, int origin);
   virtual int    ferror() const {return ::ferror(fp);}
   virtual int    fflush() {return ::fflush(fp);}
   virtual void   rewind() {::rewind(fp);}

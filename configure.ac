@@ -1,5 +1,5 @@
 AC_PREREQ([2.68])
-AC_INIT([BBCAT_BASE],[0.1.1.0])
+AC_INIT([BBCAT_BASE],[0.1.2.0])
 
 AS_NANO(BBCAT_BASE_CVS=no,BBCAT_BASE_CVS=yes)
 
@@ -48,7 +48,7 @@ case $host_os in
 esac
 
 # Check if we should disable GPL code  (./configure --disable-gpl)
-AC_MSG_CHECKING(whether to include code under gpl)
+AC_MSG_CHECKING(whether to include code under GPL)
 AC_ARG_ENABLE(gpl, AS_HELP_STRING([--disable-gpl], [disable code under GPL]), ENABLE_GPL="no", ENABLE_GPL="yes")
 if test "x${ENABLE_GPL}" = "xyes"; then
   AC_MSG_RESULT(yes)
@@ -57,6 +57,31 @@ else
   AC_MSG_RESULT(no)
   BBCAT_GLOBAL_CFLAGS="$BBCAT_GLOBAL_CFLAGS -DENABLE_GPL=0"
 fi
+
+AC_MSG_CHECKING(whether to include JSON handling)
+AC_ARG_ENABLE(json, AS_HELP_STRING([--disable-json], [disable JSON handling]), DISABLE_JSON_HANDLING="yes", DISABLE_JSON_HANDLING="no")
+if test "x${DISABLE_JSON_HANDLING}" != "xyes"; then
+  AC_MSG_RESULT(yes)
+
+  dnl json_spirit is required
+  JSON_SPIRIT_VER="4.0.6.0"
+  PKG_CHECK_MODULES(JSON_SPIRIT, json_spirit-4.0 >= JSON_SPIRIT_VER, HAVE_JSON_SPIRIT=yes, HAVE_JSON_SPIRIT=no)
+  if test "x${HAVE_JSON_SPIRIT}" == "xyes" ; then
+    BBCAT_GLOBAL_CFLAGS="$BBCAT_GLOBAL_CFLAGS -DENABLE_JSON=1 $JSON_SPIRIT_CFLAGS"
+    BBCAT_GLOBAL_LIBS="$BBCAT_GLOBAL_LIBS $JSON_SPIRIT_LIBS"
+    ENABLE_JSON="yes"
+  else
+    BBCAT_GLOBAL_CFLAGS="$BBCAT_GLOBAL_CONTROL_CFLAGS -DENABLE_JSON=0"
+    ENABLE_JSON="no"
+  fi
+else
+  AC_MSG_RESULT(no)
+
+  BBCAT_GLOBAL_CFLAGS="$BBCAT_GLOBAL_CONTROL_CFLAGS -DENABLE_JSON=0"
+  ENABLE_JSON="no"
+fi
+
+AM_CONDITIONAL(ENABLE_JSON, test "x${ENABLE_JSON}" = "xyes")
 
 AC_SUBST(BBCAT_GLOBAL_CFLAGS)
 AC_SUBST(BBCAT_GLOBAL_LIBS)

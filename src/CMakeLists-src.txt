@@ -1,0 +1,100 @@
+#names
+if(MSVC)
+# ONLY static with MSVC
+set(_static_lib_name ${PROJECT_NAME})
+else()
+set(_lib_name ${PROJECT_NAME})
+set(_static_lib_name ${PROJECT_NAME}-static)
+endif()
+
+#dependencies
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+configure_file(version.h.in
+  "version.h" @ONLY)
+
+configure_file(version.cpp.in
+  "version.cpp" @ONLY)
+
+#targets
+add_library(${_static_lib_name} STATIC
+	${_sources} 
+)
+
+if(NOT MSVC)
+add_library(${_lib_name} SHARED
+	${_sources} 
+)
+endif()
+
+if(NOT MSVC)
+target_link_libraries (${_lib_name} 
+	${_extra_libs}
+)
+endif()
+
+target_link_libraries (${_static_lib_name} 
+	${_extra_libs}
+)
+
+set_target_properties(${_static_lib_name} PROPERTIES 
+	PUBLIC_HEADER "${_headers}"
+)
+
+# create config files for package
+export(TARGETS ${_lib_name} ${_static_lib_name}
+	FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
+
+export(PACKAGE ${PROJECT_NAME})
+ 
+file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
+   "${INSTALL_INCLUDE_DIR}")
+
+configure_file(Config.cmake.in
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" @ONLY)
+
+configure_file(Config.cmake.in
+  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake" @ONLY)
+
+configure_file(ConfigVersion.cmake.in
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
+ 
+file(COPY ${_headers}
+	DESTINATION ${CMAKE_BINARY_DIR}/include/${PROJECT_NAME}
+)
+
+#install
+install(FILES
+		"${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
+		"${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+		DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+)
+
+install(TARGETS ${_static_lib_name}
+		EXPORT ${PROJECT_NAME}Targets
+		LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+		ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+		RUNTIME DESTINATION ${INSTALL_BIN_DIR}
+		PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}
+)
+
+if(MSVC)
+install(FILES
+		${PROJECT_BINARY_DIR}/src/Debug/${PROJECT_NAME}.pdb
+	    DESTINATION ${INSTALL_LIB_DIR}
+		CONFIGURATIONS Debug
+)
+endif(MSVC)
+
+if(NOT MSVC)
+install(TARGETS ${_lib_name} 
+		EXPORT ${PROJECT_NAME}Targets
+		LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+		ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+		RUNTIME DESTINATION ${INSTALL_BIN_DIR}
+		PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/${PROJECT_NAME} COMPONENT dev
+)
+endif()
+
+install(EXPORT ${PROJECT_NAME}Targets
+		DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)

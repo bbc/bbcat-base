@@ -1,0 +1,5 @@
+/* Auto-generated: DO NOT EDIT! */
+#include "LoadedVersions.h"
+BBC_AUDIOTOOLBOX_START
+volatile uint_t __keep_@UNDERSCORE_PROJECT_NAME@_version = bbcat::LoadedVersions::Get().Register("@PROJECT_NAME@", "@LIBRARY_VERSION@");
+BBC_AUDIOTOOLBOX_END

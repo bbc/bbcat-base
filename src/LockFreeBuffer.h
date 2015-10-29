@@ -22,16 +22,27 @@ class LockFreeBuffer
 {
 public:
   /*--------------------------------------------------------------------------------*/
-  /** Initialise the buffer, number of items *must* be specified
+  /** Initialise the buffer
    *
    * @note the buffer is initialised to one more than required because there must
    * always be an unused item in the list
    */
   /*--------------------------------------------------------------------------------*/
-  LockFreeBuffer(uint_t l) : buffer(l + 1),
-                             rd(0),
-                             wr(0) {}
+  LockFreeBuffer(uint_t l = 0) : buffer(l + 1),
+                                 rd(0),
+                                 wr(0) {}
   virtual ~LockFreeBuffer() {}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Resize the buffer and reset the pointers
+   *
+   * @note the buffer is initialised to one more than required because there must
+   * always be an unused item in the list
+   *
+   * @note this will effectively empty the buffer
+   */
+  /*--------------------------------------------------------------------------------*/
+  void Resize(uint_t l) {buffer.resize(l + 1); rd = wr = 0;}
 
   /*--------------------------------------------------------------------------------*/
   /** Return ptr to item at write position
