@@ -58,6 +58,10 @@ typedef unsigned long ulong_t;
 typedef signed   long long sllong_t;
 typedef unsigned long long ullong_t;
 
+#ifdef TARGET_OS_WINDOWS
+#include "Windows_uSleep.h"
+#endif
+
 #ifdef GCC_BUILD
 #define PACKEDSTRUCT   struct __attribute__ ((packed))
 #define PRINTF_FORMAT  __attribute__ ((format (printf,1,2)))
