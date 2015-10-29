@@ -17,6 +17,8 @@ bbcat-base (0.1.2.0) quantal; urgency=low
   * Added ConvertList<> for converting a vector of pointers to a vector of pointers of another [compatible] type
   * Added version number and git branch embedding using versions.cpp/h
   * Added mechanism to keep object files in final application, even if nothing references them directly
+  * Added 64-bit x 32-bit / 32-bit routine in misc.h
+  * Added LockFreeBuffer template for handling circular buffers without locks
 
  -- Richard Day <richard.day@bbc.co.uk>  Mon, 26 Oct 2015 10:30:00 +0000
 
