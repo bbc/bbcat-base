@@ -264,8 +264,8 @@ uint64_t GetNanosecondTicks()
     inited = true;
   }
 
-  uint64_t tick = mach_absolute_time();
-  return (tick * timebase.numer) / timebase.denom;
+  // scale by timebase.numer / timebase.denom which results in nano-seconds
+  return muldiv(mach_absolute_time(), timebase.numer, timebase.denom);
 #else
   struct timespec timespec;
 
