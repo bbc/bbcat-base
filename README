@@ -84,6 +84,15 @@ NOTE: JSON support is currently disabled
 --------------------------------------------------------------------------------
 Building on Windows (Visual Studio)
 
+Download and install CMake (https://cmake.org/download/) *first*
+Download and install git (https://git-scm.com/download/win)
+
+Use git-bash to change to the directory where the libraries are to be cloned to
+
+Clone source code, if necessary:
+git clone git@github.com:bbcrd/bbcat-base.git
+
+cd bbcat-base
 mkdir build
 cd build
 cmake -G "Visual Studio 14 2015 Win64" .. && cmake --build . --target INSTALL --config Release
