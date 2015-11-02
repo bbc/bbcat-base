@@ -8,12 +8,9 @@ libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_LDFLAGS =	\
     $(BBCAT_BASE_LDFLAGS)
 
 libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_LIBADD =	\
-	$(BBCAT_GLOBAL_LIBS)							\
-	$(PTHREAD_LIBS)									\
-	$(RT_LIBS)
+	$(PTHREAD_LIBS)
 
 libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_CPPFLAGS =	\
-	$(BBCAT_GLOBAL_CFLAGS)							\
 	$(BBCAT_BASE_CFLAGS)							\
 	$(PTHREAD_CFLAGS)
 
