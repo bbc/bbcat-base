@@ -398,11 +398,15 @@ extern double dBToGain(double db);
 /*--------------------------------------------------------------------------------*/
 extern double GainTodB(double gain);
 
-#ifdef COMPILER_MSVC
-// MSDev using %I64d etc
+#if defined(COMPILER_MSVC)
+// MSDev using %I64d etc for 64-bit
 #define PRINTF_64BIT "I64"
-#else
+#elif defined(__APPLE__) || !defined(__x86_64__)
+// 64-bit type is long long in Apple compilers and 32-bit Linux compilers
 #define PRINTF_64BIT "ll"
+#else
+// 64-bit is long in 64-bit Linux
+#define PRINTF_64BIT "l"
 #endif
 
 /*--------------------------------------------------------------------------------*/
@@ -426,8 +430,8 @@ extern std::string StringFrom(sint_t val, const char *fmt = "%d");
 extern std::string StringFrom(uint_t val, const char *fmt = "%u");
 extern std::string StringFrom(slong_t val, const char *fmt = "%ld");
 extern std::string StringFrom(ulong_t val, const char *fmt = "%lu");
-extern std::string StringFrom(sllong_t val, const char *fmt = "%" PRINTF_64BIT "d");
-extern std::string StringFrom(ullong_t val, const char *fmt = "%" PRINTF_64BIT "u");
+extern std::string StringFrom(sllong_t val, const char *fmt = "%lld");
+extern std::string StringFrom(ullong_t val, const char *fmt = "%llu");
 extern std::string StringFrom(double val, const char *fmt = DoubleFormatHuman);
 extern std::string StringFrom(const void *val);
 extern std::string StringFrom(const std::string& val); 

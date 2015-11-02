@@ -823,7 +823,7 @@ std::string StringFrom(double val, const char *fmt)
 std::string StringFrom(const void *val)
 {
   std::string str;
-  Printf(str, "$016" PRINTF_64BIT "x", (uint64_t)val);
+  Printf(str, "$016llx", (uint64_t)val);
   return str;
 }
 
