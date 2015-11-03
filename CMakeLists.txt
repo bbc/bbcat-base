@@ -29,9 +29,17 @@ endif()
 find_package(Threads REQUIRED)
 include_directories(${THREADS_PTHREADS_INCLUDE_DIR})
 
+# set include directories for storing in .cmake file
 set(GLOBAL_INCLUDE_DIRS
 	${THREADS_PTHREADS_INCLUDE_DIR}
 	${INSTALL_INCLUDE_DIR})
+
+# set library directories for storing in .cmake file
+set(GLOBAL_LIB_DIRS
+	${INSTALL_LIB_DIR})
+
+# set library directories for linking
+link_directories(${GLOBAL_LIB_DIRS})
 
 # JSON support is currently disabled
 set(GLOBAL_FLAGS
