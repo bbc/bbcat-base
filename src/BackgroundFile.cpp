@@ -14,7 +14,7 @@
 #include "Windows_uSleep.h"
 #endif
 
-#define DEBUG_LEVEL 2
+#define BBCDEBUG_LEVEL 2
 #include "BackgroundFile.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -68,7 +68,7 @@ void BackgroundFile::WriteBlock()
   BLOCK *block = (BLOCK *)first;
 
   size_t res = EnhancedFile::fwrite(block->data, block->size, block->count);
-  if (res == 0) ERROR("Failed to write %lu * %lu bytes to file in background: %s", (ulong_t)block->size, (ulong_t)block->count, strerror(ferror()));
+  if (res == 0) BBCERROR("Failed to write %lu * %lu bytes to file in background: %s", (ulong_t)block->size, (ulong_t)block->count, strerror(ferror()));
 
   first = first->next;
   free(block);
@@ -82,7 +82,7 @@ void BackgroundFile::FlushToDisk()
 {
   if (thread.IsRunning() || first)
   {
-    DEBUG2(("Flushing queued blocks to disk"));
+    BBCDEBUG2(("Flushing queued blocks to disk"));
 
     // tell thread to quit
     thread.Stop();
@@ -95,7 +95,7 @@ void BackgroundFile::FlushToDisk()
 
     first = last = NULL;
 
-    DEBUG2(("Flushed all queued blocks to disk"));
+    BBCDEBUG2(("Flushed all queued blocks to disk"));
   }
 }
 
@@ -163,11 +163,11 @@ size_t BackgroundFile::fwrite(const void *ptr, size_t size, size_t count)
       {
         if (thread.Start(&__ThreadStart, (void *)this))
         {
-          DEBUG2(("Created thread for background file writing"));
+          BBCDEBUG2(("Created thread for background file writing"));
         }
         else
 		{
-          ERROR("Failed to create thread (%s)", strerror(errno));
+          BBCERROR("Failed to create thread (%s)", strerror(errno));
 		}
       }
 

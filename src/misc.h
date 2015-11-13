@@ -12,8 +12,6 @@
 #ifdef TARGET_OS_WINDOWS
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #include "windows.h"
-// windows.h unfortuantely defines ERROR so undef it now
-#undef ERROR
 #endif
 
 #if ENABLE_JSON
@@ -129,87 +127,87 @@ extern const std::string& GetErrorLoggingFile();
 extern void debug_msg(const char *fmt, ...) PRINTF_FORMAT;
 extern void debug_err(const char *fmt, ...) PRINTF_FORMAT;
 
-#define ERROR debug_err
-#define DEBUG debug_msg
+#define BBCERROR debug_err
+#define BBCDEBUG debug_msg
 
 /*--------------------------------------------------------------------------------*/
 /** Debug output control
  *
- * Before including any include files from bbcat-*, #define DEBUG_LEVEL to a value
+ * Before including any include files from bbcat-*, #define BBCDEBUG_LEVEL to a value
  *
  * The value dictates which debug informatin (in that file) is output:
- * DEBUG_LEVEL  Debug output
- * 0            ERROR() and DEBUG() ONLY
- * 1            As above plus DEBUG1(())
- * 2            As above plus DEBUG2(())
- * 3            As above plus DEBUG3(())
- * 4            As above plus DEBUG4(())
- * 5            As above plus DEBUG5(())
+ * BBCDEBUG_LEVEL  Debug output
+ * 0            BBCERROR() and BBCDEBUG() ONLY
+ * 1            As above plus BBCDEBUG1(())
+ * 2            As above plus BBCDEBUG2(())
+ * 3            As above plus BBCDEBUG3(())
+ * 4            As above plus BBCDEBUG4(())
+ * 5            As above plus BBCDEBUG5(())
  *
  * Note: the double-parentheses are required because they allow debug lines that are
  *       NOT going to be outputted to be converted to (void)0 statements (unlike
  *       lower level controls which will evaluate the entrie string and arguments
  *       and then throw it away)
  *
- * If DEBUG_LEVEL is not defined, it is set to 0
+ * If BBCDEBUG_LEVEL is not defined, it is set to 0
  */
 /*--------------------------------------------------------------------------------*/
-#ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL 0
+#ifndef BBCDEBUG_LEVEL
+#define BBCDEBUG_LEVEL 0
 #endif
 
-#if DEBUG_LEVEL >= 1
-#define DEBUG1(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 1
+#define BBCDEBUG1(x) debug_msg x
 #else
-#define DEBUG1(x) (void)0
+#define BBCDEBUG1(x) (void)0
 #endif
 
-#if DEBUG_LEVEL >= 2
-#define DEBUG2(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 2
+#define BBCDEBUG2(x) debug_msg x
 #else
-#define DEBUG2(x) (void)0
+#define BBCDEBUG2(x) (void)0
 #endif
 
-#if DEBUG_LEVEL >= 3
-#define DEBUG3(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 3
+#define BBCDEBUG3(x) debug_msg x
 #else
-#define DEBUG3(x) (void)0
+#define BBCDEBUG3(x) (void)0
 #endif
 
-#if DEBUG_LEVEL >= 4
-#define DEBUG4(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 4
+#define BBCDEBUG4(x) debug_msg x
 #else
-#define DEBUG4(x) (void)0
+#define BBCDEBUG4(x) (void)0
 #endif
 
-#if DEBUG_LEVEL >= 5
-#define DEBUG5(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 5
+#define BBCDEBUG5(x) debug_msg x
 #else
-#define DEBUG5(x) (void)0
+#define BBCDEBUG5(x) (void)0
 #endif
 
-#if DEBUG_LEVEL >= 6
-#define DEBUG6(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 6
+#define BBCDEBUG6(x) debug_msg x
 #else
-#define DEBUG6(x) (void)0
+#define BBCDEBUG6(x) (void)0
 #endif
 
-#if DEBUG_LEVEL >= 7
-#define DEBUG7(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 7
+#define BBCDEBUG7(x) debug_msg x
 #else
-#define DEBUG7(x) (void)0
+#define BBCDEBUG7(x) (void)0
 #endif
 
-#if DEBUG_LEVEL >= 8
-#define DEBUG8(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 8
+#define BBCDEBUG8(x) debug_msg x
 #else
-#define DEBUG8(x) (void)0
+#define BBCDEBUG8(x) (void)0
 #endif
 
-#if DEBUG_LEVEL >= 9
-#define DEBUG9(x) debug_msg x
+#if BBCDEBUG_LEVEL >= 9
+#define BBCDEBUG9(x) debug_msg x
 #else
-#define DEBUG9(x) (void)0
+#define BBCDEBUG9(x) (void)0
 #endif
 
 // fundamental audio processing unit - don't change without careful consideration!
@@ -319,10 +317,10 @@ extern void Interpolate(double& current, double target, double coeff, double lim
 /*--------------------------------------------------------------------------------*/
 /** 'cout' like debug stream handling
  * 
- * Basically use local instance of StringStream instead of 'cout' and then wrap entire line in DEBUG() macro
+ * Basically use local instance of StringStream instead of 'cout' and then wrap entire line in BBCDEBUG() macro
  *
  * For example:
- * DEBUG2((StringStream() << "Test " << i << " of " << n << ":" << StringStream::eol));
+ * BBCDEBUG2((StringStream() << "Test " << i << " of " << n << ":" << StringStream::eol));
  *
  */
 /*--------------------------------------------------------------------------------*/

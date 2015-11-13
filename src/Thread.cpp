@@ -4,7 +4,7 @@
 #include <string.h>
 #include <errno.h>
 
-#define DEBUG_LEVEL 1
+#define BBCDEBUG_LEVEL 1
 #include "Thread.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -78,12 +78,12 @@ bool Thread::Start()
     stopthread = abortthread = threadcompleted = false;
     if (pthread_create(&thread, NULL, &__ThreadEntry, (void *)this) == 0)
     {
-      DEBUG2(("Created thread"));
+      BBCDEBUG2(("Created thread"));
       started = true;
     }
     else
     {
-      ERROR("Failed to create thread (%s)", strerror(errno));
+      BBCERROR("Failed to create thread (%s)", strerror(errno));
       memset(&thread, 0, sizeof(thread));
     }
   }

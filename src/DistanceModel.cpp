@@ -1,7 +1,7 @@
 
 #include <math.h>
 
-#define DEBUG_LEVEL 0
+#define BBCDEBUG_LEVEL 0
 #include "DistanceModel.h"
 
 BBC_AUDIOTOOLBOX_START

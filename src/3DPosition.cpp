@@ -429,7 +429,7 @@ Quaternion Quaternion::Normalised() const
 Quaternion Lerp(const Quaternion& q0, const Quaternion& q1, double t)
 {
   if (t < 0.0 || t > 1.0)
-      ERROR("Slerp - t should be between 0 and 1");
+      BBCERROR("Slerp - t should be between 0 and 1");
 
   return (q0 * (1.0 - t) + q1 * t);
 }
@@ -452,7 +452,7 @@ Quaternion Slerp(const Quaternion& q0, const Quaternion& q1, double t)
   double dot   = q0.ScalarProduct(q1);
 
   if (t < 0.0 || t > 1.0)
-    ERROR("Slerp - t should be between 0 and 1");
+    BBCERROR("Slerp - t should be between 0 and 1");
 
   // dot = cos(angle) if(dot<0) this & q are more than 90degrees apart
   // we can negate one (still represents the same rotation) but slerp will take the shorter path
@@ -1141,7 +1141,7 @@ double Angle(const Position& obj1, const Position& obj2)
   double   dot  = DotProduct(pos1, pos2);
   if ((dot < -1.01) || (dot > 1.01))
   {
-    ERROR("Dot product of (%0.3lf, %0.3lf, %0.3lf) and (%0.3lf, %0.3lf, %0.3lf) = %0.6lf",
+    BBCERROR("Dot product of (%0.3lf, %0.3lf, %0.3lf) and (%0.3lf, %0.3lf, %0.3lf) = %0.6lf",
           pos1.pos.x, pos1.pos.y, pos1.pos.z,
           pos2.pos.x, pos2.pos.y, pos2.pos.z,
           dot);
