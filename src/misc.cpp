@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#define DEBUG_LEVEL 1
+#define BBCDEBUG_LEVEL 1
 
 #include "misc.h"
 // explicit use of current directory's ByteSwap.h
@@ -211,7 +211,7 @@ uint64_t muldiv(uint64_t val, uint32_t mul, uint32_t div)
   // save final value
   res[i] = (uint32_t)carry;
 
-  DEBUG2(("Mul-result:%08lx:%08lx:%08lx", (ulong_t)res[2], (ulong_t)res[1], (ulong_t)res[0]));
+  BBCDEBUG2(("Mul-result:%08lx:%08lx:%08lx", (ulong_t)res[2], (ulong_t)res[1], (ulong_t)res[0]));
   
   // now divide by divider
   carry = 0;
@@ -223,7 +223,7 @@ uint64_t muldiv(uint64_t val, uint32_t mul, uint32_t div)
     carry  %= div;                          // save remainder
   }
 
-  DEBUG2(("Div-result:%08lx:%08lx:%08lx", (ulong_t)res[2], (ulong_t)res[1], (ulong_t)res[0]));
+  BBCDEBUG2(("Div-result:%08lx:%08lx:%08lx", (ulong_t)res[2], (ulong_t)res[1], (ulong_t)res[0]));
 
   return res[0] + ((uint64_t)res[1] << 32);
 }

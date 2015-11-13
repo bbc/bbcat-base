@@ -23,7 +23,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define DEBUG_LEVEL 1
+#define BBCDEBUG_LEVEL 1
 #include "UDPSocket.h"
 
 #ifdef TARGET_OS_WINDOWS

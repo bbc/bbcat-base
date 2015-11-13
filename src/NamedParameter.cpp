@@ -1,5 +1,5 @@
 
-#define DEBUG_LEVEL 1
+#define BBCDEBUG_LEVEL 1
 #include "NamedParameter.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -55,13 +55,13 @@ bool FromJSON(const json_spirit::mObject& obj, INamedParameter * const *list, ui
     if ((it = obj.find(parameter->GetName())) != obj.end())
     {
       // if parameter exists, set it
-      DEBUG3(("Member '%s' found in '%s'", parameter->GetName(), json_spirit::write(obj, json_spirit::pretty_print).c_str())); 
+      BBCDEBUG3(("Member '%s' found in '%s'", parameter->GetName(), json_spirit::write(obj, json_spirit::pretty_print).c_str())); 
       success &= parameter->FromJSON(it->second);
     }
     else if (reset)
     {
       // else reset parameter to its default
-      DEBUG2(("Member '%s' *not* found in '%s'", parameter->GetName(), json_spirit::write(obj, json_spirit::pretty_print).c_str())); 
+      BBCDEBUG2(("Member '%s' *not* found in '%s'", parameter->GetName(), json_spirit::write(obj, json_spirit::pretty_print).c_str())); 
       parameter->Reset();
     }
   }

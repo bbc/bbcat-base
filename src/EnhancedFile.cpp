@@ -4,7 +4,7 @@
 #include <string.h>
 #include <errno.h>
 
-#define DEBUG_LEVEL 2
+#define BBCDEBUG_LEVEL 2
 #include "EnhancedFile.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -85,13 +85,13 @@ bool EnhancedFile::fopen(const char *filename, const char *mode)
     }
     else if ((fp = ::fopen(filename, mode)) != NULL)
     {
-      DEBUG2(("Opened '%s' for '%s'", filename, mode));
+      BBCDEBUG2(("Opened '%s' for '%s'", filename, mode));
       this->filename = filename;
       this->mode     = mode;
       allowclose     = true;
       success        = true;
     }
-    else ERROR("Failed to open '%s' for '%s' (%s)", filename, mode, strerror(errno));
+    else BBCERROR("Failed to open '%s' for '%s' (%s)", filename, mode, strerror(errno));
   }
 
   return success;

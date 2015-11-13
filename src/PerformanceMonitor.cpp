@@ -11,7 +11,7 @@
 #include <mach/mach_time.h>
 #endif
 
-#define DEBUG_LEVEL 2
+#define BBCDEBUG_LEVEL 2
 #include "EnhancedFile.h"
 #include "PerformanceMonitor.h"
 
@@ -52,7 +52,7 @@ PerformanceMonitor::~PerformanceMonitor()
   {
     std::string res = GetReportEx();
 
-    DEBUG("%s", res.c_str());
+    BBCDEBUG("%s", res.c_str());
   }
 
   if (generategnuplotfile)
@@ -298,7 +298,7 @@ void PerformanceMonitor::Start(const std::string& id)
       it = timings.find(id);
     }
 
-    DEBUG3(("Creating timing data for '%s'", id.c_str()));
+    BBCDEBUG3(("Creating timing data for '%s'", id.c_str()));
   }
 
   if (it != timings.end())
@@ -349,7 +349,7 @@ void PerformanceMonitor::Start(const std::string& id)
       LogToFile(data.config.fp, t, data, id, true);
     }
   }
-  else ERROR("No timing data for ID '%s'", id.c_str());
+  else BBCERROR("No timing data for ID '%s'", id.c_str());
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -401,7 +401,7 @@ void PerformanceMonitor::Stop(const std::string& id)
       data.index   = 0;
     }
   }
-  else ERROR("No timing data for ID '%s'", id.c_str());
+  else BBCERROR("No timing data for ID '%s'", id.c_str());
 }
 
 BBC_AUDIOTOOLBOX_END

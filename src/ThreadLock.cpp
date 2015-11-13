@@ -3,7 +3,7 @@
 
 #include <errno.h>
 
-#define DEBUG_LEVEL 1
+#define BBCDEBUG_LEVEL 1
 #include "misc.h"
 #include "ThreadLock.h"
 
@@ -19,7 +19,7 @@ ThreadLockObject::ThreadLockObject()
 
   if (pthread_mutex_init(&mutex, &mta) != 0)
   {
-    ERROR("Failed to initialise mutex<%s>: %s", StringFrom(&mutex).c_str(), strerror(errno));
+    BBCERROR("Failed to initialise mutex<%s>: %s", StringFrom(&mutex).c_str(), strerror(errno));
   }
 }
 
@@ -32,7 +32,7 @@ bool ThreadLockObject::Lock()
 {
   bool success = (pthread_mutex_lock(&mutex) == 0);
 
-  if (!success) ERROR("Failed to lock mutex<%s>: %s", StringFrom(&mutex).c_str(), strerror(errno));
+  if (!success) BBCERROR("Failed to lock mutex<%s>: %s", StringFrom(&mutex).c_str(), strerror(errno));
 
   return success;
 }
@@ -41,7 +41,7 @@ bool ThreadLockObject::Unlock()
 {
   bool success = (pthread_mutex_unlock(&mutex) == 0);
 
-  if (!success) ERROR("Failed to unlock mutex<%s>: %s", StringFrom(&mutex).c_str(), strerror(errno));
+  if (!success) BBCERROR("Failed to unlock mutex<%s>: %s", StringFrom(&mutex).c_str(), strerror(errno));
 
   return success;
 }
@@ -52,7 +52,7 @@ ThreadSignalObject::ThreadSignalObject() : ThreadLockObject()
 {
   if (pthread_cond_init(&cond, NULL) != 0)
   {
-    ERROR("Failed to initialise cond<%s>: %s", StringFrom(&cond).c_str(), strerror(errno));
+    BBCERROR("Failed to initialise cond<%s>: %s", StringFrom(&cond).c_str(), strerror(errno));
   }
 }
 
@@ -66,7 +66,7 @@ bool ThreadSignalObject::Wait()
   // NOTE: mutex MUST be LOCKED at this point
   bool success = (pthread_cond_wait(&cond, &mutex) == 0);
 
-  if (!success) ERROR("Failed to wait on cond<%s>: %s", StringFrom(&cond).c_str(), strerror(errno));
+  if (!success) BBCERROR("Failed to wait on cond<%s>: %s", StringFrom(&cond).c_str(), strerror(errno));
 
   return success;
 }
@@ -76,7 +76,7 @@ bool ThreadSignalObject::Signal()
   ThreadLock lock(*this);
   bool success = (pthread_cond_signal(&cond) == 0);
 
-  if (!success) ERROR("Failed to signal cond<%s>: %s", StringFrom(&cond).c_str(), strerror(errno));
+  if (!success) BBCERROR("Failed to signal cond<%s>: %s", StringFrom(&cond).c_str(), strerror(errno));
 
   return success;
 }
@@ -86,7 +86,7 @@ bool ThreadSignalObject::Broadcast()
   ThreadLock lock(*this);
   bool success = (pthread_cond_broadcast(&cond) == 0);
 
-  if (!success) ERROR("Failed to broadcast to cond<%s>: %s", StringFrom(&cond).c_str(), strerror(errno));
+  if (!success) BBCERROR("Failed to broadcast to cond<%s>: %s", StringFrom(&cond).c_str(), strerror(errno));
 
   return success;
 }

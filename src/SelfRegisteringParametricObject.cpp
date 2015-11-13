@@ -1,7 +1,7 @@
 
 #include <string.h>
 
-#define DEBUG_LEVEL 1
+#define BBCDEBUG_LEVEL 1
 #include "SelfRegisteringParametricObject.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -91,7 +91,7 @@ int SelfRegisteringParametricObjectContainer::Create(const std::string& name, co
     if (!obj->IsObjectValid())
     {
       // object construction failed for some reason
-      ERROR("Failed to create object '%s' correctly", name.c_str());
+      BBCERROR("Failed to create object '%s' correctly", name.c_str());
 
       // ONLY delete object if it is not a singleton
       if (!obj->IsSingleton()) delete obj;
@@ -102,12 +102,12 @@ int SelfRegisteringParametricObjectContainer::Create(const std::string& name, co
       // object was created, find out what type it is
       if ((index = Register(obj, parameters)) < 0)
       {
-        ERROR("Unknown type '%s' (unable to register with container)", name.c_str());
+        BBCERROR("Unknown type '%s' (unable to register with container)", name.c_str());
         delete obj;
       }
     }
   }
-  else ERROR("Unknown type '%s' (cannot create)", name.c_str());
+  else BBCERROR("Unknown type '%s' (cannot create)", name.c_str());
 
   return index;
 }

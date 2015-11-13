@@ -1,4 +1,4 @@
-#define DEBUG_LEVEL 1
+#define BBCDEBUG_LEVEL 1
 #include "ObjectRegistry.h"
 
 BBC_AUDIOTOOLBOX_START

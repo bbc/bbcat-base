@@ -1,5 +1,5 @@
 
-#define DEBUG_LEVEL 1
+#define BBCDEBUG_LEVEL 1
 #include "LoadedVersions.h"
 
 BBC_AUDIOTOOLBOX_START

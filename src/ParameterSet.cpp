@@ -4,7 +4,7 @@
 
 #include <map>
 
-#define DEBUG_LEVEL 0
+#define BBCDEBUG_LEVEL 0
 #include "ParameterSet.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -469,7 +469,7 @@ bool ParameterSet::FindCombination(const std::vector<std::string>& strings, std:
 
     if (Get(strings[i], res))
     {
-      DEBUG2(("Found '%s' in {%s}: %s", strings[i], ToString().c_str(), res.c_str())); 
+      BBCDEBUG2(("Found '%s' in {%s}: %s", strings[i], ToString().c_str(), res.c_str())); 
       found = true;
     }
     else if (Get(strings[i], subvars))
