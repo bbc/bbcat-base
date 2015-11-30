@@ -746,6 +746,15 @@ bool Evaluate(const std::string& str, ullong_t& val)
   return (sscanf(str.c_str(), "%llu", &val) > 0);
 }
 
+bool Evaluate(const std::string& str, float& val)
+{
+  // evaluate as double and convert
+  double dval;
+  bool   success = Evaluate(str, dval);
+  if (success) val = (float)dval;
+  return success;
+}
+
 bool Evaluate(const std::string& str, double& val)
 {
   // this will FAIL to compile as 32-bit code
@@ -809,6 +818,12 @@ std::string StringFrom(ullong_t val, const char *fmt)
   std::string str;
   Printf(str, fmt, val);
   return str;
+}
+
+std::string StringFrom(float val, const char *fmt)
+{
+  // use double version
+  return StringFrom((double)val, fmt);
 }
 
 std::string StringFrom(double val, const char *fmt)
@@ -904,6 +919,14 @@ bool FromJSON(const json_spirit::mValue& _val, sint64_t& val)
   return success;
 }
 
+bool FromJSON(const json_spirit::mValue& _val, float& val)
+{
+  double dval;
+  bool success = FromJSON(_val, dval);
+  if (success) val = (float)dval;
+  return success;
+}
+
 bool FromJSON(const json_spirit::mValue& _val, double& val)
 {
   bool success = false;
@@ -938,6 +961,11 @@ json_spirit::mValue ToJSON(const sint_t& val)
 }
 
 json_spirit::mValue ToJSON(const sint64_t& val)
+{
+  return json_spirit::mValue(val);
+}
+
+json_spirit::mValue ToJSON(const float& val)
 {
   return json_spirit::mValue(val);
 }
