@@ -31,7 +31,7 @@
 #define NUMBEROF(x) (sizeof(x) / sizeof(x[0]))
 #endif
 #ifndef RANGE
-#define RANGE(a, b, c) (((a) >= (b)) && ((b) <= (c)))
+#define RANGE(a, b, c) (((a) >= (b)) && ((a) <= (c)))
 #endif
 
 #ifndef M_PI
