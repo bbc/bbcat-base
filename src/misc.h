@@ -35,7 +35,11 @@
 #endif
 
 #ifndef M_PI
-#define M_PI 3.141592653589793238462643383279502884
+#define M_PI        3.14159265358979323846264338327950288   /* pi             */
+#endif
+
+#ifndef M_LN2
+#define M_LN2       0.693147180559945309417232121458176568  /* loge(2)        */
 #endif
 
 #define IFFID(name) (((uint32_t)name[0] << 24) | ((uint32_t)name[1] << 16) | ((uint32_t)name[2] << 8) | (uint32_t)name[3])
@@ -60,14 +64,16 @@ typedef unsigned long long ullong_t;
 #include "Windows_uSleep.h"
 #endif
 
-#ifdef GCC_BUILD
+#ifdef COMPILER_GCC
 #define PACKEDSTRUCT   struct __attribute__ ((packed))
 #define PRINTF_FORMAT  __attribute__ ((format (printf,1,2)))
 #define PRINTF_FORMAT2 __attribute__ ((format (printf,2,3)))
+#define MEMALIGNED(x, decl)  decl __attribute__ ((aligned (x)))
 #else
 #define PACKEDSTRUCT   struct
 #define PRINTF_FORMAT
 #define PRINTF_FORMAT2
+#define MEMALIGNED(x, decl)  __declspec(align(x)) decl
 #endif
 
 BBC_AUDIOTOOLBOX_START
@@ -396,45 +402,50 @@ extern double dBToGain(double db);
 /*--------------------------------------------------------------------------------*/
 extern double GainTodB(double gain);
 
-#if defined(COMPILER_MSVC)
-// MSDev using %I64d etc for 64-bit
-#define PRINTF_64BIT "I64"
-#elif defined(__APPLE__) || !defined(__x86_64__)
-// 64-bit type is long long in Apple compilers and 32-bit Linux compilers
-#define PRINTF_64BIT "ll"
-#else
-// 64-bit is long in 64-bit Linux
-#define PRINTF_64BIT "l"
-#endif
-
 /*--------------------------------------------------------------------------------*/
 /** Attempt to evaluate values from strings
+ *
+ * If the string starts with '$' or hex is true, the value is evaluted as hex
  */
 /*--------------------------------------------------------------------------------*/
 extern bool Evaluate(const std::string& str, bool& val);
-extern bool Evaluate(const std::string& str, sint_t& val);
-extern bool Evaluate(const std::string& str, uint_t& val);
-extern bool Evaluate(const std::string& str, slong_t& val);
-extern bool Evaluate(const std::string& str, ulong_t& val);
-extern bool Evaluate(const std::string& str, sllong_t& val);
-extern bool Evaluate(const std::string& str, ullong_t& val);
+extern bool Evaluate(const std::string& str, sint_t& val, bool hex = false);
+extern bool Evaluate(const std::string& str, uint_t& val, bool hex = false);
+extern bool Evaluate(const std::string& str, slong_t& val, bool hex = false);
+extern bool Evaluate(const std::string& str, ulong_t& val, bool hex = false);
+extern bool Evaluate(const std::string& str, sllong_t& val, bool hex = false);
+extern bool Evaluate(const std::string& str, ullong_t& val, bool hex = false);
 extern bool Evaluate(const std::string& str, float& val);
 extern bool Evaluate(const std::string& str, double& val);
 extern bool Evaluate(const std::string& str, std::string& val);
 
-extern const char *DoubleFormatHuman;         // format as human-readable, scientific format with 32 decimal places
-extern const char *DoubleFormatExact;         // format as hex-encoded double (exact)
+/*--------------------------------------------------------------------------------*/
+/** Convert various types to strings
+ *
+ * @param fmt format specifier (WITHOUT 'l's) and optionally without types
+ *
+ * @note example value fmt values:
+ *  "" default display ('d', 'u' or 'f'), no field formatting
+ *  "x" hex display 
+ *  "016x" hex display with field size of 16, '0' padded 
+ *  "0.32" default display ('f') with field size of 32
+ *
+ * Essentially:
+ *  if no type specifier is specified, a default type based on the supplied variable type is appended
+ *  the correct number of 'l's are inserted before the type specifier for the supplied variable type
+ */
+/*--------------------------------------------------------------------------------*/
 extern std::string StringFrom(bool val);
-extern std::string StringFrom(sint_t val, const char *fmt = "%d");
-extern std::string StringFrom(uint_t val, const char *fmt = "%u");
-extern std::string StringFrom(slong_t val, const char *fmt = "%ld");
-extern std::string StringFrom(ulong_t val, const char *fmt = "%lu");
-extern std::string StringFrom(sllong_t val, const char *fmt = "%lld");
-extern std::string StringFrom(ullong_t val, const char *fmt = "%llu");
-extern std::string StringFrom(float val, const char *fmt = DoubleFormatHuman);
-extern std::string StringFrom(double val, const char *fmt = DoubleFormatHuman);
-extern std::string StringFrom(const void *val);
+extern std::string StringFrom(sint_t val, const char *fmt = "");
+extern std::string StringFrom(uint_t val, const char *fmt = "");
+extern std::string StringFrom(slong_t val, const char *fmt = "");
+extern std::string StringFrom(ulong_t val, const char *fmt = "");
+extern std::string StringFrom(sllong_t val, const char *fmt = "");
+extern std::string StringFrom(ullong_t val, const char *fmt = "");
+extern std::string StringFrom(float val, const char *fmt = "0.32");
+extern std::string StringFrom(double val, const char *fmt = "0.32");
 extern std::string StringFrom(const std::string& val); 
+extern std::string StringFrom(const void *val); 
 
 /*--------------------------------------------------------------------------------*/
 /** Bog-standard string search and replace that *should* be in std::string!
@@ -458,13 +469,17 @@ extern bool matchstring(const char *pat, const char *str);
 #if ENABLE_JSON
 extern bool                FromJSON(const json_spirit::mValue& _val, bool& val);
 extern bool                FromJSON(const json_spirit::mValue& _val, sint_t& val);
+extern bool                FromJSON(const json_spirit::mValue& _val, uint_t& val);
 extern bool                FromJSON(const json_spirit::mValue& _val, sint64_t& val);
+extern bool                FromJSON(const json_spirit::mValue& _val, uint64_t& val);
 extern bool                FromJSON(const json_spirit::mValue& _val, float& val);
 extern bool                FromJSON(const json_spirit::mValue& _val, double& val);
 extern bool                FromJSON(const json_spirit::mValue& _val, std::string& val);
 extern json_spirit::mValue ToJSON(const bool& val);
 extern json_spirit::mValue ToJSON(const sint_t& val);
+extern json_spirit::mValue ToJSON(const uint_t& val);
 extern json_spirit::mValue ToJSON(const sint64_t& val);
+extern json_spirit::mValue ToJSON(const uint64_t& val);
 extern json_spirit::mValue ToJSON(const float& val);
 extern json_spirit::mValue ToJSON(const double& val);
 extern json_spirit::mValue ToJSON(const std::string& val);

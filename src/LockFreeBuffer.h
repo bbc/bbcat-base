@@ -15,6 +15,15 @@ BBC_AUDIOTOOLBOX_START
  *
  * To read:
  * Call GetReadBuffer(), if it returns non-NULL, read from the buffer and then call IncrementRead()
+ *
+ * GetReadBuffersAvailable() always returns number of buffers that can be read
+ * Read-ahead allows valid read buffers beyond the next one to be accessed, using GetReadBuffer(<x>)
+ *
+ * GetWriteBuffersAvailable() always returns number of buffers that can be written to
+ * Write-ahead allows buffers to be written (but not committed) using GetWriteBuffer(<x>)
+ *
+ * Notes:
+ *  1. to detect empty/full, *one* of the slots is unavailable (to detect the difference between empty and full)
  */
 /*--------------------------------------------------------------------------------*/
 template<typename T>
@@ -47,44 +56,70 @@ public:
   /*--------------------------------------------------------------------------------*/
   /** Return ptr to item at write position
    *
+   * @param offset write-ahead buffer requested (i.e. write buffers beyond the current write buffer)
+   *
    * @return ptr to data to write to or NULL if no free items available
    *
    * @note this function deliberately prevents the last item before the read item
    * from being used
    */
   /*--------------------------------------------------------------------------------*/
-  T *GetWriteBuffer() {return WriteBufferAvailable() ? &buffer[wr] : NULL;}
+  T *GetWriteBuffer(uint_t offset = 0) {return (offset < WriteBuffersAvailable()) ? &buffer[(wr + offset) % buffer.size()] : NULL;}
+  
+  /*--------------------------------------------------------------------------------*/
+  /** Return number of write buffers available
+   * 
+   * @note number of write buffers = rd - wr - 1 but each subtraction requires addition of buffer size to prevent underflow
+   */
+  /*--------------------------------------------------------------------------------*/
+  uint_t WriteBuffersAvailable() const {return ((rd + 2 * buffer.size() - wr - 1) % buffer.size());}
 
   /*--------------------------------------------------------------------------------*/
-  /** Increment the write pointer (after writing data)
+  /** Increment the write pointer (after writing data, essentially committing buffers)
+   *
+   * @param n number of buffers to commit
    *
    * @return true if pointer increments, false if it is not possible
    */
   /*--------------------------------------------------------------------------------*/
-  bool IncrementWrite()
+  bool IncrementWrite(uint_t n = 1)
   {
-    if (WriteBufferAvailable()) {wr = (wr + 1) % buffer.size(); return true;}
+    uint_t avail = WriteBuffersAvailable();
+    if ((n = MIN(n, avail)) > 0) {wr = (wr + n) % buffer.size(); return true;}
     return false;
   }
 
   /*--------------------------------------------------------------------------------*/
+  /** Return how many occupied read buffers are available
+   * 
+   * @note number of read buffers = wr - rd but the subtraction requires addition of buffer size to prevent underflow
+   */
+  /*--------------------------------------------------------------------------------*/
+  uint_t ReadBuffersAvailable() const {return ((wr + buffer.size() - rd) % buffer.size());}
+
+  /*--------------------------------------------------------------------------------*/
   /** Return ptr to item at read position
+   *
+   * @param offset offset from current read pointer to get buffer for
    *
    * @return ptr to data to read from or NULL if no items available
    */
   /*--------------------------------------------------------------------------------*/
-  const T *GetReadBuffer() const {return ReadBufferAvailable() ? &buffer[rd] : NULL;}
-  T       *GetReadBuffer()       {return ReadBufferAvailable() ? &buffer[rd] : NULL;}
+  const T *GetReadBuffer(uint_t offset = 0) const {return (offset < ReadBuffersAvailable()) ? &buffer[(rd + offset) % buffer.size()] : NULL;}
+  T       *GetReadBuffer(uint_t offset = 0)       {return (offset < ReadBuffersAvailable()) ? &buffer[(rd + offset) % buffer.size()] : NULL;}
 
   /*--------------------------------------------------------------------------------*/
   /** Increment the read pointer (after reading data)
    *
+   * @param n number of slots to increment read pointer by
+   *
    * @return true if pointer increments, false if it is not possible
    */
   /*--------------------------------------------------------------------------------*/
-  bool IncrementRead()
+  bool IncrementRead(uint_t n = 1)
   {
-    if (ReadBufferAvailable()) {rd = (rd + 1) % buffer.size(); return true;}
+    uint_t avail = ReadBuffersAvailable();
+    if ((n = MIN(n, avail)) > 0) {rd = (rd + n) % buffer.size(); return true;}
     return false;
   }
 
@@ -93,19 +128,6 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   void Reset() {rd = wr;}
-
-protected:
-  /*--------------------------------------------------------------------------------*/
-  /** Return whether a free write buffer is available
-   */
-  /*--------------------------------------------------------------------------------*/
-  bool WriteBufferAvailable() const {return (((wr + 1) % buffer.size()) != rd);}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Return whether a read buffer is available
-   */
-  /*--------------------------------------------------------------------------------*/
-  bool ReadBufferAvailable()  const {return (wr != rd);}
 
 protected:
   std::vector<T> buffer;

@@ -184,54 +184,6 @@ bool ParameterSet::Get(const std::string& name, std::string& val) const
   return (it != values.end());
 }
 
-bool ParameterSet::Get(const std::string& name, bool& val) const
-{
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && Evaluate(it->second.c_str(), val));
-}
-
-bool ParameterSet::Get(const std::string& name, sint_t& val) const
-{
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && Evaluate(it->second, val));
-}
-
-bool ParameterSet::Get(const std::string& name, uint_t& val) const
-{
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && Evaluate(it->second, val));
-}
-
-bool ParameterSet::Get(const std::string& name, slong_t& val) const
-{
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && Evaluate(it->second, val));
-}
-
-bool ParameterSet::Get(const std::string& name, ulong_t& val) const
-{
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && Evaluate(it->second, val));
-}
-
-bool ParameterSet::Get(const std::string& name, sllong_t& val) const
-{
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && Evaluate(it->second, val));
-}
-
-bool ParameterSet::Get(const std::string& name, ullong_t& val) const
-{
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && Evaluate(it->second, val));
-}
-
-bool ParameterSet::Get(const std::string& name, double& val) const
-{
-  const std::map<std::string,std::string>::const_iterator it = values.find(name);
-  return ((it != values.end()) && Evaluate(it->second, val));
-}
-
 /*--------------------------------------------------------------------------------*/
 /** Delete a parameter
  */
@@ -259,18 +211,45 @@ std::string ParameterSet::Raw(const std::string& name, const std::string& defval
   return (it != values.end()) ? it->second : defval; 
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Split full parameter name into prefix and suffix
+ */
+/*--------------------------------------------------------------------------------*/
+bool ParameterSet::SplitSubParameter(const std::string& name, std::string& prefix, std::string& suffix)
+{
+  size_t p;
+
+  if ((p = name.find(".")) < std::string::npos)
+  {
+    prefix = name.substr(0, p);
+    suffix = name.substr(p + 1);
+    return true;
+  }
+
+  return false;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Return sub-parameters prefixed by 'prefix.'
+ */
+/*--------------------------------------------------------------------------------*/
 bool ParameterSet::GetSubParameters(ParameterSet& parameters, const std::string& prefix) const
 {
   std::string _prefix = prefix + ".";
   Iterator it;
+  bool found = false;
 
   for (it = GetBegin(); it != GetEnd(); ++it)
   {
-    // if the name starts with 'vbap.' create a corresponding parameters in vbapparameters
-    if (it->first.find(_prefix) == 0) parameters.Set(it->first.substr(_prefix.length()), it->second);
+    // e.g. if the name starts with 'vbap.' create a corresponding parameters in parameters
+    if (it->first.find(_prefix) == 0)
+    {
+      parameters.Set(it->first.substr(_prefix.length()), it->second);
+      found = true;
+    }
   }
 
-  return !parameters.IsEmpty();
+  return found;
 }
 
 ParameterSet ParameterSet::GetSubParameters(const std::string& prefix) const
@@ -469,7 +448,7 @@ bool ParameterSet::FindCombination(const std::vector<std::string>& strings, std:
 
     if (Get(strings[i], res))
     {
-      BBCDEBUG2(("Found '%s' in {%s}: %s", strings[i], ToString().c_str(), res.c_str())); 
+      BBCDEBUG2(("Found '%s' in {%s}: %s", strings[i].c_str(), ToString().c_str(), res.c_str())); 
       found = true;
     }
     else if (Get(strings[i], subvars))

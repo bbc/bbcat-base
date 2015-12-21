@@ -30,9 +30,6 @@ static void         *debughandler_context = NULL;
 static DEBUGHANDLER errorhandler = NULL;
 static void         *errorhandler_context = NULL;
 
-const char *DoubleFormatHuman = "%0.32le";
-const char *DoubleFormatExact = "#%016lx";
-
 /*--------------------------------------------------------------------------------*/
 /** Set debug handler (replacing printf())
  *
@@ -716,34 +713,40 @@ bool Evaluate(const std::string& str, bool& val)
   return success;
 }
 
-bool Evaluate(const std::string& str, sint_t& val)
+bool Evaluate(const std::string& str, sint_t& val, bool hex)
 {
-  return (sscanf(str.c_str(), "%d", &val) > 0);
+  uint_t hexoffset = ((str[0] == '$') || (str[0] == '#'));
+  return (sscanf(str.c_str() + hexoffset, (hexoffset || hex) ? "%x" : "%d", &val) > 0);
 }
 
-bool Evaluate(const std::string& str, uint_t& val)
+bool Evaluate(const std::string& str, uint_t& val, bool hex)
 {
-  return (sscanf(str.c_str(), "%u", &val) > 0);
+  uint_t hexoffset = ((str[0] == '$') || (str[0] == '#'));
+  return (sscanf(str.c_str() + hexoffset, (hexoffset || hex) ? "%x" : "%d", &val) > 0);
 }
 
-bool Evaluate(const std::string& str, slong_t& val)
+bool Evaluate(const std::string& str, slong_t& val, bool hex)
 {
-  return (sscanf(str.c_str(), "%ld", &val) > 0);
+  uint_t hexoffset = ((str[0] == '$') || (str[0] == '#'));
+  return (sscanf(str.c_str() + hexoffset, (hexoffset || hex) ? "%lx" : "%ld", &val) > 0);
 }
 
-bool Evaluate(const std::string& str, ulong_t& val)
+bool Evaluate(const std::string& str, ulong_t& val, bool hex)
 {
-  return (sscanf(str.c_str(), "%lu", &val) > 0);
+  uint_t hexoffset = ((str[0] == '$') || (str[0] == '#'));
+  return (sscanf(str.c_str() + hexoffset, (hexoffset || hex) ? "%lx" : "%lu", &val) > 0);
 }
 
-bool Evaluate(const std::string& str, sllong_t& val)
+bool Evaluate(const std::string& str, sllong_t& val, bool hex)
 {
-  return (sscanf(str.c_str(), "%lld", &val) > 0);
+  uint_t hexoffset = ((str[0] == '$') || (str[0] == '#'));
+  return (sscanf(str.c_str() + hexoffset, (hexoffset || hex) ? "%llx" : "%lld", &val) > 0);
 }
 
-bool Evaluate(const std::string& str, ullong_t& val)
+bool Evaluate(const std::string& str, ullong_t& val, bool hex)
 {
-  return (sscanf(str.c_str(), "%llu", &val) > 0);
+  uint_t hexoffset = ((str[0] == '$') || (str[0] == '#'));
+  return (sscanf(str.c_str() + hexoffset, (hexoffset || hex) ? "%llx" : "%llu", &val) > 0);
 }
 
 bool Evaluate(const std::string& str, float& val)
@@ -757,12 +760,10 @@ bool Evaluate(const std::string& str, float& val)
 
 bool Evaluate(const std::string& str, double& val)
 {
-  // this will FAIL to compile as 32-bit code
-
   // values starting with a '#' are a 64-bit hex representation of the double value
   // otherwise try to scan the string as a double
-  return (((str[0] == '#') && (sscanf(str.c_str() + 1, "%lx", (ulong_t *)&val) > 0)) ||
-          ((str[0] != '#') && (sscanf(str.c_str(),     "%lf", &val) > 0)));
+  if (str[0] == '#') return Evaluate(str, *(uint64_t *)&val);
+  else               return (sscanf(str.c_str(), "%lf", &val) > 0);
 }
 
 bool Evaluate(const std::string& str, std::string& val)
@@ -771,6 +772,44 @@ bool Evaluate(const std::string& str, std::string& val)
   return true;
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Generate full format string from supplied format string
+ *
+ * Essentially:
+ *  if no type specifier is specified, a default type based on the supplied variable type is appended
+ *  the correct number of 'l's are inserted before the type specifier for the supplied variable type
+ */
+/*--------------------------------------------------------------------------------*/
+std::string GetFormat(const char *_fmt, const char *insert, const char *defsuffix)
+{
+  std::string fmt = std::string("%") + _fmt;
+  char c = fmt[fmt.size() - 1]; // string will be at least one char long is this is safe
+  if (!_fmt[0] || !(RANGE(c, 'a', 'z') || RANGE(c, 'A', 'Z')))
+  {
+    if (insert[0]) fmt += insert;
+    fmt += defsuffix;
+  }
+  else if (insert[0]) fmt = fmt.substr(0, fmt.size() - 1) + insert + fmt.substr(fmt.size() - 1);
+  BBCDEBUG9(("GetFormat('%s', '%s', '%s') = '%s'", _fmt, insert, defsuffix, fmt.c_str()));
+  return fmt;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Convert various types to strings
+ *
+ * @param fmt format specifier (WITHOUT 'l's) and optionally without types
+ *
+ * @note example value fmt values:
+ *  "" default display ('d', 'u' or 'f'), no field formatting
+ *  "x" hex display 
+ *  "016x" hex display with field size of 16, '0' padded 
+ *  "0.32" default display ('f') with field size of 32
+ *
+ * Essentially:
+ *  if no type specifier is specified, a default type based on the supplied variable type is appended
+ *  the correct number of 'l's are inserted before the type specifier for the supplied variable type
+ */
+/*--------------------------------------------------------------------------------*/
 std::string StringFrom(bool val)
 {
   std::string str;
@@ -781,42 +820,42 @@ std::string StringFrom(bool val)
 std::string StringFrom(sint_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, fmt, val);
+  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "", "d").c_str(), val);  
   return str;
 }
 
 std::string StringFrom(uint_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, fmt, val);
+  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "", "u").c_str(), val);  
   return str;
 }
 
 std::string StringFrom(slong_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, fmt, val);
+  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "l", "d").c_str(), val);  
   return str;
 }
 
 std::string StringFrom(ulong_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, fmt, val);
+  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "l", "u").c_str(), val);  
   return str;
 }
 
 std::string StringFrom(sllong_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, fmt, val);
+  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "ll", "d").c_str(), val);  
   return str;
 }
 
 std::string StringFrom(ullong_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, fmt, val);
+  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "ll", "u").c_str(), val);  
   return str;
 }
 
@@ -829,22 +868,24 @@ std::string StringFrom(float val, const char *fmt)
 std::string StringFrom(double val, const char *fmt)
 {
   std::string str;
-  // this will FAIL to compile as 32-bit code
-  // print double as hex encoded double
-  Printf(str, fmt, val);
-  return str;
-}
-
-std::string StringFrom(const void *val)
-{
-  std::string str;
-  Printf(str, "$016llx", (uint64_t)val);
+  if (fmt[0] && (fmt[strlen(fmt) - 1] == 'x'))
+  {
+    uint64_t uval;
+    memcpy(&uval, &val, sizeof(uval));
+    str = "#" + StringFrom(uval, "016x");
+  }
+  else Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "l", "f").c_str(), val);  
   return str;
 }
 
 std::string StringFrom(const std::string& val)
 {
   return val;
+}
+
+std::string StringFrom(const void *val)
+{
+  return "$" + StringFrom((uint64_t)val, (sizeof(val) == 4) ? "08x" : "016x");
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -912,10 +953,24 @@ bool FromJSON(const json_spirit::mValue& _val, sint_t& val)
   return success;
 }
 
+bool FromJSON(const json_spirit::mValue& _val, uint_t& val)
+{
+  bool success = (_val.type() == json_spirit::int_type);
+  if (success) val = MAX(_val.get_int(), 0);
+  return success;
+}
+
 bool FromJSON(const json_spirit::mValue& _val, sint64_t& val)
 {
   bool success = (_val.type() == json_spirit::int_type);
   if (success) val = _val.get_int64();
+  return success;
+}
+
+bool FromJSON(const json_spirit::mValue& _val, uint64_t& val)
+{
+  bool success = (_val.type() == json_spirit::int_type);
+  if (success) val = MAX(_val.get_int64(), 0);
   return success;
 }
 
@@ -960,9 +1015,19 @@ json_spirit::mValue ToJSON(const sint_t& val)
   return json_spirit::mValue(val);
 }
 
+json_spirit::mValue ToJSON(const uint_t& val)
+{
+  return json_spirit::mValue((sint_t)val);
+}
+
 json_spirit::mValue ToJSON(const sint64_t& val)
 {
   return json_spirit::mValue(val);
+}
+
+json_spirit::mValue ToJSON(const uint64_t& val)
+{
+  return json_spirit::mValue((sint64_t)val);
 }
 
 json_spirit::mValue ToJSON(const float& val)

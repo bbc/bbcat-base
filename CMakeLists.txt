@@ -9,7 +9,7 @@ PROJECT( bbcat-base C CXX )
 set(PROJECT_VERSION_MAJOR 0)
 set(PROJECT_VERSION_MINOR 1)
 set(PROJECT_VERSION_RELEASE 2)
-set(PROJECT_VERSION_BUILD 0)
+set(PROJECT_VERSION_BUILD 1)
 
 #include all the parts that are consistent across all libraries
 include(CMakeLists-bbcat.txt)

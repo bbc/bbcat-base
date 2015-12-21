@@ -94,14 +94,10 @@ public:
   /*--------------------------------------------------------------------------------*/
   ParameterSet& Set(const std::string& name, const std::string&  val);
   ParameterSet& Set(const std::string& name, const char         *val) {return Set(name, std::string(val));}
-  ParameterSet& Set(const std::string& name, bool                val) {return Set(name, StringFrom(val));}
-  ParameterSet& Set(const std::string& name, uint_t              val, const char *fmt = "%u") {return Set(name, StringFrom(val, fmt));}
-  ParameterSet& Set(const std::string& name, sint_t              val, const char *fmt = "%d") {return Set(name, StringFrom(val, fmt));}
-  ParameterSet& Set(const std::string& name, ulong_t             val, const char *fmt = "%lu") {return Set(name, StringFrom(val, fmt));}
-  ParameterSet& Set(const std::string& name, slong_t             val, const char *fmt = "%ld") {return Set(name, StringFrom(val, fmt));}
-  ParameterSet& Set(const std::string& name, ullong_t            val, const char *fmt = "%llu") {return Set(name, StringFrom(val, fmt));}
-  ParameterSet& Set(const std::string& name, sllong_t            val, const char *fmt = "%lld") {return Set(name, StringFrom(val, fmt));}
-  ParameterSet& Set(const std::string& name, double              val, const char *fmt = DoubleFormatHuman) {return Set(name, StringFrom(val, fmt));}
+
+  template<typename T>
+  ParameterSet& Set(const std::string& name, const T&            val) {return Set(name, StringFrom(val));}
+
   ParameterSet& Set(const std::string& name, const ParameterSet& val);
 
   /*--------------------------------------------------------------------------------*/
@@ -128,15 +124,13 @@ public:
    * @return true if parameter found and value extracted
    */
   /*--------------------------------------------------------------------------------*/
-  bool Get(const std::string& name, std::string&  val) const;
-  bool Get(const std::string& name, bool&         val) const;
-  bool Get(const std::string& name, sint_t&       val) const;
-  bool Get(const std::string& name, uint_t&       val) const;
-  bool Get(const std::string& name, slong_t&      val) const;
-  bool Get(const std::string& name, ulong_t&      val) const;
-  bool Get(const std::string& name, sllong_t&     val) const;
-  bool Get(const std::string& name, ullong_t&     val) const;
-  bool Get(const std::string& name, double&       val) const;
+  bool Get(const std::string& name, std::string& val) const;
+
+  template<typename T>
+  bool Get(const std::string& name, T& val) const {
+    std::string str;
+    return (Get(name, str) && Evaluate(str, val));
+  }
   bool Get(const std::string& name, ParameterSet& val) const;
 
   /*--------------------------------------------------------------------------------*/
@@ -150,6 +144,12 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   std::string Raw(const std::string& name, const std::string& defval = "") const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Split full parameter name into prefix and suffix
+   */
+  /*--------------------------------------------------------------------------------*/
+  static bool SplitSubParameter(const std::string& name, std::string& prefix, std::string& suffix);
 
   /*--------------------------------------------------------------------------------*/
   /** Return sub-parameters prefixed by 'prefix.'

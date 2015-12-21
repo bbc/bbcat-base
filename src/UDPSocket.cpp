@@ -8,7 +8,6 @@
 #ifndef COMPILER_MSVC
 #include <sys/param.h>
 #include <unistd.h>
-#include <sys/socket.h>
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -32,7 +31,34 @@
 
 BBC_AUDIOTOOLBOX_START
 
-static bool resolve(const char *address, uint_t port, struct sockaddr_in* sockaddr)
+UDPSocket::UDPSocket() : socket(-1)
+{
+#ifdef TARGET_OS_WINDOWS
+  // ensure Windows networking initialised
+  WindowsNet::Init();
+#endif
+  
+  readfds = (void *)new fd_set;
+}
+
+UDPSocket::~UDPSocket()
+{
+  close();
+
+  if (readfds) delete (fd_set *)readfds;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Resolve an address and port to a sockaddr_in structure
+ *
+ * @param address host name or IP address in text form
+ * @param port number
+ * @param sockaddr structure to be filled in
+ *
+ * @return true if look up successful
+ */
+/*--------------------------------------------------------------------------------*/
+bool UDPSocket::resolve(const char *address, uint_t port, struct sockaddr_in *sockaddr)
 {
   bool success = false;
 
@@ -62,23 +88,6 @@ static bool resolve(const char *address, uint_t port, struct sockaddr_in* sockad
   else success = true;
 
   return success;
-}
-
-UDPSocket::UDPSocket() : socket(-1)
-{
-#ifdef TARGET_OS_WINDOWS
-  // ensure Windows networking initialised
-  WindowsNet::Init();
-#endif
-  
-  readfds = (void *)new fd_set;
-}
-
-UDPSocket::~UDPSocket()
-{
-  close();
-
-  if (readfds) delete (fd_set *)readfds;
 }
 
 bool UDPSocket::bind(const char *bindaddress, uint_t port)
@@ -143,20 +152,29 @@ void UDPSocket::close()
   }
 }
 
-bool UDPSocket::send(const void *data, uint_t bytes)
+/*--------------------------------------------------------------------------------*/
+/** Send data to UDP socket
+ */
+/*--------------------------------------------------------------------------------*/
+bool UDPSocket::send(const void *data, uint_t bytes, const struct sockaddr *to)
 {
   bool success = false;
 
   if (socket >= 0)
   {
-    success = (::send(socket, (const char*)data, bytes, 0) >= 0);
-    if (!success) debug_err("Failed to send %u bytes to socket (%s)", bytes, strerror(errno));
+    if (to) success = (::sendto(socket, (const char *)data, bytes, 0, to, sizeof(*to)) >= 0);
+    else    success = (::send(socket, (const char *)data, bytes, 0) >= 0);
+    if (!success) BBCERROR("Failed to send %u bytes to socket (%s)", bytes, strerror(errno));
   }
 
   return success;
 }
 
-sint_t UDPSocket::recv(void *data, uint_t maxbytes)
+/*--------------------------------------------------------------------------------*/
+/** Receive data from UDP socket
+ */
+/*--------------------------------------------------------------------------------*/
+sint_t UDPSocket::recv(void *data, uint_t maxbytes, struct sockaddr *from)
 {
   sint_t bytes = -1;
 
@@ -166,10 +184,12 @@ sint_t UDPSocket::recv(void *data, uint_t maxbytes)
     // as a dumping point for the data
     // it *still* means recv()  is thread-safe because we don't care about the data
     static char _staticbuf[16384];
+    socklen_t len = sizeof(struct sockaddr);
     
-    bytes = ::recv(socket, data ? (char *)data : _staticbuf, data ? maxbytes : sizeof(_staticbuf), data ? 0 : MSG_PEEK);
-    
-    if (bytes < 0) debug_err("Failed to receive %u bytes from socket (%s)", maxbytes, strerror(errno));
+    if (from) bytes = ::recvfrom(socket, data ? (char *)data : _staticbuf, data ? maxbytes : sizeof(_staticbuf), data ? 0 : MSG_PEEK, from, &len);
+    else      bytes = ::recv(socket, data ? (char *)data : _staticbuf, data ? maxbytes : sizeof(_staticbuf), data ? 0 : MSG_PEEK);
+
+    if (bytes < 0) BBCERROR("Failed to receive %u from socket (%s)", maxbytes, strerror(errno));
   }
 
   return bytes;

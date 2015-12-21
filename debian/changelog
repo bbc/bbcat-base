@@ -1,3 +1,14 @@
+bbcat-base (0.1.2.1) quantal; urgency=low
+
+  * Improved Evaluate() and StringFrom() to avoid need to know what complete format string is
+  * Improved LockFreeBuffer<> to allow safe read-ahead and write-ahead
+  * Simplified ParameterSet type handling using templates
+  * Changed resolve() to be public member function of UDPSocket
+  * Added support for recv from and send to in UDPSocket
+  * Other minor bugfixes and improvements
+
+  -- Richard Day <richard.day@bbc.co.uk>  Mon, 21 Dec 2015 14:00:00 +0000
+
 bbcat-base (0.1.2.0) quantal; urgency=low
 
   * Added Windows build support using CMake

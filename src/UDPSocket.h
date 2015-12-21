@@ -3,6 +3,12 @@
 
 #include "misc.h"
 
+#ifdef TARGET_OS_WINDOWS
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#endif
+
 BBC_AUDIOTOOLBOX_START
 
 /*--------------------------------------------------------------------------------*/
@@ -15,6 +21,18 @@ class UDPSocket
 public:
   UDPSocket();
   ~UDPSocket();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Resolve an address and port to a sockaddr_in structure
+   *
+   * @param address host name or IP address in text form
+   * @param port number
+   * @param sockaddr structure to be filled in
+   *
+   * @return true if look up successful
+   */
+  /*--------------------------------------------------------------------------------*/
+  static bool resolve(const char *address, uint_t port, struct sockaddr_in *sockaddr);
 
   /*--------------------------------------------------------------------------------*/
   /** Bind UDP socket to an address and port for receiving
@@ -66,8 +84,17 @@ public:
   /*--------------------------------------------------------------------------------*/
   bool   wait(uint_t timeout = 0);
 
-  bool   send(const void *data, uint_t bytes);
-  sint_t recv(void *data, uint_t maxbytes);
+  /*--------------------------------------------------------------------------------*/
+  /** Send data to UDP socket
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool   send(const void *data, uint_t bytes, const struct sockaddr *to = NULL);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Receive data from UDP socket
+   */
+  /*--------------------------------------------------------------------------------*/
+  sint_t recv(void *data, uint_t maxbytes, struct sockaddr *from = NULL);
 
 protected:
   int  socket;

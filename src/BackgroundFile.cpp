@@ -68,7 +68,7 @@ void BackgroundFile::WriteBlock()
   BLOCK *block = (BLOCK *)first;
 
   size_t res = EnhancedFile::fwrite(block->data, block->size, block->count);
-  if (res == 0) BBCERROR("Failed to write %lu * %lu bytes to file in background: %s", (ulong_t)block->size, (ulong_t)block->count, strerror(ferror()));
+  if (res == 0) BBCERROR("Failed to write %s * %s bytes to file in background: %s", StringFrom(block->size).c_str(), StringFrom(block->count).c_str(), strerror(ferror()));
 
   first = first->next;
   free(block);

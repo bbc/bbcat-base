@@ -262,6 +262,7 @@ public:
     {
       double x, y, z;     // co-ordinates in m
     };
+    double elements[3];   // {az,el,d} or {x,y,z}
   } pos;
 };
 
@@ -632,6 +633,8 @@ public:
   double dist;          // perspective distance
 };
 
+extern bool        Evaluate(const std::string& str, Position& val);
+extern bool        Evaluate(const std::string& str, Quaternion& val);
 extern std::string StringFrom(const Position& val);
 extern std::string StringFrom(const Quaternion& val);
 

@@ -1187,6 +1187,21 @@ bool Evaluate(const std::string& str, Position& val)
   return success;
 }
 
+
+bool Evaluate(const std::string& str, Quaternion& val)
+{
+  Quaternion rot;
+  bool success = false;
+
+  if (sscanf(str.c_str(), "%lf,%lf,%lf,%lf", &rot.w, &rot.x, &rot.y, &rot.z) == 4)
+  {
+    val = rot;
+    success = true;
+  }
+
+  return success;
+}
+
 std::string StringFrom(const Position& val)
 {
   return val.ToString();
