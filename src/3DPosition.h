@@ -361,6 +361,12 @@ public:
   Quaternion& operator /= (const Quaternion& obj) {*this = *this / obj; return *this;}
 
   /*--------------------------------------------------------------------------------*/
+  /** Return whether the axis is more negative than positive
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool AxisIsNegative() const {return ((x + y + z) < 0.0);}
+  
+  /*--------------------------------------------------------------------------------*/
   /** Return angle
    *
    * @note returns a value in the range 0 - 180 degrees
@@ -601,6 +607,13 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   ScreenTransform& operator = (const ScreenTransform& obj);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Comparison operators
+   */
+  /*--------------------------------------------------------------------------------*/
+  friend bool operator == (const ScreenTransform& obj1, const ScreenTransform& obj2);
+  friend bool operator != (const ScreenTransform& obj1, const ScreenTransform& obj2) {return !operator == (obj1, obj2);}
 
   /*--------------------------------------------------------------------------------*/
   /** Return scale due to perspective for the specified Z co-ordinate

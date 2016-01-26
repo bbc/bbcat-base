@@ -1047,7 +1047,7 @@ json_spirit::mValue ToJSON(const std::string& val)
 #endif
 
 /*--------------------------------------------------------------------------------*/
-/** Return ns-resolution time from textual hh:mm:ss.SSSSS
+/** Return ns-resolution time from textual [[hh:]mm:]ss.SSSSS
  *
  * @param str time in ASCII format
  *
@@ -1056,20 +1056,24 @@ json_spirit::mValue ToJSON(const std::string& val)
 /*--------------------------------------------------------------------------------*/
 bool CalcTime(uint64_t& t, const std::string& str)
 {
-  uint_t hr, mn, s, ss;
-  bool   success = false;
+  double secs = 0.0;
+  uint_t hrs = 0, mins = 0;
+  int n;
 
-  if (sscanf(str.c_str(), "%u:%u:%u.%u", &hr, &mn, &s, &ss) == 4)
+  if      ((n = sscanf(str.c_str(), "%u:%u:%lf", &hrs, &mins, &secs)) == 3) ;                 // do nothing
+  else if ((n = sscanf(str.c_str(), "%u:%lf",    &mins, &secs))       == 2) hrs = 0;          // MUST zero this here because it will have be set by the line above!
+  else if ((n = sscanf(str.c_str(), "%lf",       &secs))              == 1) hrs = mins = 0;   // MUST zero these here because they will have be set by the lines above!
+
+  // has a valid time been extracted?
+  if (n > 0)
   {
-    t = hr;                 // hours
-    t = (t * 60) + mn;      // minutes
-    t = (t * 60) + s;       // seconds
-    t = (t * 100000) + ss;  // 100000ths of second
-    t *= 10000;             // nanoseconds
-    success = true;
-  }
+    BBCDEBUG2(("Converted time '%s' to %u:%u:%0.3lf", str.c_str(), hrs, mins, secs));
 
-  return success;
+    t = (uint64_t)(secs * 1.0e9) + (uint64_t)(hrs * 60UL + mins) * 60UL * 1000UL * 1000000UL;
+  }
+  else BBCERROR("Unable to extract time from '%s'", str.c_str());
+
+  return (n > 0);
 }
 
 /*--------------------------------------------------------------------------------*/

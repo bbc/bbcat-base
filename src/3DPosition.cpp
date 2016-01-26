@@ -691,6 +691,19 @@ ScreenTransform& ScreenTransform::operator = (const ScreenTransform& obj)
 }
 
 /*--------------------------------------------------------------------------------*/
+/** Comparison operators
+ */
+/*--------------------------------------------------------------------------------*/
+bool operator == (const ScreenTransform& obj1, const ScreenTransform& obj2)
+{
+  return ((obj2.dist == obj1.dist) &&
+          (obj2.cx   == obj1.cx) &&
+          (obj2.cy   == obj1.cy) &&
+          (obj2.sx   == obj1.sx) &&
+          (obj2.sy   == obj1.sy));
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Apply transform to position
  */
 /*--------------------------------------------------------------------------------*/
