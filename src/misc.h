@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 
 #include "OSCompiler.h"
 
@@ -18,20 +19,8 @@
 #include <json_spirit/json_spirit.h>
 #endif
 
-#ifndef MIN
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#endif
-#ifndef MAX
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef LIMIT
-#define LIMIT(a, b, c) (((a) < (b)) ? (b) : (((a) > (c)) ? (c) : (a)))
-#endif
 #ifndef NUMBEROF
 #define NUMBEROF(x) (sizeof(x) / sizeof(x[0]))
-#endif
-#ifndef RANGE
-#define RANGE(a, b, c) (((a) >= (b)) && ((a) <= (c)))
 #endif
 
 #ifndef M_PI
@@ -506,25 +495,48 @@ extern bool CalcTime(uint64_t& t, const std::string& str);
 /*--------------------------------------------------------------------------------*/
 extern std::string GenerateTime(uint64_t t);
 
-/*--------------------------------------------------------------------------------*/
-/** Safe (limited) addition for *unsigned* types (DOES NOT work for signed types)
- */
-/*--------------------------------------------------------------------------------*/
-template<typename T>
-T addm(const T& a, const T& b)
+namespace limited
 {
-  T c = a + b;
-  return (c >= a) ? c : (T)-1;
-}
+  /*--------------------------------------------------------------------------------*/
+  /** Safe (limited) addition for *unsigned* types (DOES NOT work for signed types)
+   */
+  /*--------------------------------------------------------------------------------*/
+  template<typename T>
+  T addm(const T& a, const T& b)
+  {
+    T c = a + b;
+    return (c >= a) ? c : (T)-1;
+  }
 
-/*--------------------------------------------------------------------------------*/
-/** Safe (limited) subtraction for *unsigned* types (DOES NOT work for signed types)
- */
-/*--------------------------------------------------------------------------------*/
-template<typename T>
-T subz(const T& a, const T& b)
-{
-  return (a >= b) ? a - b : 0;
+  /*--------------------------------------------------------------------------------*/
+  /** Safe (limited) subtraction for *unsigned* types (DOES NOT work for signed types)
+   */
+  /*--------------------------------------------------------------------------------*/
+  template<typename T>
+  T subz(const T& a, const T& b)
+  {
+    return (a >= b) ? a - b : 0;
+  }
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return value limited by range
+   */
+  /*--------------------------------------------------------------------------------*/
+  template<typename T>
+  const T& limit(const T& a, const T& b, const T& c)
+  {
+    return ((a < b) ? b : ((a > c) ? c : a));
+  }
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether value is within a range (inclusive)
+   */
+  /*--------------------------------------------------------------------------------*/
+  template<typename T>
+  bool inrange(const T& a, const T& b, const T& c)
+  {
+    return ((a >= b) && (a <= c));
+  }
 }
 
 /*--------------------------------------------------------------------------------*/

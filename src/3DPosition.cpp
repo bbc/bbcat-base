@@ -1159,7 +1159,7 @@ double Angle(const Position& obj1, const Position& obj2)
           pos2.pos.x, pos2.pos.y, pos2.pos.z,
           dot);
   }
-  dot = LIMIT(dot, -1.0, 1.0);
+  dot = limited::limit(dot, -1.0, 1.0);
   return acos(dot) * 180.0 / M_PI;
 }
 

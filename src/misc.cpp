@@ -30,6 +30,9 @@ static void         *debughandler_context = NULL;
 static DEBUGHANDLER errorhandler = NULL;
 static void         *errorhandler_context = NULL;
 
+const char *DoubleFormatHuman = "0.32";
+const char *DoubleFormatExact = "x";
+
 /*--------------------------------------------------------------------------------*/
 /** Set debug handler (replacing printf())
  *
@@ -358,7 +361,7 @@ std::string CreateIndent(const std::string& indent, uint_t count)
 
       for (pos = len; pos < endpos;)
       {
-        uint_t n = MIN(endpos - pos, pos);
+        uint_t n = std::min(endpos - pos, pos);
 
         memcpy(buf + pos, buf, n);
         pos += n;
@@ -679,7 +682,7 @@ double GainTodB(double gain)
   if (gain >= mingain)
   {
     db = 20.0 * log10(gain);
-    db = MAX(db, mindb);
+    db = std::max(db, mindb);
   }
 
   return db;
@@ -780,17 +783,32 @@ bool Evaluate(const std::string& str, std::string& val)
  *  the correct number of 'l's are inserted before the type specifier for the supplied variable type
  */
 /*--------------------------------------------------------------------------------*/
-std::string GetFormat(const char *_fmt, const char *insert, const char *defsuffix)
+const char *GetFormat(char *fmt, const char *_fmt, const char *insert, const char *defsuffix)
 {
-  std::string fmt = std::string("%") + _fmt;
-  char c = fmt[fmt.size() - 1]; // string will be at least one char long is this is safe
-  if (!_fmt[0] || !(RANGE(c, 'a', 'z') || RANGE(c, 'A', 'Z')))
-  {
-    if (insert[0]) fmt += insert;
-    fmt += defsuffix;
-  }
-  else if (insert[0]) fmt = fmt.substr(0, fmt.size() - 1) + insert + fmt.substr(fmt.size() - 1);
-  BBCDEBUG9(("GetFormat('%s', '%s', '%s') = '%s'", _fmt, insert, defsuffix, fmt.c_str()));
+  // if original is fully specified, just return it
+  if (_fmt[0] == '%') return _fmt;
+  
+  size_t p = 0, l = strlen(_fmt);   // length of supplied format string
+
+  // if last char of supplied format string is alpha, decrement length by 1
+  if (l && (limited::inrange(_fmt[l - 1], 'a', 'z') || limited::inrange(_fmt[l - 1], 'A', 'Z'))) l--;
+
+  // set suffix to point to last char (if alpha) or end of string (otherwise)
+  const char *suffix = _fmt + l;
+  // if no suffix supplied, set it to default suffix
+  if (!suffix[0]) suffix = defsuffix;
+  
+  // start full format string
+  fmt[p++] = '%';
+  // copy supplied format string (sans last char if it is alpha)
+  memcpy(fmt + p, _fmt, l); p += l;
+  // add string of 'l's as necessary to format string
+  strcpy(fmt + p, insert);
+  // then add suffix
+  strcat(fmt, suffix);
+
+  BBCDEBUG9(("GetFormat('%s', '%s', '%s') = '%s'", _fmt, insert, defsuffix, fmt));
+
   return fmt;
 }
 
@@ -820,42 +838,48 @@ std::string StringFrom(bool val)
 std::string StringFrom(sint_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "", "d").c_str(), val);  
+  char tmpfmt[16];
+  Printf(str, GetFormat(tmpfmt, fmt, "", "d"), val);  
   return str;
 }
 
 std::string StringFrom(uint_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "", "u").c_str(), val);  
+  char tmpfmt[16];
+  Printf(str, GetFormat(tmpfmt, fmt, "", "u"), val);  
   return str;
 }
 
 std::string StringFrom(slong_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "l", "d").c_str(), val);  
+  char tmpfmt[16];
+  Printf(str, GetFormat(tmpfmt, fmt, "l", "d"), val);  
   return str;
 }
 
 std::string StringFrom(ulong_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "l", "u").c_str(), val);  
+  char tmpfmt[16];
+  Printf(str, GetFormat(tmpfmt, fmt, "l", "u"), val);  
   return str;
 }
 
 std::string StringFrom(sllong_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "ll", "d").c_str(), val);  
+  char tmpfmt[16];
+  Printf(str, GetFormat(tmpfmt, fmt, "ll", "d"), val);  
   return str;
 }
 
 std::string StringFrom(ullong_t val, const char *fmt)
 {
   std::string str;
-  Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "ll", "u").c_str(), val);  
+  char tmpfmt[16];
+  Printf(str, GetFormat(tmpfmt, fmt, "ll", "u"), val);  
   return str;
 }
 
@@ -868,13 +892,19 @@ std::string StringFrom(float val, const char *fmt)
 std::string StringFrom(double val, const char *fmt)
 {
   std::string str;
-  if (fmt[0] && (fmt[strlen(fmt) - 1] == 'x'))
+  size_t l;
+  
+  if (((l = strlen(fmt)) > 0) && (fmt[l - 1] == 'x'))
   {
     uint64_t uval;
     memcpy(&uval, &val, sizeof(uval));
     str = "#" + StringFrom(uval, "016x");
   }
-  else Printf(str, (fmt[0] == '%') ? fmt : GetFormat(fmt, "l", "f").c_str(), val);  
+  else
+  {
+    char tmpfmt[16];
+    Printf(str, GetFormat(tmpfmt, fmt, "l", "f"), val);
+  }
   return str;
 }
 
@@ -956,7 +986,7 @@ bool FromJSON(const json_spirit::mValue& _val, sint_t& val)
 bool FromJSON(const json_spirit::mValue& _val, uint_t& val)
 {
   bool success = (_val.type() == json_spirit::int_type);
-  if (success) val = MAX(_val.get_int(), 0);
+  if (success) val = std::max(_val.get_int(), 0);
   return success;
 }
 
@@ -970,7 +1000,7 @@ bool FromJSON(const json_spirit::mValue& _val, sint64_t& val)
 bool FromJSON(const json_spirit::mValue& _val, uint64_t& val)
 {
   bool success = (_val.type() == json_spirit::int_type);
-  if (success) val = MAX(_val.get_int64(), 0);
+  if (success) val = std::max(_val.get_int64(), (sint64_t)0);
   return success;
 }
 

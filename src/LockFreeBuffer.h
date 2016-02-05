@@ -72,7 +72,7 @@ public:
    * @note number of write buffers = rd - wr - 1 but each subtraction requires addition of buffer size to prevent underflow
    */
   /*--------------------------------------------------------------------------------*/
-  uint_t WriteBuffersAvailable() const {return ((rd + 2 * buffer.size() - wr - 1) % buffer.size());}
+  uint_t WriteBuffersAvailable() const {return (uint_t)((rd + 2 * buffer.size() - wr - 1) % buffer.size());}
 
   /*--------------------------------------------------------------------------------*/
   /** Increment the write pointer (after writing data, essentially committing buffers)
@@ -85,7 +85,7 @@ public:
   bool IncrementWrite(uint_t n = 1)
   {
     uint_t avail = WriteBuffersAvailable();
-    if ((n = MIN(n, avail)) > 0) {wr = (wr + n) % buffer.size(); return true;}
+    if ((n = std::min(n, avail)) > 0) {wr = (wr + n) % buffer.size(); return true;}
     return false;
   }
 
@@ -95,7 +95,7 @@ public:
    * @note number of read buffers = wr - rd but the subtraction requires addition of buffer size to prevent underflow
    */
   /*--------------------------------------------------------------------------------*/
-  uint_t ReadBuffersAvailable() const {return ((wr + buffer.size() - rd) % buffer.size());}
+  uint_t ReadBuffersAvailable() const {return (uint_t)((wr + buffer.size() - rd) % buffer.size());}
 
   /*--------------------------------------------------------------------------------*/
   /** Return ptr to item at read position
@@ -119,7 +119,7 @@ public:
   bool IncrementRead(uint_t n = 1)
   {
     uint_t avail = ReadBuffersAvailable();
-    if ((n = MIN(n, avail)) > 0) {rd = (rd + n) % buffer.size(); return true;}
+    if ((n = std::min(n, avail)) > 0) {rd = (rd + n) % buffer.size(); return true;}
     return false;
   }
 

@@ -4,6 +4,11 @@
 #include "EnhancedFile.h"
 #include "Thread.h"
 
+#ifdef COMPILER_MSVC
+#pragma warning( push )
+#pragma warning( disable : 4200 )
+#endif
+
 BBC_AUDIOTOOLBOX_START
 
 /*--------------------------------------------------------------------------------*/
@@ -93,5 +98,9 @@ protected:
 };
 
 BBC_AUDIOTOOLBOX_END
+
+#ifdef COMPILER_MSVC
+#pragma warning( pop )
+#endif
 
 #endif

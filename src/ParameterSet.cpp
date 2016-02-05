@@ -312,7 +312,7 @@ std::string ParameterSet::GenerateMessage(const std::string& format, bool allowe
     std::string arg  = msg.substr(pos1 + 1, pos2 - pos1 - 1);   // text between { and }
     size_t      pos3 = arg.find(":");                           // key:fmt split
     size_t      pos4 = arg.find("?");                           // key?a:b split
-    std::string key  = arg.substr(0, MIN(pos3, pos4));          // key
+    std::string key  = arg.substr(0, std::min(pos3, pos4));     // key
     std::string val;                                            // string that will end up with printable value in it
 
     if (allowempty || Exists(key))                              // make sure key exists

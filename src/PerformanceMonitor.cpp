@@ -107,7 +107,7 @@ std::string PerformanceMonitor::GetReportEx()
     {
       const std::string& id = timingslist[i]->id;
 
-      maxlen = MAX(maxlen, (uint_t)id.length());
+      maxlen = std::max(maxlen, (uint_t)id.length());
     }
 
     // create format string (with ID length fround above)
@@ -317,17 +317,17 @@ void PerformanceMonitor::Start(const std::string& id)
     // update total
     data.stats.total_elapsed += timing.elapsed;
     // update max/min
-    data.stats.max_elapsed = MAX(data.stats.max_elapsed, timing.elapsed);
+    data.stats.max_elapsed = std::max(data.stats.max_elapsed, timing.elapsed);
     if (!data.wrapped && (data.index == 0)) data.stats.min_elapsed = timing.elapsed;
-    else                                    data.stats.min_elapsed = MIN(data.stats.min_elapsed, timing.elapsed);
+    else                                    data.stats.min_elapsed = std::min(data.stats.min_elapsed, timing.elapsed);
 
     // update utilization values
     perftime_t last_taken = data.timings[(data.index + data.ntimings - 1) % data.ntimings].taken;
     double ut = timing.elapsed ? 100.0 * (double)last_taken / (double)timing.elapsed : 0.0;
     data.stats.utilization = ut;
-    data.stats.max_utilization = MAX(data.stats.max_utilization, ut);
+    data.stats.max_utilization = std::max(data.stats.max_utilization, ut);
     if (!data.wrapped && (data.index == 1)) data.stats.min_utilization = ut;
-    else                                    data.stats.min_utilization = MIN(data.stats.min_utilization, ut);
+    else                                    data.stats.min_utilization = std::min(data.stats.min_utilization, ut);
 
     if (logtofile)
     {
@@ -380,9 +380,9 @@ void PerformanceMonitor::Stop(const std::string& id)
     // update total
     data.stats.total_taken += timing.taken;
     // update max/min
-    data.stats.max_taken = MAX(data.stats.max_taken, timing.taken);
+    data.stats.max_taken = std::max(data.stats.max_taken, timing.taken);
     if (!data.wrapped && (data.index == 0)) data.stats.min_taken = timing.taken;
-    else                                    data.stats.min_taken = MIN(data.stats.min_taken, timing.taken);
+    else                                    data.stats.min_taken = std::min(data.stats.min_taken, timing.taken);
 
     if (logtofile)
     {
