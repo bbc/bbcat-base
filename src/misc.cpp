@@ -485,8 +485,16 @@ uint_t SplitString(const std::string& str, std::vector<std::string>& list, char 
       while ((p < l) && (str[p] != delim)) p++;
     }
 
-    // skip over delimiters
-    while ((p < l) && (str[p] == delim)) p++;
+    if (keepempty)
+    {
+      // only allow a single delim if keeping empty strings
+      if ((p < l) && (str[p] == delim)) p++;
+    }
+    else
+    {
+      // skip over delimiters
+      while ((p < l) && (str[p] == delim)) p++;
+    }
 
     // ignore whitespace at end
     while ((p < l) && ((str[p] == ' ') || (str[p] == '\t'))) p++;
