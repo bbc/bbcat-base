@@ -294,6 +294,7 @@ extern void VPrintf(std::string& str, const char *fmt, va_list ap);
  * @param str string split
  * @param list list to be populated
  * @param delim delimiter character
+ * @param keepempty true to keep empty strings
  * @param maxstrings if non-zero specifies the maximum number of entries in list
  *
  * @return position in string when scanning stopped
@@ -301,7 +302,7 @@ extern void VPrintf(std::string& str, const char *fmt, va_list ap);
  * @note whitespace is IGNORED!
  */
 /*--------------------------------------------------------------------------------*/
-extern uint_t SplitString(const std::string& str, std::vector<std::string>& list, char delim = ' ', uint_t maxstrings = 0);
+extern uint_t SplitString(const std::string& str, std::vector<std::string>& list, char delim = ' ', bool keepempty = false, uint_t maxstrings = 0);
 
 /*--------------------------------------------------------------------------------*/
 /** Interpolate current towards target at rate coeff, protecting against denormals

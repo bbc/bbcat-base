@@ -436,14 +436,15 @@ void VPrintf(std::string& str, const char *fmt, va_list ap)
  * @param str string split
  * @param list list to be populated
  * @param delim delimiter character
+ * @param keepempty true to keep empty strings
  * @param maxstrings if non-zero specifies the maximum number of entries in list
  *
  * @return position in string when scanning stopped
- *
+ * 
  * @note whitespace is IGNORED!
  */
 /*--------------------------------------------------------------------------------*/
-uint_t SplitString(const std::string& str, std::vector<std::string>& list, char delim, uint_t maxstrings)
+uint_t SplitString(const std::string& str, std::vector<std::string>& list, char delim, bool keepempty, uint_t maxstrings)
 {
   uint_t p = 0, l = (uint_t)str.length();
 
@@ -473,8 +474,8 @@ uint_t SplitString(const std::string& str, std::vector<std::string>& list, char 
       while ((p2 > p1) && ((str[p2 - 1] == ' ') || (str[p2 - 1] == '\t'))) p2--;
     }
 
-    // if string is not empty, add it to the list
-    if (p2 > p1) list.push_back(str.substr(p1, p2 - p1));
+    // if string is not empty (or keepempty is true), add it to the list
+    if (keepempty || (p2 > p1)) list.push_back(str.substr(p1, p2 - p1));
 
     // if a closing quote was found, skip quote and then find delimiter
     if ((p < l) && quote && (str[p] == quote))
