@@ -35,6 +35,7 @@ set(_headers
 	PerformanceMonitor.h
 	RefCount.h
 	SelfRegisteringParametricObject.h
+	SystemParameters.h
 	Thread.h
 	ThreadLock.h
 	UniversalTime.h
