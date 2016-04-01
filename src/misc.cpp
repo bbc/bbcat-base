@@ -429,7 +429,6 @@ void VPrintf(std::string& str, const char *fmt, va_list ap)
   }
 }
 
-
 /*--------------------------------------------------------------------------------*/
 /** Split a string by a delimiter, allowing for quotes to prevent splitting in the wrong place
  *

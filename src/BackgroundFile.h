@@ -35,6 +35,14 @@ public:
   /*--------------------------------------------------------------------------------*/
   virtual void   EnableBackground(bool enable = true);
 
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether it will be 'quick' to close the file now - indicating the close will be quick
+   *
+   * @note this essentially returns whether there is fewer than 2 blocks queued to write
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual bool   ReadyToClose() const;
+
   virtual void   fclose();
 
   /*--------------------------------------------------------------------------------*/

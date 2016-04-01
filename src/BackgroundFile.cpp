@@ -60,6 +60,21 @@ void BackgroundFile::EnableBackground(bool enable)
 }
 
 /*--------------------------------------------------------------------------------*/
+/** Return whether it will be 'quick' to close the file now - indicating the close will be quick
+ *
+ * @note this essentially returns whether there is more than one block queued to write
+ */
+/*--------------------------------------------------------------------------------*/
+bool BackgroundFile::ReadyToClose() const
+{
+  // return true in the case of none or only one block queued to write
+  // there appears to be a race condition here (first *could* become NULL between the two checks below)
+  // BUT first only becomes NULL when the file closes so as long as ReadyToClose() is called by
+  // the SAME thread as that will close the file (highly likely) this will never be an issue 
+  return (isopen() && !(first && first->next));
+}
+
+/*--------------------------------------------------------------------------------*/
 /** Write the first block to disk
  */
 /*--------------------------------------------------------------------------------*/
