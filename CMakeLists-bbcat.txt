@@ -1,4 +1,11 @@
 
+# ensure CMAKE_BUILD_TYPE is valid
+if (NOT CMAKE_BUILD_TYPE)
+	# default to release
+	set(CMAKE_BUILD_TYPE "Release")
+	message("Unknown build type, defaulting to '" ${CMAKE_BUILD_TYPE} "'")
+endif()
+	
 # create a version of project name with underscores instead of dashes
 string(REPLACE "-" "_" UNDERSCORE_PROJECT_NAME ${PROJECT_NAME})
 
