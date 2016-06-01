@@ -6,7 +6,7 @@ Contains miscellaneous debug, file and position functions
 
 Dependencies
 
-jsoncpp - https://github.com/open-source-parsers/jsoncpp
+jsoncpp - https://github.com/open-source-parsers/jsoncpp (see Notes on Windows builds, below)
 
 Files
 
@@ -180,6 +180,9 @@ As there is no standardised directories for cmake files, libraries, etc. the bui
 1. Library includes, libs and shared files will be stored in c:\local
 2. CMake configuration files will be stored in c:\local
 3. http://sourceforge.net/projects/pthreads4w/ has been downloaded and extracted to c:\local\pthreads (rename unzip folder to 'pthreads')
+4. For JSON support:
+4.1. Download the source code, use CMake to generate a solution and build it as x64/Release (install may fail due to privileges)
+4.2. Find the .lib file (e.g. in build\src\lib_json\Release) and copy it to c:/local/lib (creating that directory if necessary)
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
