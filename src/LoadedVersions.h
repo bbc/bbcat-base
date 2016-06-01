@@ -42,6 +42,18 @@ public:
   /*--------------------------------------------------------------------------------*/
   std::string GetVersionsList() const;
 
+  /*--------------------------------------------------------------------------------*/
+  /** Return number of entries in the versions list
+   */
+  /*--------------------------------------------------------------------------------*/
+  uint_t GetVersionListCount() const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return number of entries in the versions list
+   */
+  /*--------------------------------------------------------------------------------*/
+  std::string GetVersionIndex(uint_t n) const;
+  
 protected:
   LoadedVersions();
   ~LoadedVersions();

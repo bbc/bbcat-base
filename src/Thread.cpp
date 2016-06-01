@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 
 #define BBCDEBUG_LEVEL 1
 #include "Thread.h"
@@ -17,11 +18,14 @@ Thread::Thread(bool start) : call(NULL),
                              arg(NULL),
                              stopthread(false),
                              abortthread(false),
-                             threadcompleted(false)
+                             threadcompleted(false),
+                             threadfinished(false)
 {
+#ifdef USE_PTHREADS
   // clear thread data
   memset(&thread, 0, sizeof(thread));
-
+#endif
+  
   if (start) Start();
 }
 
@@ -33,10 +37,13 @@ Thread::Thread(THREADCALL _call, void *_arg) : call(NULL),
                                                arg(NULL),
                                                stopthread(false),
                                                abortthread(false),
-                                               threadcompleted(false)
+                                               threadcompleted(false),
+                                               threadfinished(false)
 {
+#ifdef USE_PTHREADS
   // clear thread data
   memset(&thread, 0, sizeof(thread));
+#endif
 
   if (_call) Start(_call, _arg);
 }
@@ -44,6 +51,43 @@ Thread::Thread(THREADCALL _call, void *_arg) : call(NULL),
 Thread::~Thread()
 {
   Stop();
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Copy constructor
+ */
+/*--------------------------------------------------------------------------------*/
+Thread::Thread(const Thread& obj) : call(NULL),
+                                    arg(NULL),
+                                    stopthread(false),
+                                    abortthread(false),
+                                    threadcompleted(false)
+{
+#ifdef USE_PTHREADS
+  // clear thread data
+  memset(&thread, 0, sizeof(thread));
+#endif
+
+  operator = (obj);
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Assignment operator
+ */
+/*--------------------------------------------------------------------------------*/
+Thread& Thread::operator = (const Thread& obj)
+{
+  if (&obj != this)
+  {
+    assert(!IsRunning());
+    assert(!obj.IsRunning());
+    
+    call = obj.call;
+    arg  = obj.arg;
+    stopthread = abortthread = threadcompleted = threadfinished = false;
+  }
+  
+  return *this;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -75,7 +119,9 @@ bool Thread::Start()
   if (!IsRunning())
   {
     // create thread
-    stopthread = abortthread = threadcompleted = false;
+    stopthread = abortthread = threadcompleted = threadfinished = false;
+
+#ifdef USE_PTHREADS
     if (pthread_create(&thread, NULL, &__ThreadEntry, (void *)this) == 0)
     {
       BBCDEBUG2(("Created thread"));
@@ -86,6 +132,18 @@ bool Thread::Start()
       BBCERROR("Failed to create thread (%s)", strerror(errno));
       memset(&thread, 0, sizeof(thread));
     }
+#else
+    thread = std::thread( [this]() {
+        try {
+          Run();
+        }
+        catch (std::exception e)
+        {
+          BBCERROR("Exception in ThreadSTL: %s", e.what());
+        }
+      });
+    started = true;
+#endif
   }
 
   return started;
@@ -97,10 +155,16 @@ bool Thread::Start()
 /*--------------------------------------------------------------------------------*/
 bool Thread::IsRunning() const
 {
+#ifdef USE_PTHREADS
+
 #ifdef COMPILER_MSVC
   return (thread.p != NULL);
 #else
   return (thread != 0);
+#endif
+
+#else
+  return thread.joinable();
 #endif
 }
 
@@ -114,13 +178,18 @@ void Thread::Stop(bool wait)
   {
     stopthread = true;
 
-    // if thread has completed, force join
-    wait |= HasCompleted();
+    // if thread has finished, force join
+    wait |= HasFinished();
 
     if (wait)
     {
+#ifdef USE_PTHREADS
       pthread_join(thread, NULL);
       memset(&thread, 0, sizeof(thread));
+#else
+      thread.join();
+#endif
+      
       stopthread = abortthread = false;
     }
   }
@@ -141,7 +210,26 @@ void Thread::Abort(bool wait)
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Main thread entry point
+/** Main thread entry point (non-overridable)
+ */
+/*--------------------------------------------------------------------------------*/
+void *Thread::RunEx()
+{
+  void *res;
+  
+  res = Run();
+
+  // if not aborted, mark as completed
+  if (!AbortRequested()) Complete();
+
+  // whatever happens, mark as finished
+  Finished();
+  
+  return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Overridable thread routine
  */
 /*--------------------------------------------------------------------------------*/
 void *Thread::Run()
@@ -150,8 +238,6 @@ void *Thread::Run()
   
   // if callback defined, call it
   if (call) res = (*call)(*this, arg);
-
-  if (!abortthread) Complete();
 
   return res;
 }

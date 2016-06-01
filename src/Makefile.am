@@ -8,29 +8,30 @@ libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_LDFLAGS =	\
     $(BBCAT_BASE_LDFLAGS)
 
 libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_LIBADD =	\
-	$(PTHREAD_LIBS)
+	$(BBCAT_GLOBAL_BASE_LIBS)						\
+	$(RT_LIBS)
 
 libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_CPPFLAGS =	\
 	$(BBCAT_BASE_CFLAGS)							\
-	$(PTHREAD_CFLAGS)
+	$(BBCAT_GLOBAL_BASE_CFLAGS)
 
-libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_SOURCES =	\
-	3DPosition.cpp									\
-	BackgroundFile.cpp								\
-	ByteSwap.cpp									\
-	DistanceModel.cpp								\
-	EnhancedFile.cpp								\
-	LoadedVersions.cpp								\
-	misc.cpp										\
-	NamedParameter.cpp								\
-	ObjectRegistry.cpp								\
-	ParameterSet.cpp								\
-	PerformanceMonitor.cpp							\
-	SelfRegisteringParametricObject.cpp				\
-	Thread.cpp										\
-	ThreadLock.cpp									\
-	UDPSocket.cpp									\
-	version.cpp
+libbbcat_base_sources =							\
+	3DPosition.cpp								\
+	BackgroundFile.cpp							\
+	ByteSwap.cpp								\
+	DistanceModel.cpp							\
+	EnhancedFile.cpp							\
+	LoadedVersions.cpp							\
+	misc.cpp									\
+	NamedParameter.cpp							\
+	ObjectRegistry.cpp							\
+	ParameterSet.cpp							\
+	PerformanceMonitor.cpp						\
+	SelfRegisteringParametricObject.cpp			\
+	SystemParameters.cpp						\
+	Thread.cpp									\
+	ThreadLock.cpp								\
+	UDPSocket.cpp
 
 pkginclude_HEADERS =							\
 	3DPosition.h								\
@@ -54,18 +55,16 @@ pkginclude_HEADERS =							\
 	UniversalTime.h								\
 	UDPSocket.h									\
 	misc.h										\
-	version.h
+	json.h
 
-noinst_HEADERS =
+if ENABLE_JSON
+libbbcat_base_sources += json.cpp
+endif
 
-CLEANFILES = version.h version.cpp
+#CLEANFILES = register.cpp
 
-version.h: Makefile ../config.h ../gitbranch.txt
-	echo "{\"@PACKAGE@\", \"@VERSION@-`cat ../gitbranch.txt`\"}," >version.h
+# register.cpp is included in repo but will be updated by the script below 
+register.cpp: Makefile ../config.h ../gitbranch.txt $(libbbcat_base_sources)
+	sh ../bbcat-common/findregisterfunctions.sh "bbcat-base" "@VERSION@-`cat ../gitbranch.txt`" "$(libbbcat_base_sources)" "" >$@
 
-version.cpp: Makefile ../config.h ../gitbranch.txt
-	echo "/* Auto-generated: DO NOT EDIT! */" >version.cpp
-	echo "#include \"LoadedVersions.h\"" >>version.cpp
-	echo "BBC_AUDIOTOOLBOX_START" >>version.cpp
-	echo "volatile uint_t __keep_@PACKAGE@_version = bbcat::LoadedVersions::Get().Register(\"@PACKAGE@\", \"@VERSION@-`cat ../gitbranch.txt`\");" >>version.cpp
-	echo "BBC_AUDIOTOOLBOX_END" >>version.cpp
+libbbcat_base_@BBCAT_BASE_MAJORMINOR@_la_SOURCES = $(libbbcat_base_sources) register.cpp

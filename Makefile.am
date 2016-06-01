@@ -3,13 +3,19 @@ AUTOMAKE_OPTIONS = foreign
 
 include doxygen.am
 
-SUBDIRS = src
+SUBDIRS = src test
 
 base_DATA = share/licences.txt
 
-basedir = $(prefix)/share/$(PACKAGE)
+basedir = $(prefix)/share/bbcat-base
 
-EXTRA_DIST = README COPYING autogen.sh $(base_DATA)
+catch_DATA = bbcat-common/include/catch/*
+catchdir = $(prefix)/share/bbcat-common/include/catch
+
+common_DATA = bbcat-common/*.sh
+commondir = $(prefix)/share/bbcat-common
+
+EXTRA_DIST = README COPYING autogen.sh $(base_DATA) $(catch_DATA) $(common_DATA)
 
 pkgconfig_DATA = bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc
 
@@ -21,7 +27,7 @@ bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc: bbcat-base-uninstalled.pc
 
 BUILT_SOURCES = bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc gitbranch.txt
 
-CLEANFILES = bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc src/version.h src/version.cpp gitbranch.txt .branch
+CLEANFILES = bbcat-base-$(BBCAT_BASE_MAJORMINOR).pc bbcat-base-$(BBCAT_BASE_MAJORMINOR)-uninstalled.pc src/register.cpp gitbranch.txt .branch
 
 ACLOCAL_FLAGS = -I m4
 

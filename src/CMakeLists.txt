@@ -12,10 +12,10 @@ set(_sources
 	ParameterSet.cpp
 	PerformanceMonitor.cpp
 	SelfRegisteringParametricObject.cpp
+	SystemParameters.cpp
 	Thread.cpp
 	ThreadLock.cpp
 	UDPSocket.cpp
-	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
 # public headers
@@ -41,21 +41,30 @@ set(_headers
 	UniversalTime.h
 	UDPSocket.h
 	misc.h
-	${CMAKE_CURRENT_BINARY_DIR}/version.h
-)
+	json.h)
+
+if(ENABLE_JSON)
+	set(_sources
+		${_sources}
+		json.cpp)
+endif()
 
 # os specific
 if(WIN32)
-	set(_sources ${_sources} 
-		Windows_uSleep.cpp)
 	set(_headers ${_headers}
 		WindowsNet.h
 		Windows_uSleep.h)
-		
-	set(_extra_libs
-		${_extra_libs}
+
+	set(_sources ${_sources}
+		Windows_uSleep.cpp)
+
+	set(GLOBAL_EXTRA_LIBS
+		${GLOBAL_EXTRA_LIBS}
 		"ws2_32.lib")
 endif(WIN32)
 
-#include all the parts that are consistent across all libraries
-include(CMakeLists-src.txt)
+# auto-generate register.cpp
+bbcat_generate_register_cpp()
+
+# include all the parts that are consistent across all projects
+include(${BBCAT_COMMON_DIR}/CMakeLibrary.txt)

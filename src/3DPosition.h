@@ -4,11 +4,6 @@
 #include <math.h>
 #include <string>
 
-#if ENABLE_JSON
-#include <json_spirit/json_spirit.h>
-#endif
-
-#include "misc.h"
 #include "ParameterSet.h"
 
 BBC_AUDIOTOOLBOX_START
@@ -24,7 +19,7 @@ class Quaternion;
  *
  */
 /*--------------------------------------------------------------------------------*/
-class Position
+class Position : public JSONSerializable
 {
 public:
   // Polar:
@@ -66,6 +61,7 @@ public:
   /*--------------------------------------------------------------------------------*/
   Position(const Position& obj) : polar(obj.polar),
                                   pos(obj.pos) {}
+  virtual ~Position() {}
     
   /*--------------------------------------------------------------------------------*/
   /** Return the same position but as polar co-ordinates
@@ -251,6 +247,20 @@ public:
   /*--------------------------------------------------------------------------------*/
   void SetParameters(ParameterSet& parameters, const std::string& name, bool radians = false) const;
 
+#if ENABLE_JSON
+  /*--------------------------------------------------------------------------------*/
+  /** Return object as JSON object
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void ToJSON(JSONValue& obj) const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Set object from JSON
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual bool FromJSON(const JSONValue& value);
+#endif
+  
   bool polar;                 // true if co-ordinates are polar
   union
   {
@@ -277,7 +287,7 @@ extern const Position ZAxis;
  *
  */
 /*--------------------------------------------------------------------------------*/
-class Quaternion
+class Quaternion : public JSONSerializable
 {
 public:
   /*--------------------------------------------------------------------------------*/
@@ -303,7 +313,7 @@ public:
                                       x(obj.x),
                                       y(obj.y),
                                       z(obj.z) {}
-  ~Quaternion() {}
+  virtual ~Quaternion() {}
 
   /*--------------------------------------------------------------------------------*/
   /** Assignment operator
@@ -506,6 +516,20 @@ public:
   /*--------------------------------------------------------------------------------*/
   std::string ToString() const;
 
+#if ENABLE_JSON
+  /*--------------------------------------------------------------------------------*/
+  /** Return object as JSON object
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void ToJSON(JSONValue& obj) const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Set object from JSON
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual bool FromJSON(const JSONValue& value);
+#endif
+
   double w, x, y, z;
 };
 
@@ -650,14 +674,6 @@ extern bool        Evaluate(const std::string& str, Position& val);
 extern bool        Evaluate(const std::string& str, Quaternion& val);
 extern std::string StringFrom(const Position& val);
 extern std::string StringFrom(const Quaternion& val);
-
-#if ENABLE_JSON
-extern bool                FromJSON(const json_spirit::mValue& _val, Position& val);
-extern json_spirit::mValue ToJSON(const Position& val);
-
-extern bool                FromJSON(const json_spirit::mValue& _val, Quaternion& val);
-extern json_spirit::mValue ToJSON(const Quaternion& val);
-#endif
 
 BBC_AUDIOTOOLBOX_END
 

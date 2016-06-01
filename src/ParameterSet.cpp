@@ -65,6 +65,31 @@ ParameterSet& ParameterSet::operator = (const ParameterSet& obj)
   return *this;
 }
 
+bool ParameterSet::operator == (const ParameterSet& obj) const
+{
+  bool same = map_compare(values, obj.values);
+
+#if BBCDEBUG_LEVEL>=3
+  if (!same)
+  {
+    BBCDEBUG("ParameterSet sizes %s / %s:", StringFrom(values.size()).c_str(), StringFrom(obj.values.size()).c_str());
+
+    Iterator it;
+    for (it = GetBegin(); it != GetEnd(); ++it)
+    {
+      BBCDEBUG("this:%s : %s", it->first.c_str(), it->second.c_str());
+    }
+
+    for (it = obj.GetBegin(); it != obj.GetEnd(); ++it)
+    {
+      BBCDEBUG("obj: %s : %s", it->first.c_str(), it->second.c_str());
+    }
+  }
+#endif
+  
+  return same;
+}
+
 /*--------------------------------------------------------------------------------*/
 /** Returns whether this object contains all the keys and values of 'obj'
  */
@@ -467,46 +492,87 @@ bool ParameterSet::FindCombination(const std::vector<std::string>& strings, std:
 /** Return object as JSON object
  */
 /*--------------------------------------------------------------------------------*/
-json_spirit::mObject ParameterSet::ToJSON() const
-{
-  json_spirit::mObject obj;
-  ToJSON(obj);
-  return obj;
-}
-
-void ParameterSet::ToJSON(json_spirit::mObject& obj) const
+void ParameterSet::ToJSON(JSONValue& obj) const
 {
   Iterator it;
-    
+
   for (it = GetBegin(); it != GetEnd(); ++it)
   {
     const std::string& name = it->first;
     size_t pos;
 
     // detect sub-objects using '.' in name
-    if ((pos = name.find(".")) != std::string::npos)
+    if ((pos = name.find(".")) < std::string::npos)
     {
       std::string subname = name.substr(0, pos);
 
       // only process sub-object for FIRST entry!
-      if (obj.find(name) == obj.end())
+      if (!(obj.isObject() && obj.isMember(subname)))
       {
         ParameterSet subset;
-        if (Get(subname, subset)) obj[subname] = subset.ToJSON();
+        if (Get(subname, subset)) subset.ToJSON(obj[subname]);
       }
     }
     else obj[name] = it->second;
   }
 }
 
-bool ParameterSet::Get(const std::string& name, json_spirit::mObject& obj) const
+/*--------------------------------------------------------------------------------*/
+/** Set object from JSON
+ */
+/*--------------------------------------------------------------------------------*/
+bool ParameterSet::FromJSON(const JSONValue& obj)
+{
+  bool success = false;
+
+  if (obj.isObject())
+  {
+    JSONValue::const_iterator it;
+    
+    for (it = obj.begin(); it != obj.end(); ++it)
+    {
+      const JSONValue& obj2 = *it;
+      std::string name = JSON_MEMBER_NAME(it);
+      std::string str;
+      uint64_t uval;
+      sint64_t sval;
+      double   fval;
+      
+      if (obj2.isObject())
+      {
+        ParameterSet set;
+        set.FromJSON(obj2);
+        Set(name, set);
+        success = true;
+      }
+      else if (json::FromJSON(obj2, str))  {Set(name, str); success = true;}
+      else if (json::FromJSON(obj2, uval)) {Set(name, uval); success = true;}
+      else if (json::FromJSON(obj2, sval)) {Set(name, sval); success = true;}
+      else if (json::FromJSON(obj2, fval)) {Set(name, fval); success = true;}
+      else BBCERROR("Unknown type '%s' (member '%s')", obj2.toStyledString().c_str(), name.c_str());
+    }
+  }
+
+  return success;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Take a subset of parameters and store them in a JSON object
+ *
+ * @param name stub for parameter subset
+ * @param obj parent JSON object to populate named member of
+ *
+ * @return true for success
+ */
+/*--------------------------------------------------------------------------------*/
+bool ParameterSet::Get(const std::string& name, JSONValue& obj) const
 {
   ParameterSet subset;
   bool success = false;
 
   if (Get(name, subset))
   {
-    obj[name] = subset.ToJSON();
+    subset.ToJSON(obj[name]);
     success = true;
   }
 
@@ -514,73 +580,36 @@ bool ParameterSet::Get(const std::string& name, json_spirit::mObject& obj) const
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Set object from JSON
+/** Set a subset of parameters from a named member of a JSON object
+ *
+ * @param name stub for parameter subset
+ * @param obj parent JSON object of which named member exists
  */
 /*--------------------------------------------------------------------------------*/
-void ParameterSet::FromJSON(const json_spirit::mObject& obj)
+ParameterSet& ParameterSet::Set(const std::string& name, const JSONValue& obj)
 {
-  json_spirit::mObject::const_iterator it;
-
-  for (it = obj.begin(); it != obj.end(); ++it)
+  if (obj.isMember(name))
   {
-    Set(it->first, it->second);
-  }
-}
+    const JSONValue& obj2 = obj[name];
 
-ParameterSet& ParameterSet::Set(const std::string& name, const json_spirit::mValue& value)
-{
-  switch (value.type())
-  {
-    case json_spirit::obj_type:
-      Set(name, value.get_obj());
-      break;
-
-    case json_spirit::array_type:
+    if (obj2.isObject())
     {
-      const json_spirit::mArray& array = value.get_array();
-      json_spirit::mArray::const_iterator it;
-      uint_t i;
-
-      for (i = 0, it = array.begin(); it != array.end(); ++it, ++i)
+      ParameterSet subset = obj2;
+      Set(name, subset);
+    }
+    else if (obj2.isArray())
+    {
+      for (uint_t i = 0; i < obj2.size(); i++)
       {
         std::string name1;
         Printf(name1, "%s.%u", name.c_str(), i);
-        Set(name1, *it);
+        Set(name1, obj2[i].asString());
       }
-      break;
     }
-
-    default:
-      Set(name, value.get_str());
-      break;
-  }
-
-  return *this;
-}
-
-ParameterSet& ParameterSet::Set(const std::string& name, const json_spirit::mObject& obj)
-{
-  ParameterSet subset;
-  subset.FromJSON(obj);
-  Set(name, subset);
-  return *this;
-}
-
-bool FromJSON(const json_spirit::mValue& _val, ParameterSet& val)
-{
-  bool success = (_val.type() == json_spirit::obj_type);
-
-  if (success)
-  {
-    val.FromJSON(_val.get_obj());
+    else Set(name, obj.asString());
   }
   
-  return success;
-}
-
-json_spirit::mValue ToJSON(const ParameterSet& val)
-{
-  return val.ToJSON();
+  return *this;
 }
 #endif
 

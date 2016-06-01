@@ -7,6 +7,10 @@
 
 #include <string>
 
+#ifndef USE_PTHREADS
+#include <thread>
+#endif
+
 #ifdef __MACH__
 #include <mach/mach_time.h>
 #endif
@@ -14,6 +18,7 @@
 #define BBCDEBUG_LEVEL 2
 #include "EnhancedFile.h"
 #include "PerformanceMonitor.h"
+#include "SystemParameters.h"
 
 #define DISP(t) ((double)(t) * 1.0e-9)
 
@@ -32,6 +37,21 @@ PerformanceMonitor::PerformanceMonitor(uint_t _avglen) :
   reportatend(REPORT_PERFORMANCE_BY_DEFAULT),
   generategnuplotfile(false)
 {
+  static const char *paths[] =
+  {
+    "{env:BBCATPERFMONLOGSDIR}",
+    "{perfmonlogsdir}",
+    "{homedir}",
+    ".",
+  };
+  EnhancedFile file;
+  uint_t i;
+    
+  // find first valid (non-empty) path
+  for (i = 0; i < NUMBEROF(paths); i++)
+  {
+    if (!(logfiledir = SystemParameters::Get().Substitute(paths[i])).empty()) break;
+  }
 }
 
 PerformanceMonitor::~PerformanceMonitor()
@@ -58,8 +78,9 @@ PerformanceMonitor::~PerformanceMonitor()
   if (generategnuplotfile)
   {
     EnhancedFile file;
-
-    if (file.fopen("plot.gnp", "w"))
+    std::string filename = EnhancedFile::catpath(logfiledir, "plot.gnp");
+    
+    if (file.fopen(filename.c_str(), "w"))
     {
       uint_t i;
 
@@ -73,6 +94,7 @@ PerformanceMonitor::~PerformanceMonitor()
       file.fprintf("  0 lt 0\n");
       file.fclose();
     }
+    else BBCERROR("Failed to open log file '%s' for writing", filename.c_str());
   }
 }
 
@@ -239,10 +261,15 @@ void PerformanceMonitor::LogToFile(FILE *fp, perftime_t t, const TIMING_DATA& da
       fprintf(fp, "Time Start/Stop \"Start Time\" \"Stop Time\" \"Average Elapsed\" \"Average Taken\" \"This Elapsed\" \"This Taken\" \"Last Start/Stop\" Utilization Instance ID Thread\n");
     }
 
+#ifdef USE_PTHREADS
 #ifdef TARGET_OS_WINDOWS
     const void *self = pthread_self().p;
 #else
     const void *self = (const void *)pthread_self();
+#endif
+#else
+    std::hash<std::thread::id> hasher;
+    const size_t self = hasher(std::this_thread::get_id());
 #endif
     
     fprintf(fp, "%0.9lf %2d %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.9lf %0.3lf %u \"%s (%s)\" \"Thread<%s>\"\n",
@@ -331,7 +358,7 @@ void PerformanceMonitor::Start(const std::string& id)
 
     if (logtofile)
     {
-      if (!fp) fp = fopen("perfdata.dat", "w");
+      if (!fp) fp = fopen(EnhancedFile::catpath(logfiledir, "perfdata.dat").c_str(), "w");
 
       LogToFile(fp, t, data, id, true);
     }
@@ -343,7 +370,7 @@ void PerformanceMonitor::Start(const std::string& id)
         std::string filename;
 
         Printf(filename, "perf-%u.dat", data.config.instance);
-        data.config.fp = fopen(filename.c_str(), "w");
+        data.config.fp = fopen(EnhancedFile::catpath(logfiledir, filename).c_str(), "w");
       }
 
       LogToFile(data.config.fp, t, data, id, true);

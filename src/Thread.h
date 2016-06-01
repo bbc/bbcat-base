@@ -1,13 +1,22 @@
-#ifndef __THREAD__
-#define __THREAD__
+#ifndef __THREAD_H__
+#define __THREAD_H__
 
-#ifdef _MSC_VER
+#ifdef USE_PTHREADS
+#include <pthread.h>
+#else
+#include <thread>
+#include <type_traits>
+#include <atomic>
+#endif
+
+// include early for section below
+#include "OSCompiler.h"
+
+#ifdef COMPILER_MSVC
 // prevent MSDev throwing a wobbly with struct timespec defined in pthread.h
 #include <time.h>
 #define HAVE_STRUCT_TIMESPEC
 #endif
-
-#include <pthread.h>
 
 #include "misc.h"
 
@@ -39,13 +48,27 @@ public:
    */
   /*--------------------------------------------------------------------------------*/
   Thread(THREADCALL _call, void *_arg = NULL);
+
+  /*--------------------------------------------------------------------------------*/
+  /** Copy constructor
+   */
+  /*--------------------------------------------------------------------------------*/
+  Thread(const Thread& obj);
+
   virtual ~Thread();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Assignment operator
+   */
+  /*--------------------------------------------------------------------------------*/
+  Thread& operator = (const Thread& obj);
 
   /*--------------------------------------------------------------------------------*/
   /** Start callback thread
    */
   /*--------------------------------------------------------------------------------*/
   virtual bool Start(THREADCALL _call, void *_arg = NULL);
+
   /*--------------------------------------------------------------------------------*/
   /** Start thread (derived or callback)
    */
@@ -89,30 +112,67 @@ public:
   virtual void Complete() {threadcompleted = true;}
 
   /*--------------------------------------------------------------------------------*/
-  /** Return whether thread has completed
+  /** Return whether thread has completed successfully
    */
   /*--------------------------------------------------------------------------------*/
   bool HasCompleted() const {return threadcompleted;}
 
+  /*--------------------------------------------------------------------------------*/
+  /** Mark thread as finished
+   */
+  /*--------------------------------------------------------------------------------*/
+  virtual void Finished() {threadfinished = true;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Return whether thread has finished (completed or aborted)
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool HasFinished() const {return threadfinished;}
+
 protected:
   static void *__ThreadEntry(void *arg)
   {
-    return ((Thread *)arg)->Run();
+    return ((Thread *)arg)->RunEx();
   }
 
   /*--------------------------------------------------------------------------------*/
-  /** Main thread entry point
+  /** Main thread entry point (non-overridable)
+   */
+  /*--------------------------------------------------------------------------------*/
+  void *RunEx();
+
+  /*--------------------------------------------------------------------------------*/
+  /** Overridable thread routine
    */
   /*--------------------------------------------------------------------------------*/
   virtual void *Run();
 
 protected:
+#ifdef USE_PTHREADS
   pthread_t  thread;
+#else
+  // TLDR Using a thread rather than async/future to avoid hang on exit
+  // when used in plugins
+
+  // When a windows process loads a dll then exits rather than unloading dll
+  // dll-launched threads are killed before static destructors run
+  //
+  // An async future's destructor will block on completion of the
+  // async function (if launched via async policy). If the underlying thread
+  // is already dead, it blocks forever (VS2013).
+  //
+  // So if you've a statically defined renderer in a windows dll & the parent process doesn't unload, it hangs on exit
+  //
+  // OTOH std::thread seems to tolerate a join to a dead thread.
+
+  std::thread thread;
+#endif
   THREADCALL call;
   void       *arg;
   bool       stopthread;
   bool       abortthread;
   bool       threadcompleted;
+  bool       threadfinished;
 };
 
 BBC_AUDIOTOOLBOX_END

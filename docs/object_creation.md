@@ -121,7 +121,7 @@ void Foo::SetParameters(const ParameterSet& parameters)
   
   // extract and process any parameters here that
   // can be set multiple times or changed
-  parameters.Get(_parameters.bar.name, bar);
+  parameters.Get(_parameters[Parameter_bar].name, bar);
 }
 
 void Foo::GetParameterDescriptions(std::vector<const PARAMETERDESC *>& list)

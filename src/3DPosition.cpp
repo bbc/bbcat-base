@@ -1226,124 +1226,71 @@ std::string StringFrom(const Quaternion& val)
 }
 
 #if ENABLE_JSON
-bool FromJSON(const json_spirit::mValue& _val, Position& val)
+void Position::ToJSON(JSONValue& obj) const
 {
-  bool success = (_val.type() == json_spirit::obj_type);
-
-  if (success)
+  obj["polar"] = polar;
+  if (polar)
   {
-    json_spirit::mObject::iterator it;
-    json_spirit::mObject obj = _val.get_obj();
-    Position pos;
-
-    if ((it = obj.find("polar")) != obj.end())
-    {
-      FromJSON(it->second, pos.polar);
-    }
-
-    if (pos.polar)
-    {
-      if (success && ((it = obj.find("az")) != obj.end()))
-      {
-        success = FromJSON(it->second, pos.pos.az);
-      }
-      if (success && ((it = obj.find("el")) != obj.end()))
-      {
-        success = FromJSON(it->second, pos.pos.el);
-      }
-      if (success && ((it = obj.find("d")) != obj.end()))
-      {
-        success = FromJSON(it->second, pos.pos.d);
-      }
-    }
-    else
-    {
-      if (success && ((it = obj.find("x")) != obj.end()))
-      {
-        success = FromJSON(it->second, pos.pos.x);
-      }
-      if (success && ((it = obj.find("y")) != obj.end()))
-      {
-        success = FromJSON(it->second, pos.pos.y);
-      }
-      if (success && ((it = obj.find("z")) != obj.end()))
-      {
-        success = FromJSON(it->second, pos.pos.z);
-      }
-    }
-
-    if (success) val = pos;
-  }
-
-  return success;
-}
-
-json_spirit::mValue ToJSON(const Position& val)
-{
-  json_spirit::mObject obj;
-
-  obj["polar"] = val.polar;
-  if (val.polar)
-  {
-    obj["az"] = val.pos.az;
-    obj["el"] = val.pos.el;
-    obj["d"]  = val.pos.d;
+    obj["az"] = pos.az;
+    obj["el"] = pos.el;
+    obj["d"]  = pos.d;
   }
   else
   {
-    obj["x"] = val.pos.x;
-    obj["y"] = val.pos.y;
-    obj["z"] = val.pos.z;
+    obj["x"] = pos.x;
+    obj["y"] = pos.y;
+    obj["z"] = pos.z;
   }
-
-  return obj;
 }
 
-bool FromJSON(const json_spirit::mValue& _val, Quaternion& val)
+bool Position::FromJSON(const JSONValue& obj)
 {
-  bool success = (_val.type() == json_spirit::obj_type);
+  Position pos;
+  bool success;
 
-  if (success)
+  // non-existence of "polar" member is okay
+  json::FromJSON(obj, "polar", pos.polar);
+    
+  if (pos.polar)
   {
-    json_spirit::mObject::iterator it;
-    json_spirit::mObject obj = _val.get_obj();
-    Quaternion rot;
-
-    if (success && ((it = obj.find("w")) != obj.end()))
-    {
-      success = FromJSON(it->second, rot.w);
-    }
-    if (success && ((it = obj.find("x")) != obj.end()))
-    {
-      success = FromJSON(it->second, rot.x);
-    }
-    if (success && ((it = obj.find("y")) != obj.end()))
-    {
-      success = FromJSON(it->second, rot.y);
-    }
-    if (success && ((it = obj.find("z")) != obj.end()))
-    {
-      success = FromJSON(it->second, rot.z);
-    }
-
-    if (success) val = rot;
+    success = (json::FromJSON(obj, "az", pos.pos.az) &&
+               json::FromJSON(obj, "el", pos.pos.el) &&
+               json::FromJSON(obj, "d",  pos.pos.d));
   }
+  else
+  {
+    success = (json::FromJSON(obj, "x", pos.pos.x) &&
+               json::FromJSON(obj, "y", pos.pos.y) &&
+               json::FromJSON(obj, "z", pos.pos.z));
+  }
+
+  if (success) *this = pos;
 
   return success;
 }
 
-json_spirit::mValue ToJSON(const Quaternion& val)
+void Quaternion::ToJSON(JSONValue& obj) const
 {
-  json_spirit::mObject obj;
-
-  obj["w"] = val.w;
-  obj["x"] = val.x;
-  obj["y"] = val.y;
-  obj["z"] = val.z;
-
-  return obj;
+  obj["w"] = w;
+  obj["x"] = x;
+  obj["y"] = y;
+  obj["z"] = z;
 }
 
+bool Quaternion::FromJSON(const JSONValue& obj)
+{
+  Quaternion rot;
+  bool success;
+
+  success = (json::FromJSON(obj, "w", rot.w) &&
+             json::FromJSON(obj, "x", rot.x) &&
+             json::FromJSON(obj, "y", rot.y) &&
+             json::FromJSON(obj, "z", rot.z));
+
+  if (success) *this = rot;
+
+  return success;
+}
 #endif
 
 BBC_AUDIOTOOLBOX_END

@@ -1,3 +1,17 @@
+bbcat-base (0.1.2.2) quantal; urgency=low
+
+  * Improved CMake build mechanism
+  * Added redirection of debug output to OutputDebugString() in Windows
+  * Added explicit library registration function (see README)
+  * Improved JSON support using jsoncpp library
+  * Improved generic conversion to and from JSON (using ToJSON() and FromJSON() functions)
+  * Defaults to stl::thread for thread support (*requires* C++ 11 support)
+  * Added support for configurable paths by bbcat.conf in home directory, loaded by SystemParameters class
+  * Added generic file finding using search paths (configured by the above)
+  * Added unit tests using Catch framework
+
+ -- Richard Day <richard.day@bbc.co.uk>  Tue, 26 Apr 2016 17:00:00 +0100
+
 bbcat-base (0.1.2.1) quantal; urgency=low
 
   * Improved Evaluate() and StringFrom() to avoid need to know what complete format string is

@@ -19,6 +19,7 @@
 #include "./ByteSwap.h"
 #include "ThreadLock.h"
 #include "EnhancedFile.h"
+#include "SystemParameters.h"
 
 BBC_AUDIOTOOLBOX_START
 
@@ -63,6 +64,29 @@ void SetErrorHandler(DEBUGHANDLER handler, void *context)
 
   errorhandler = handler;
   errorhandler_context = context;
+}
+
+#ifdef TARGET_OS_WINDOWS
+static void __WindowsDebugOut(const char *str, void *context)
+{
+  UNUSED_PARAMETER(context);
+
+  std::string str1 = std::string(str) + "\n";
+  // make sure we use the ASCII version of Windows function
+  OutputDebugStringA(str1.c_str());
+}
+#endif
+
+/*--------------------------------------------------------------------------------*/
+/** Enable use of OutputDebugString in Windows
+ */
+/*--------------------------------------------------------------------------------*/
+void EnableWindowsDebug()
+{
+#ifdef TARGET_OS_WINDOWS
+  SetDebugHandler(&__WindowsDebugOut);
+  SetErrorHandler(&__WindowsDebugOut);
+#endif
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -138,7 +162,7 @@ void debug_err(const char *fmt, ...)
       file.fprintf("%s\n", str.c_str());
       file.fflush();
     }
-    
+
     if (errorhandler)
     {
       (*errorhandler)(str.c_str(), errorhandler_context);
@@ -200,7 +224,7 @@ uint64_t muldiv(uint64_t val, uint32_t mul, uint32_t div)
 
   uint64_t carry = 0;                   // accumulator
   uint_t i;
-  
+
   // first, multiply up by multiplier
   for (i = 0; i < NUMBEROF(parts); i++)
   {
@@ -212,7 +236,7 @@ uint64_t muldiv(uint64_t val, uint32_t mul, uint32_t div)
   res[i] = (uint32_t)carry;
 
   BBCDEBUG2(("Mul-result:%08lx:%08lx:%08lx", (ulong_t)res[2], (ulong_t)res[1], (ulong_t)res[0]));
-  
+
   // now divide by divider
   carry = 0;
   for (i = NUMBEROF(res); i > 0; /* i pre-decremented below */)
@@ -242,14 +266,14 @@ uint64_t GetNanosecondTicks()
   if (!div)
   {
     LARGE_INTEGER freq;
-    
+
     // calculate divisor to get from ns from performance counter
     QueryPerformanceFrequency(&freq);
 
     // assume divider is 32-bits or less
     div = (uint32_t)freq.QuadPart;
   }
-  
+
   QueryPerformanceCounter(&time);
 
   // multiply time by 1e9 (s->ns) then divide by divisor
@@ -398,7 +422,7 @@ void Printf(std::string& str, const char *fmt, ...)
 int vasprintf(char **buf, const char *fmt, va_list ap)
 {
   *buf = NULL;
-    
+
   int l = vsnprintf(NULL, 0, fmt, ap);
   if (l >= 0) {
     if ((*buf = (char *)malloc(l + 1)) != NULL)
@@ -439,7 +463,7 @@ void VPrintf(std::string& str, const char *fmt, va_list ap)
  * @param maxstrings if non-zero specifies the maximum number of entries in list
  *
  * @return position in string when scanning stopped
- * 
+ *
  * @note whitespace is IGNORED!
  */
 /*--------------------------------------------------------------------------------*/
@@ -454,7 +478,7 @@ uint_t SplitString(const std::string& str, std::vector<std::string>& list, char 
 
     // detect opening quote
     char quote = ((str[p] == '\'') || (str[p] == '\"')) ? str[p] : 0;
-    
+
     // skip quote, if any
     if (quote) p++;
 
@@ -795,7 +819,7 @@ const char *GetFormat(char *fmt, const char *_fmt, const char *insert, const cha
 {
   // if original is fully specified, just return it
   if (_fmt[0] == '%') return _fmt;
-  
+
   size_t p = 0, l = strlen(_fmt);   // length of supplied format string
 
   // if last char of supplied format string is alpha, decrement length by 1
@@ -805,7 +829,7 @@ const char *GetFormat(char *fmt, const char *_fmt, const char *insert, const cha
   const char *suffix = _fmt + l;
   // if no suffix supplied, set it to default suffix
   if (!suffix[0]) suffix = defsuffix;
-  
+
   // start full format string
   fmt[p++] = '%';
   // copy supplied format string (sans last char if it is alpha)
@@ -827,8 +851,8 @@ const char *GetFormat(char *fmt, const char *_fmt, const char *insert, const cha
  *
  * @note example value fmt values:
  *  "" default display ('d', 'u' or 'f'), no field formatting
- *  "x" hex display 
- *  "016x" hex display with field size of 16, '0' padded 
+ *  "x" hex display
+ *  "016x" hex display with field size of 16, '0' padded
  *  "0.32" default display ('f') with field size of 32
  *
  * Essentially:
@@ -847,7 +871,7 @@ std::string StringFrom(sint_t val, const char *fmt)
 {
   std::string str;
   char tmpfmt[16];
-  Printf(str, GetFormat(tmpfmt, fmt, "", "d"), val);  
+  Printf(str, GetFormat(tmpfmt, fmt, "", "d"), val);
   return str;
 }
 
@@ -855,7 +879,7 @@ std::string StringFrom(uint_t val, const char *fmt)
 {
   std::string str;
   char tmpfmt[16];
-  Printf(str, GetFormat(tmpfmt, fmt, "", "u"), val);  
+  Printf(str, GetFormat(tmpfmt, fmt, "", "u"), val);
   return str;
 }
 
@@ -863,7 +887,7 @@ std::string StringFrom(slong_t val, const char *fmt)
 {
   std::string str;
   char tmpfmt[16];
-  Printf(str, GetFormat(tmpfmt, fmt, "l", "d"), val);  
+  Printf(str, GetFormat(tmpfmt, fmt, "l", "d"), val);
   return str;
 }
 
@@ -871,7 +895,7 @@ std::string StringFrom(ulong_t val, const char *fmt)
 {
   std::string str;
   char tmpfmt[16];
-  Printf(str, GetFormat(tmpfmt, fmt, "l", "u"), val);  
+  Printf(str, GetFormat(tmpfmt, fmt, "l", "u"), val);
   return str;
 }
 
@@ -879,7 +903,7 @@ std::string StringFrom(sllong_t val, const char *fmt)
 {
   std::string str;
   char tmpfmt[16];
-  Printf(str, GetFormat(tmpfmt, fmt, "ll", "d"), val);  
+  Printf(str, GetFormat(tmpfmt, fmt, "ll", "d"), val);
   return str;
 }
 
@@ -887,7 +911,7 @@ std::string StringFrom(ullong_t val, const char *fmt)
 {
   std::string str;
   char tmpfmt[16];
-  Printf(str, GetFormat(tmpfmt, fmt, "ll", "u"), val);  
+  Printf(str, GetFormat(tmpfmt, fmt, "ll", "u"), val);
   return str;
 }
 
@@ -901,7 +925,7 @@ std::string StringFrom(double val, const char *fmt)
 {
   std::string str;
   size_t l;
-  
+
   if (((l = strlen(fmt)) > 0) && (fmt[l - 1] == 'x'))
   {
     uint64_t uval;
@@ -949,7 +973,7 @@ std::string SearchAndReplace(const std::string& str, const std::string& search, 
 /*--------------------------------------------------------------------------------*/
 /** Very simple wildcard matching
  *
- * @param pat pattern containing characters and/or '*' / '?' 
+ * @param pat pattern containing characters and/or '*' / '?'
  * @param str string to match
  *
  * @return true if string matches pattern
@@ -966,123 +990,6 @@ bool matchstring(const char *pat, const char *str)
 
   return ((pat[0] == str[0]) && matchstring(pat + 1, str + 1));
 }
-
-#if ENABLE_JSON
-bool FromJSON(const json_spirit::mValue& _val, bool& val)
-{
-  bool success = false;
-  if (_val.type() == json_spirit::bool_type)
-  {
-    val = _val.get_bool();
-    success = true;
-  }
-  else if (_val.type() == json_spirit::int_type)
-  {
-    val = (_val.get_int() != 0);
-    success = true;
-  }
-  return success;
-}
-
-bool FromJSON(const json_spirit::mValue& _val, sint_t& val)
-{
-  bool success = (_val.type() == json_spirit::int_type);
-  if (success) val = _val.get_int();
-  return success;
-}
-
-bool FromJSON(const json_spirit::mValue& _val, uint_t& val)
-{
-  bool success = (_val.type() == json_spirit::int_type);
-  if (success) val = std::max(_val.get_int(), 0);
-  return success;
-}
-
-bool FromJSON(const json_spirit::mValue& _val, sint64_t& val)
-{
-  bool success = (_val.type() == json_spirit::int_type);
-  if (success) val = _val.get_int64();
-  return success;
-}
-
-bool FromJSON(const json_spirit::mValue& _val, uint64_t& val)
-{
-  bool success = (_val.type() == json_spirit::int_type);
-  if (success) val = std::max(_val.get_int64(), (sint64_t)0);
-  return success;
-}
-
-bool FromJSON(const json_spirit::mValue& _val, float& val)
-{
-  double dval;
-  bool success = FromJSON(_val, dval);
-  if (success) val = (float)dval;
-  return success;
-}
-
-bool FromJSON(const json_spirit::mValue& _val, double& val)
-{
-  bool success = false;
-  if (_val.type() == json_spirit::real_type)
-  {
-    val = _val.get_real();
-    success = true;
-  }
-  else if (_val.type() == json_spirit::int_type)
-  {
-    val = (double)_val.get_int();
-    success = true;
-  }
-  return success;
-}
-
-bool FromJSON(const json_spirit::mValue& _val, std::string& val)
-{
-  bool success = (_val.type() == json_spirit::str_type);
-  if (success) val = _val.get_str();
-  return success;
-}
-
-json_spirit::mValue ToJSON(const bool& val)
-{
-  return json_spirit::mValue(val);
-}
-
-json_spirit::mValue ToJSON(const sint_t& val)
-{
-  return json_spirit::mValue(val);
-}
-
-json_spirit::mValue ToJSON(const uint_t& val)
-{
-  return json_spirit::mValue((sint_t)val);
-}
-
-json_spirit::mValue ToJSON(const sint64_t& val)
-{
-  return json_spirit::mValue(val);
-}
-
-json_spirit::mValue ToJSON(const uint64_t& val)
-{
-  return json_spirit::mValue((sint64_t)val);
-}
-
-json_spirit::mValue ToJSON(const float& val)
-{
-  return json_spirit::mValue(val);
-}
-
-json_spirit::mValue ToJSON(const double& val)
-{
-  return json_spirit::mValue(val);
-}
-
-json_spirit::mValue ToJSON(const std::string& val)
-{
-  return json_spirit::mValue(val);
-}
-#endif
 
 /*--------------------------------------------------------------------------------*/
 /** Return ns-resolution time from textual [[hh:]mm:]ss.SSSSS
@@ -1139,6 +1046,163 @@ std::string GenerateTime(uint64_t t)
   Printf(str, "%02u:%02u:%02u.%05u", hr, mn, s, ss);
 
   return str;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Attempt to find a file in supplied list of [semi-colon separated] list
+ *
+ * @param filename filename of file to search for
+ * @param paths semi-colon separated list of search paths
+ *
+ * @return path of found file or empty if file not found
+ */
+/*--------------------------------------------------------------------------------*/
+static std::string FindFileInList(const std::string& filename, const std::string& pathlist)
+{
+  // split path list by ';'
+  std::vector<std::string> paths;
+  SplitString(SystemParameters::Get().Substitute(pathlist), paths, ';');
+
+  uint_t i;
+  for (i = 0; i < (uint_t)paths.size(); i++)
+  {
+    const std::string& testpath = paths[i];
+
+    if (!testpath.empty())
+    {
+      // use SystemParameter::Substitute() for system parameters and environment variables access
+      std::string testfile = EnhancedFile::catpath(testpath, filename);
+    
+      // if found, return path
+      if (EnhancedFile::exists(testfile.c_str())) return testfile;
+      else BBCDEBUG3(("No '%s' in '%s'", filename.c_str(), testpath.c_str()));
+    }
+  }
+
+  // not found
+  return "";
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Find a file using various sources of possible paths
+ *
+ * @param filename filename of file to search for
+ * @param paths list of paths to search 
+ * @param npaths number of paths in above list
+ *
+ * @return path of found file or empty if file not found
+ *
+ * @note each entry can be a list of directories separated by ';'
+ */
+/*--------------------------------------------------------------------------------*/
+std::string FindFile(const std::string& filename, const char *paths[], uint_t npaths)
+{
+  std::string file;
+  uint_t i;
+
+  // always return empty for empty
+  if (filename.empty()) return filename;
+
+  // if file exists in current directory, return it
+  if (EnhancedFile::exists(filename.c_str()))
+  {
+    BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), filename.c_str()));
+    return filename;
+  }
+
+  // check in explicit list of paths
+  for (i = 0; i < npaths; i++)
+  {
+    if (!(file = FindFileInList(filename, paths[i])).empty())
+    {
+      BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), file.c_str()));
+      return file;
+    }
+  }
+
+  // not found
+  return "";
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Find a file using various sources of possible paths
+ *
+ * @param filename filename of file to search for
+ * @param paths list of paths to search 
+ * @param npaths number of paths in above list
+ *
+ * @return path of found file or empty if file not found
+ *
+ * @note each entry can be a list of directories separated by ';'
+ */
+/*--------------------------------------------------------------------------------*/
+std::string FindFile(const std::string& filename, const std::string *paths, uint_t npaths)
+{
+  std::string file;
+
+  // always return empty for empty
+  if (filename.empty()) return filename;
+
+  // if file exists in current directory, return it
+  if (EnhancedFile::exists(filename.c_str()))
+  {
+    BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), filename.c_str()));
+    return filename;
+  }
+
+  // check in explicit list of paths
+  uint_t i;
+  for (i = 0; i < npaths; i++)
+  {
+    if (!(file = FindFileInList(filename, paths[i])).empty())
+    {
+      BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), file.c_str()));
+      return file;
+    }
+  }
+
+  // not found
+  return "";
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Find a file using various sources of possible paths
+ *
+ * @param filename filename of file to search for
+ * @param paths list of paths to search 
+ *
+ * @return path of found file or empty if file not found
+ *
+ * @note each entry can be a list of directories separated by ';'
+ */
+/*--------------------------------------------------------------------------------*/
+std::string FindFile(const std::string& filename, const std::vector<std::string>& paths)
+{
+  std::string file;
+
+  // always return empty for empty
+  if (filename.empty()) return filename;
+
+  // if file exists in current directory, return it
+  if (EnhancedFile::exists(filename.c_str()))
+  {
+    BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), filename.c_str()));
+    return filename;
+  }
+  
+  // check in explicit list of paths
+  uint_t i;
+  for (i = 0; i < (uint_t)paths.size(); i++)
+  {
+    if (!(file = FindFileInList(filename, paths[i])).empty())
+    {
+      BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), file.c_str()));
+      return file;
+    }
+  }
+
+  // not found
+  return "";
 }
 
 BBC_AUDIOTOOLBOX_END

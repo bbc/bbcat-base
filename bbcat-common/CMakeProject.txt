@@ -1,0 +1,471 @@
+
+# create a version of project name with underscores instead of dashes
+string(REPLACE "-" "_" UNDERSCORE_PROJECT_NAME ${PROJECT_NAME})
+
+# create an uppercase version the above
+string(TOUPPER ${UNDERSCORE_PROJECT_NAME} UPPERCASE_PROJECT_NAME)
+
+if(NOT DEFINED GITBRANCH)
+	# extract git branch for use in version strings
+	find_package (Git)
+	execute_process(
+	    COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+	    RESULT_VARIABLE RESULT
+	    OUTPUT_VARIABLE GITBRANCH
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
+# convert LINKTYPE into library suffix
+if((NOT MSVC) AND (DEFINED LINKTYPE) AND (("${LINKTYPE}" STREQUAL "static")))
+	# static libraries require '-static' suffix
+	set(LINKTYPE "-static")
+else()
+	# shared and libraries in MSVC libraries have no suffix
+	set(LINKTYPE "")
+endif()
+
+message("Project link-type ${LINKTYPE}")
+	
+# set project version string
+set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_RELEASE}.${PROJECT_VERSION_BUILD}-${GITBRANCH}")
+
+# add this directory for CMake module path
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${BBCAT_COMMON_DIR})
+
+# create name for project name with major.minor version number
+set(PROJECT_NAME_AND_VERSION ${PROJECT_NAME}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR})
+
+# set default build type
+if(NOT DEFINED CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
+
+# set default Win32 installation location for libraries and includes used
+if(WIN32 AND (NOT DEFINED CYGWIN) AND (NOT DEFINED WIN32_LIBRARIES_LOCATION))
+	set(WIN32_LIBRARIES_LOCATION "c:/local")
+endif()
+
+if(FALSE)
+# create install destination for bbcat libraries
+if(WIN32 AND CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CYGWIN)
+	set(_bbcat_dir "bbcat")
+	get_filename_component(_oneup ${CMAKE_INSTALL_PREFIX} DIRECTORY)
+	if(DEFINED WIN32_LIBRARIES_LOCATION)
+		set(CMAKE_INSTALL_PREFIX ${WIN32_LIBRARIES_LOCATION}/${_bbcat_dir} CACHE PATH
+			"Install path prefix, prepended onto install directories." FORCE)
+	else()
+		set(CMAKE_INSTALL_PREFIX ${_oneup}/${_bbcat_dir}/ CACHE PATH
+			"Install path prefix, prepended onto install directories." FORCE)
+	endif()
+endif()
+endif()
+
+# set installation destination for this project
+set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
+set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for binaries")
+set(INSTALL_INCLUDE_DIR include/${PROJECT_NAME_AND_VERSION} CACHE PATH "Installation directory for header files")
+set(INSTALL_SHARE_DIR share/${PROJECT_NAME} CACHE PATH "Installation directory for shared files")
+set(INSTALL_CMAKE_DIR lib/cmake)
+
+# Make relative paths absolute
+foreach(p LIB BIN INCLUDE SHARE CMAKE)
+	set(var INSTALL_${p}_DIR)
+	if(NOT IS_ABSOLUTE "${${var}}")
+		set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
+	endif()
+	#message("${var} is " ${${var}})
+endforeach()
+
+# add this directory for CMake module path
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${INSTALL_CMAKE_DIR})
+
+set(GLOBAL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR})
+set(GLOBAL_LIB_DIRS ${INSTALL_LIB_DIR})
+
+################################################################################
+# Add known library to project flags
+function(bbcat_add_library LIBRARY)
+	#message("Adding library ${LIBRARY}")
+	#message("Adding compile flags ${${LIBRARY}_FLAGS}")
+	#message("Adding include directories ${${LIBRARY}_INCLUDE_DIRS}")
+	#message("Adding library directories ${${LIBRARY}_LIB_DIRS}")
+	#message("Adding library extra libraries ${${LIBRARY}_EXTRA_LIBS}")
+	set(GLOBAL_FLAGS
+		${GLOBAL_FLAGS}
+		${${LIBRARY}_FLAGS} PARENT_SCOPE)
+	set(GLOBAL_INCLUDE_DIRS
+		${GLOBAL_INCLUDE_DIRS}
+		${${LIBRARY}_INCLUDE_DIRS} PARENT_SCOPE)
+	set(GLOBAL_LIB_DIRS
+		${GLOBAL_LIB_DIRS}
+		${${LIBRARY}_LIB_DIRS} PARENT_SCOPE)
+	set(GLOBAL_EXTRA_LIBS
+		${GLOBAL_EXTRA_LIBS}
+		${${LIBRARY}_EXTRA_LIBS} PARENT_SCOPE)
+	set(GLOBAL_OPTIONS
+		${GLOBAL_OPTIONS}
+		${${LIBRARY}_OPTIONS} PARENT_SCOPE)
+endfunction()
+		
+################################################################################
+# Find library and add it to project flags
+#
+# Arguments:
+# LIBRARY <name> library name to look for
+# [PACKAGE <name>] pkg-config name (if different from above)
+# [VERSION <version>] version for pkg-config search
+# [DEFINE <define>] add define <define> to compile flags with result of find (i.e. =1 or =0)
+# [HEADER <header>] header file to look for (when not using pkg-config)
+# [EXTRA_LIBRARY_PATHS <paths>] extra paths to start search in
+# [EXTRA_LIBRARY_NAMES <names>] extra library names to search for
+# [EXTRA_LIBRARY_PATH_SUFFIXES <paths>] extra suffices to add to paths when searching for library
+# [EXTRA_INCLUDE_PATH_SUFFIXES <paths>] extra suffices to add to paths when searching for header
+# [EXACT] pkg-config version of library must be exact match
+# [REQUIRED] process will fail if library/header not found
+# [HEADERONLY] only look for header, not library
+#
+# On Mac/Linux, pkg-config is tried first using PACKAGE argument
+#
+# On win32, the library search paths are:
+# ${WIN32_LIBRARIES_LOCATION}/<library>
+# ${WIN32_LIBRARIES_LOCATION}
+# ${CMAKE_INSTALL_PREFIX}/<library>
+# ${CMAKE_INSTALL_PREFIX}
+# For EACH of the above paths, the following suffices are tried:
+# build/<buildtype>
+# x64/<buildtype>
+# <buildtype>
+# lib64
+# lib
+#
+# On win32, the header search paths are:
+# ${WIN32_LIBRARIES_LOCATION}/<library>
+# ${WIN32_LIBRARIES_LOCATION}
+# ${CMAKE_INSTALL_PREFIX}/<library>
+# ${CMAKE_INSTALL_PREFIX}
+# For EACH of the above paths, the following suffices are tried:
+# include
+# .
+#
+function(bbcat_find_library)
+	set(options EXACT REQUIRED HEADERONLY)
+	set(oneValueArgs LIBRARY PACKAGE VERSION DEFINE HEADER)
+	set(multiValueArgs EXTRA_LIBRARY_PATHS EXTRA_LIBRARY_NAMES EXTRA_LIBRARY_PATH_SUFFIXES EXTRA_INCLUDE_PATH_SUFFIXES)
+	cmake_parse_arguments(FIND "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+	# allow different package name for pkg-config
+	if(NOT DEFINED FIND_PACKAGE)
+		set(FIND_PACKAGE ${FIND_LIBRARY})
+	endif()
+
+	string(REPLACE "-" "_" LIBRARY_NAME "${FIND_LIBRARY}")
+	
+	# attempt to find package via pkg-config
+	if(UNIX)
+	    find_package(PkgConfig)
+	    if(PKG_CONFIG_FOUND)
+	        if(${FIND_VERSION})
+	            if(${FIND_EXACT})
+	                pkg_check_modules(${LIBRARY_NAME} QUIET ${FIND_PACKAGE}=${FIND_VERSION})
+	            else(${FIND_EXACT})
+	                pkg_check_modules(${LIBRARY_NAME} QUIET ${FIND_PACKAGE}>=${FIND_VERSION})
+	            endif(${FIND_EXACT})
+	        else(${FIND_VERSION})
+	            pkg_check_modules(${LIBRARY_NAME} QUIET ${FIND_PACKAGE})
+	        endif(${FIND_VERSION})
+			set(${LIBRARY_NAME}_VERSION ${${LIBRARY_NAME}_VERSION} PARENT_SCOPE)
+	    endif(PKG_CONFIG_FOUND)
+	endif(UNIX)
+
+	if(${LIBRARY_NAME}_FOUND)
+		message("Found ${FIND_LIBRARY} using pkg-config")
+	elseif(DEFINED FIND_HEADER)
+		message("Trying to find header ${FIND_HEADER} in ${FIND_LIBRARY}")
+		if(WIN32)
+			find_path(${LIBRARY_NAME}_INCLUDE_DIRS
+					  NAMES "${FIND_HEADER}"
+					  PATHS
+					  ${EXTRA_LIBRARY_PATHS}
+					  "${WIN32_LIBRARIES_LOCATION}/${FIND_LIBRARY}"
+					  "${WIN32_LIBRARIES_LOCATION}"
+					  HINTS
+					  "${CMAKE_INSTALL_PREFIX}/${FIND_LIBRARY}"
+					  "${CMAKE_INSTALL_PREFIX}"
+					  PATH_SUFFIXES
+					  ${FIND_EXTRA_INCLUDE_PATH_SUFFIXES}
+					  "include"
+					  ".")
+		else()
+			find_path(${LIBRARY_NAME}_INCLUDE_DIRS
+					  NAMES ${FIND_HEADER}
+					  PATH_SUFFIXES
+					  "${FIND_LIBRARY}"
+					  ".")
+		endif()
+
+		if(NOT FIND_HEADERONLY)
+			message("Trying to find library ${FIND_LIBRARY} in ${FIND_LIBRARY}")
+		
+			if(WIN32)
+				find_library(${LIBRARY_NAME}_LIBRARIES
+							 NAMES
+							 ${FIND_EXTRA_LIBRARY_NAMES}
+							 "${FIND_LIBRARY}"
+							 "lib${FIND_LIBRARY}"
+							 PATHS
+							 ${EXTRA_LIBRARY_PATHS}
+							 "${WIN32_LIBRARIES_LOCATION}/${FIND_LIBRARY}"
+							 "${WIN32_LIBRARIES_LOCATION}"
+							 HINTS
+							 "${CMAKE_INSTALL_PREFIX}/${FIND_LIBRARY}"
+							 "${CMAKE_INSTALL_PREFIX}"
+							 PATH_SUFFIXES
+							 ${FIND_EXTRA_LIBRARY_PATH_SUFFIXES}
+							 "build/${CMAKE_BUILD_TYPE}"
+							 "x64/${CMAKE_BUILD_TYPE}"
+							 "${CMAKE_BUILD_TYPE}"
+							 "lib64"
+							 "lib")			
+			else()
+				find_library(${LIBRARY_NAME}_LIBRARIES
+							 NAMES ${FIND_LIBRARY} ${FIND_PACKAGE})
+			endif()
+		endif()
+
+		# if library not found, undefine variable
+		if(DEFINED ${LIBRARY_NAME}_LIBRARIES AND (NOT (${LIBRARY_NAME}_LIBRARIES STREQUAL "${LIBRARY_NAME}_LIBRARIES-NOTFOUND")))
+			include(FindPackageHandleStandardArgs)
+			find_package_handle_standard_args(${FIND_LIBRARY}
+			                                  DEFAULT_MSG
+			                                  ${LIBRARY_NAME}_LIBRARIES)
+		else()
+			unset(${LIBRARY_NAME}_LIBRARIES)
+		endif()
+
+		if(DEFINED ${LIBRARY_NAME}_INCLUDE_DIRS AND (NOT ${LIBRARY_NAME}_INCLUDE_DIRS))
+			message("Header ${FIND_HEADER} not found")
+			unset(${LIBRARY_NAME}_INCLUDE_DIRS)
+		endif()
+		
+		if(${LIBRARY_NAME}_INCLUDE_DIRS AND (${LIBRARY_NAME}_LIBRARIES OR FIND_HEADERONLY))
+			set(${LIBRARY_NAME}_FOUND TRUE)
+		else()
+			set(${LIBRARY_NAME}_FOUND FALSE)
+		endif()
+	endif()
+
+	if(${LIBRARY_NAME}_FOUND)
+		#message("Library ${FIND_LIBRARY} found: flags '${${LIBRARY_NAME}_CFLAGS}' includedirs '${${LIBRARY_NAME}_INCLUDE_DIRS}' libdirs '${${LIBRARY_NAME}_LIBRARY_DIRS}' libs '${${LIBRARY_NAME}_LIBRARIES}'")
+
+		set(${LIBRARY_NAME}_FOUND ${${LIBRARY_NAME}_FOUND} PARENT_SCOPE)
+
+		mark_as_advanced(${LIBRARY_NAME}_INCLUDE_DIRS ${LIBRARY_NAME}_LIBRARY_DIRS ${LIBRARY_NAME}_LIBRARIES)
+		
+		if(DEFINED FIND_DEFINE)
+			set(GLOBAL_FLAGS
+				${GLOBAL_FLAGS}
+				"-D${FIND_DEFINE}=1")
+			set(${FIND_DEFINE} TRUE PARENT_SCOPE)
+		endif()
+
+		# pkg-config supplies compile flags, use them if they exist
+		set(GLOBAL_FLAGS
+			${GLOBAL_FLAGS}
+			${${LIBRARY_NAME}_CFLAGS} PARENT_SCOPE)
+
+		# other methods specify include dirs
+		# BUT pkg-config specifies BOTH compile flags and include dirs
+		# so ONLY use include dirs if compile flags haven't been set
+		if (NOT ${LIBRARY_NAME}_CFLAGS)
+			set(GLOBAL_INCLUDE_DIRS
+				${GLOBAL_INCLUDE_DIRS}
+				${${LIBRARY_NAME}_INCLUDE_DIRS})
+
+			list(REMOVE_DUPLICATES GLOBAL_INCLUDE_DIRS)
+
+			set(GLOBAL_INCLUDE_DIRS
+				${GLOBAL_INCLUDE_DIRS} PARENT_SCOPE)
+		endif()
+
+		# split <dir>/[lib]<lib>.<ext> into <dir> and <lib>
+		if(UNIX AND (NOT DEFINED ${LIBRARY_NAME}_LIBRARY_DIRS))
+			set(ORIGINAL "${${LIBRARY_NAME}_LIBRARIES}")
+			get_filename_component(${LIBRARY_NAME}_LIBRARY_DIRS "${${LIBRARY_NAME}_LIBRARIES}" DIRECTORY)
+			get_filename_component(${LIBRARY_NAME}_LIBRARIES "${${LIBRARY_NAME}_LIBRARIES}" NAME_WE)
+			string(REGEX REPLACE "^lib" "" ${LIBRARY_NAME}_LIBRARIES "${${LIBRARY_NAME}_LIBRARIES}")
+			message("Stripped ${ORIGINAL} into '${${LIBRARY_NAME}_LIBRARIES}' and '${${LIBRARY_NAME}_LIBRARY_DIRS}'")
+		endif()
+		
+		set(GLOBAL_LIB_DIRS
+			${GLOBAL_LIB_DIRS}
+			${${LIBRARY_NAME}_LIBRARY_DIRS})
+
+		list(REMOVE_DUPLICATES GLOBAL_LIB_DIRS)
+
+		set(GLOBAL_LIB_DIRS
+			${GLOBAL_LIB_DIRS} PARENT_SCOPE)
+
+		set(GLOBAL_EXTRA_LIBS
+			${GLOBAL_EXTRA_LIBS}
+			${${LIBRARY_NAME}_LIBRARIES} PARENT_SCOPE)
+	else()
+		message("Library ${FIND_LIBRARY} NOT found")
+		if(DEFINED FIND_DEFINE)
+			set(GLOBAL_FLAGS
+				${GLOBAL_FLAGS}
+				"-D${FIND_DEFINE}=0" PARENT_SCOPE)
+			set(${FIND_DEFINE} FALSE PARENT_SCOPE)
+		endif()
+	endif()
+	
+	if(NOT ${LIBRARY_NAME}_FOUND AND FIND_REQUIRED)
+		message(FATAL_ERROR "Required library ${FIND_LIBRARY} not found" )
+	endif()
+endfunction()
+		
+# At the moment, all include directories are relative to the source root directory.
+# Therefore it suffices to set this root as the include path.
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/src )
+
+# Copy the executables to the binary directory
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+
+############################################################
+# Set compiler options
+if(MSVC)
+	# enable /bigobj so Visual Studio doesn't whinge
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
+	# stop unsafe warnings, ensure STL is exported and prevent std::min()/std::max() causing errors
+	ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS -D_WINSOCK_DEPRECATED_NO_WARNINGS -DEXP_STL -DNOMINMAX")
+else()
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -msse2")
+	if(NOT DEFINED ERRORS_AS_WARNINGS OR ERRORS_AS_WARNINGS)
+	    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+	endif()
+
+	# Use C++11
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+# tell code that this is a CMake build
+ADD_DEFINITIONS("-DCMAKE_BUILD")
+ADD_DEFINITIONS("-I.")
+
+############################################################
+# Control optimisation (prefer to use optimization even for Debug builds)
+OPTION(BUILD_OPTIMISE "Optimisation" ON)
+
+if(BUILD_OPTIMISE)
+	if(MSVC)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
+	else()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
+	endif()
+endif()
+
+############################################################
+# Pull C flags into C++ compile
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS}")
+
+################################################################################
+# function to collate registration functions into a single file
+OPTION(GENERATE_REGISTER "Generate registration file" OFF)
+function(bbcat_generate_register_cpp)
+	set(options)
+	set(oneValueArgs FILE PROJECTNAME)
+	set(multiValueArgs DEPENDENCIES)
+	cmake_parse_arguments(GENERATE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+	if(NOT DEFINED GENERATE_FILE)
+		set(GENERATE_FILE register)
+	endif()
+
+	if(NOT DEFINED GENERATE_PROJECTNAME)
+		set(GENERATE_PROJECTNAME "${UNDERSCORE_PROJECT_NAME}")
+	endif()
+
+	# if registration source file already exists in source directory, don't generate one
+	if((NOT GENERATE_REGISTER) AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${GENERATE_FILE}.cpp"))
+		set(REGISTER_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/${GENERATE_FILE}.cpp)
+		message("Using existing ${REGISTER_SOURCE} as registration file")
+	else()
+		set(REGISTER_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${GENERATE_FILE}.cpp)
+		message("Generating ${REGISTER_SOURCE} as registration file")
+
+		# Set versions include path
+		if("${PROJECT_NAME}" STREQUAL "bbcat-base")
+			set(LOADED_VERSIONS_PATH "\"LoadedVersions.h\"")
+		else()
+			set(LOADED_VERSIONS_PATH "<bbcat-base/LoadedVersions.h>")
+		endif()
+
+		# Dependency registration functions
+		foreach(_dependentLib IN ITEMS ${GENERATE_DEPENDENCIES})
+			if(NOT "${_dependentLib}" STREQUAL "")
+				set(_dependencyRegFnDecl "extern bool bbcat_register_${_dependentLib}();\n")
+				set(_dependencyRegFnCall "\tbbcat_register_${_dependentLib}();\n")
+				set(DEPENDENCY_REG_FUNCTION_DECLS "${DEPENDENCY_REG_FUNCTION_DECLS}${_dependencyRegFnDecl}")
+				set(DEPENDENCY_REG_FUNCTION_CALLS "${DEPENDENCY_REG_FUNCTION_CALLS}${_dependencyRegFnCall}")
+			endif()
+		endforeach()
+
+		# Get registration functions from source files
+		foreach (_file IN ITEMS ${_sources})
+			# file command returns whole lines that contain a match
+			file(STRINGS ${_file} _regFnLines
+				 REGEX "^void bbcat_register_[A-Za-z0-9_]+\\(\\)"
+			)
+			foreach(_fnLine IN ITEMS "${_regFnLines}")
+				if(NOT "${_fnLine}" STREQUAL "")
+					# so need to do a second match to pull out just the function sig
+					string(REGEX MATCH "^void bbcat_register_[A-Za-z0-9_]+\\(\\)" _regFn "${_fnLine}")
+					# have to get rid of the return type from the signature when calling
+					string(REGEX MATCH "bbcat_register_[A-Za-z0-9_]+\\(\\)" _regCall "${_regFn}")
+					if(NOT "${_regFn}" STREQUAL "")
+						set(_regFnDecl "extern ${_regFn}")
+						# populate these two vars with a list of the declarations and calls that will be substituted into the file
+						set(REGISTRATION_FUNCTION_DECLARATIONS "${REGISTRATION_FUNCTION_DECLARATIONS}${_regFnDecl};\n")
+						set(REGISTRATION_FUNCTION_CALLS        "${REGISTRATION_FUNCTION_CALLS}\t${_regCall};\n")
+					endif()
+				endif()
+			endforeach()
+		endforeach()
+
+		# do the variable substitution to generate file
+		configure_file("${BBCAT_COMMON_DIR}/register.cpp.in" "${REGISTER_SOURCE}" @ONLY)
+	endif()
+	
+	# update sources to include new file
+	set(_sources
+		${_sources}
+		${REGISTER_SOURCE} PARENT_SCOPE)
+endfunction()
+
+################################################################################
+# define function to create pkg-config file but this MUST be called very late in
+# the project because it refers to GLOBAL_EXTRA_LIBS and GLOBAL_FLAGS which may be changed after this point
+function(bbcat_generate_pkg_config)
+	# create special spaces-instead-of-semi-colons versions of GLOBAL_EXTRA_LIBS and GLOBAL_FLAGS
+	string(REPLACE ";" " -L" GLOBAL_LIB_DIRS_SPACES "-L${GLOBAL_LIB_DIRS}")
+	string(REPLACE ";" " -l" GLOBAL_EXTRA_LIBS_SPACES "-l${GLOBAL_EXTRA_LIBS}")
+	string(REPLACE ";" " " GLOBAL_FLAGS_SPACES "${GLOBAL_FLAGS}")
+
+	# create pkg-config file
+	configure_file(${BBCAT_COMMON_DIR}/pkgconfig.in
+				   ${PROJECT_BINARY_DIR}/${PROJECT_NAME_AND_VERSION}.pc @ONLY)
+
+	install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME_AND_VERSION}.pc
+			DESTINATION ${INSTALL_LIB_DIR}/pkgconfig)
+endfunction()
+
+function(is_feature_enabled FEATURE DESC)
+	string(FIND "${GLOBAL_FLAGS}" "-D${FEATURE}=1" ${FEATURE})
+	if(${FEATURE} LESS 0)
+		message("${DESC} *disabled*")
+		set(${FEATURE} FALSE PARENT_SCOPE)
+	else()
+		message("${DESC} enabled")
+		set(${FEATURE} TRUE PARENT_SCOPE)
+	endif()
+endfunction()

@@ -4,9 +4,15 @@ Base library for BBC Audio Toolbox
 
 Contains miscellaneous debug, file and position functions
 
+Dependencies
+
+jsoncpp - https://github.com/open-source-parsers/jsoncpp
+
 Files
 
 autogen.sh - simple autotools script
+bbcat-common - a set of common files for all bbcat-* libraries (will be installed by CMake to /usr/local/share)
+CMakeLists.txt - CMake configuration
 configure.ac - configure configuration for autotools
 COPYING - information on copying this library
 debian/ - Debian control and version information
@@ -16,6 +22,24 @@ m4 - folder for autotools
 Makefile.am - makefile for automake
 README - this file
 src/ - source folder containing C/C++ source and header files
+test/ - unit test files
+
+bbcat-common/CMakeLibrary.txt			| Common CMake configuration for the libraries
+
+bbcat-common/CMakeProject.txt			| Common CMake configuration for all projects
+
+bbcat-common/Config.cmake.in			| Input files for CMake .cmake configuration file auto-generation
+bbcat-common/ConfigVersion.cmake.in		|
+
+bbcat-common/FindPortAudio.cmake		| Various CMake file utilities
+bbcat-common/FindThreads.cmake			|
+bbcat-common/FindwxWidgets.cmake		|
+
+bbcat-common/findregisterfunctions.sh	| Shell script to auto-generate the register.cpp file
+
+bbcat-common/include/catch/catch.hpp	| Catch unit testing framework
+
+bbcat-common/pkgconfig.in				| Input file for pkg-config auto-generation
 
 src/3DPosition.cpp                      | 3D position, rotation and transformation classes
 src/3DPosition.h                        |
@@ -28,11 +52,16 @@ src/ByteSwap.h                          |
 
 src/CallbackHook.h                      | A simple callback object for sequenced callbacks
 
+src/CMakeLists.txt						| CMake configuration for source files
+
 src/DistanceModel.cpp                   | A model for level and delay calculations based on distance 
 src/DistanceModel.h                     |
 
 src/EnhancedFile.cpp                    | A wrapper for FILE * operations which provides some extra functionality 
 src/EnhancedFile.h                      |
+
+src/json.cpp                            | Abstraction and support for JSON
+src/json.h                              |
 
 src/LoadedVersions.cpp					| A singleton class to hold a list of the loaded versions of libraries and applications
 src/LoadedVersions.h					|
@@ -44,7 +73,7 @@ src/Makefile.am                         | Makefile for automake
 src/misc.cpp                            | Miscelleanous functions and definitions, especially debugging functions
 src/misc.h                              |
 
-src/NamedParameter.cpp					| An interface, template and macro that create a named parameter with an optional default value
+src/NamedParameter.cpp					| An interface, template and macro that create a named parameter with an optional default value with JSON support
 src/NamedParameter.h					|
 
 src/ObjectRegistry.cpp                  | A register of objects that can create themselves (see SelfRegisteringParametricObject.h)
@@ -63,6 +92,9 @@ src/RefCount.h							| A simple ref-counting template that allows easy ref-count
 src/SelfRegisteringParametricObject.cpp | A base class for objects that can be created from a textual name and parameters (using ParameterSet objects)
 src/SelfRegisteringParametricObject.h   |
 
+src/SystemParameters.cpp				| A global registry for system level parameters and paths
+src/SystemParameters.h					|
+
 src/Thread.cpp							| Simple thread class that can run a thread via a derived class or callback
 src/Thread.h							|
 
@@ -74,12 +106,56 @@ src/UDPSocket.h                         |
 
 src/UniversalTime.h                     | A simple fraction based timebase with arbitrary numerator and denominator
 
-src/WindowsNet.h                        | Windows network intialisation
+src/WindowsNet.h						| Windows networking initialisation
 
-src/Windows_uSleep.cpp                  | Windows implementation of usleep()
-src/Windows_uSleep.h                    |
+src/Windows_uSleep.cpp					| Windows implementation of usleep()
+src/Windows_uSleep.h					|
 
-NOTE: JSON support is currently disabled
+src/register.cpp						| Registration function (see below)
+
+test/CMakeLists.txt						| CMake configuration for tests
+
+test/Makefile.am						| Makefile for automake 
+
+test/jsontests.cpp						| Tests for JSON
+
+test/stringfromtests.cpp				| Tests for StringFrom() functions
+
+test/testbase.cpp						| Test base file
+
+--------------------------------------------------------------------------------
+Initialising the Library (IMPORTANT!)
+
+Compilers are clever and try to remove unused code whilst linking applications.
+However, sometimes they are too clever and remove some code that *appears* not
+to be used but is.  Uses of the SelfRegisteringParametricObject class may
+particularly suffer from this as it appears as though nothing is using the
+code.
+
+To stop this, each library includes a register.cpp file which explicitly calls a
+set of initilisation and registration functions. This file also calls the
+registration functions of any libraries it is dependant upon.
+
+For this to work, any application *must* call the registration function of most
+dependant library it uses.
+
+For example, for an application using only this library:
+BBC_AUDIOTOOLBOX_START
+extern bool bbcat_register_bbcat_base();
+BBC_AUDIOTOOLBOX_END
+
+using namespace bbcat;
+
+int main(int argc, char *argv[])
+{
+  // ensure libraries are set up
+  bbcat_register_bbcat_base();
+}
+
+register.cpp is included in repo but will be updated by the script
+bbcat-common/findregisterfunctions.sh if autotools is used.  The CMake process
+is also capable of autogenerating this file if the original in the source
+directory does not exist.
 
 --------------------------------------------------------------------------------
 Building on Windows (Visual Studio)
@@ -101,8 +177,8 @@ cmake -G "Visual Studio 14 2015 Win64" .. && cmake --build . --target INSTALL --
 Notes on Windows builds
 
 As there is no standardised directories for cmake files, libraries, etc. the build *assumes* that:
-1. Library includes, libs and shared files will be stored in c:\local\bbcat
-2. CMake configuration files will be stored in c:\local\cmake
+1. Library includes, libs and shared files will be stored in c:\local
+2. CMake configuration files will be stored in c:\local
 3. http://sourceforge.net/projects/pthreads4w/ has been downloaded and extracted to c:\local\pthreads (rename unzip folder to 'pthreads')
 --------------------------------------------------------------------------------
 
@@ -117,4 +193,3 @@ autotools:
 cmake:
 mkdir build ; cd build ; cmake .. && make && sudo make install
 --------------------------------------------------------------------------------
-

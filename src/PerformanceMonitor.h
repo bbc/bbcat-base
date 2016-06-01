@@ -148,14 +148,15 @@ protected:
    */
   /*--------------------------------------------------------------------------------*/
   std::string GetReportEx();
-
+  
 protected:
   ThreadLockObject tlock;
   perftime_t       t0;
   uint_t           avglen;
   std::map<std::string,TIMING_DATA> timings;
   std::vector<const TIMING_DATA *>  timingslist;
-
+  std::string      logfiledir;
+  
   FILE *fp;
   bool measure;
   bool logtofile;

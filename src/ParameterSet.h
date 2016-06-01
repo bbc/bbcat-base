@@ -5,11 +5,8 @@
 #include <map>
 #include <vector>
 
-#if ENABLE_JSON
-#include <json_spirit/json_spirit.h>
-#endif
-
 #include "misc.h"
+#include "json.h"
 
 BBC_AUDIOTOOLBOX_START
 
@@ -18,7 +15,7 @@ BBC_AUDIOTOOLBOX_START
  *
  */
 /*--------------------------------------------------------------------------------*/
-class ParameterSet
+class ParameterSet : public JSONSerializable
 {
 public:
   ParameterSet() {}
@@ -26,9 +23,9 @@ public:
   ParameterSet(const std::vector<std::string>& values);         // array of key=value strings
   ParameterSet(const ParameterSet& obj);
 #if ENABLE_JSON
-  ParameterSet(const json_spirit::mObject& obj) {FromJSON(obj);}
+  ParameterSet(const JSONValue& obj) {FromJSON(obj);}
 #endif
-  ~ParameterSet() {}
+  virtual ~ParameterSet() {}
 
   /*--------------------------------------------------------------------------------*/
   /** Assignment operators
@@ -42,7 +39,7 @@ public:
   /** Comparison operators
    */
   /*--------------------------------------------------------------------------------*/
-  bool operator == (const ParameterSet& obj) const {return map_compare(values, obj.values);}
+  bool operator == (const ParameterSet& obj) const;
   bool operator != (const ParameterSet& obj) const {return !operator == (obj);}
 
   /*--------------------------------------------------------------------------------*/
@@ -238,35 +235,40 @@ public:
   /** Return object as JSON object
    */
   /*--------------------------------------------------------------------------------*/
-  json_spirit::mObject ToJSON() const;
-  void ToJSON(json_spirit::mObject& obj) const;
-  bool Get(const std::string& name, json_spirit::mObject& obj) const;
-  operator json_spirit::mObject () const {return ToJSON();}
-
-  /*--------------------------------------------------------------------------------*/
-  /** Convert parameters to a JSON string
-   */
-  /*--------------------------------------------------------------------------------*/
-  std::string ToJSONString() const {return json_spirit::write(ToJSON(), json_spirit::pretty_print);}
+  virtual void ToJSON(JSONValue& obj) const;
 
   /*--------------------------------------------------------------------------------*/
   /** Set object from JSON
    */
   /*--------------------------------------------------------------------------------*/
-  void FromJSON(const json_spirit::mObject& obj);
-  ParameterSet& Set(const std::string& name, const json_spirit::mObject& obj);
-  ParameterSet& Set(const std::string& name, const json_spirit::mValue& value);
-  ParameterSet& operator = (const json_spirit::mObject& obj) {FromJSON(obj); return *this;}
+  virtual bool FromJSON(const JSONValue& value);
+
+  ParameterSet& operator = (const JSONValue& obj) {FromJSON(obj); return *this;}
+
+  /*--------------------------------------------------------------------------------*/
+  /** Take a subset of parameters and store them in a named member of a JSON object
+   *
+   * @param name stub for parameter subset
+   * @param obj parent JSON object to populate named member of
+   *
+   * @return true for success
+   */
+  /*--------------------------------------------------------------------------------*/
+  bool          Get(const std::string& name, JSONValue& obj) const;
+
+  /*--------------------------------------------------------------------------------*/
+  /** Set a subset of parameters from a named member of a JSON object
+   *
+   * @param name stub for parameter subset
+   * @param obj parent JSON object of which named member exists
+   */
+  /*--------------------------------------------------------------------------------*/
+  ParameterSet& Set(const std::string& name, const JSONValue& obj);
 #endif
 
 protected:
   std::map<std::string,std::string> values;
 };
-
-#if ENABLE_JSON
-extern bool                FromJSON(const json_spirit::mValue& _val, ParameterSet& val);
-extern json_spirit::mValue ToJSON(const ParameterSet& val);
-#endif
 
 BBC_AUDIOTOOLBOX_END
 

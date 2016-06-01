@@ -1,0 +1,27 @@
+/* Auto-generated: DO NOT EDIT! */
+#include @LOADED_VERSIONS_PATH@
+BBC_AUDIOTOOLBOX_START
+// list of libraries this library is dependant on
+@DEPENDENCY_REG_FUNCTION_DECLS@
+// list of this library's component registration functions
+@REGISTRATION_FUNCTION_DECLARATIONS@
+// registration function
+bool bbcat_register_@GENERATE_PROJECTNAME@()
+{
+  static bool registered = false;
+  // prevent registration functions being called more than once
+  if (!registered)
+  {
+    registered = true;
+    // register other libraries
+@DEPENDENCY_REG_FUNCTION_CALLS@
+    // register this library's version number
+    LoadedVersions::Get().Register("@PROJECT_NAME@", "@PROJECT_VERSION@");
+    // register this library's components
+@REGISTRATION_FUNCTION_CALLS@
+  }
+  return registered;
+}
+// automatically call registration functions
+volatile const bool @GENERATE_PROJECTNAME@_registered = bbcat_register_@GENERATE_PROJECTNAME@();
+BBC_AUDIOTOOLBOX_END

@@ -170,8 +170,7 @@ protected:
  */
 /*--------------------------------------------------------------------------------*/
 #define SELF_REGISTERING_PARAMETRIC_OBJECT(type, name)                  \
-static SelfRegisteringParametricObjectFactory<type> __factory_##type(name); \
-const RegisteredObjectFactory *factory_##type = &__factory_##type;
+static SelfRegisteringParametricObjectFactory<type> __factory_##type(name);
 
 /*--------------------------------------------------------------------------------*/
 /** Add this to any class definitions that should be singletons

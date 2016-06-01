@@ -1,5 +1,5 @@
 AC_PREREQ([2.68])
-AC_INIT([BBCAT_BASE],[0.1.2.1])
+AC_INIT([BBCAT_BASE],[0.1.2.2])
 
 AS_NANO(BBCAT_BASE_CVS=no,BBCAT_BASE_CVS=yes)
 
@@ -36,12 +36,12 @@ AC_SUBST(ACLOCAL_AMFLAGS)
 DX_DOXYGEN_FEATURE(ON)
 DX_INIT_DOXYGEN(bbcat-base, doxygen.cfg)
 
-BBCAT_BASE_CFLAGS="-D_FILE_OFFSET_BITS=64"
-BBCAT_BASE_LIBS=""
+BBCAT_GLOBAL_BASE_CFLAGS="-D_FILE_OFFSET_BITS=64 -DINSTALL_PREFIX=\\\"${prefix}\\\""
+BBCAT_GLOBAL_BASE_LIBS=""
 
 case $host_os in
   linux*)
-    BBCAT_BASE_CFLAGS="$BBCAT_BASE_CFLAGS -D__LINUX__"
+    BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_GLOBAL_BASE_CFLAGS -D__LINUX__"
     ;;
   *)
     ;;
@@ -52,48 +52,86 @@ AC_MSG_CHECKING(whether to include code under GPL)
 AC_ARG_ENABLE(gpl, AS_HELP_STRING([--disable-gpl], [disable code under GPL]), ENABLE_GPL="no", ENABLE_GPL="yes")
 if test "x${ENABLE_GPL}" = "xyes"; then
   AC_MSG_RESULT(yes)
-  BBCAT_BASE_CFLAGS="$BBCAT_BASE_CFLAGS -DENABLE_GPL=1"
+  BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_GLOBAL_BASE_CFLAGS -DENABLE_GPL=1"
 else
   AC_MSG_RESULT(no)
-  BBCAT_BASE_CFLAGS="$BBCAT_BASE_CFLAGS -DENABLE_GPL=0"
+  BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_GLOBAL_BASE_CFLAGS -DENABLE_GPL=0"
 fi
 
 AC_MSG_CHECKING(whether to include JSON handling)
-AC_ARG_ENABLE(json, AS_HELP_STRING([--enable-json], [enable JSON handling]), ENABLE_JSON_HANDLING="yes", ENABLE_JSON_HANDLING="no")
-if test "x${ENABLE_JSON_HANDLING}" = "xyes"; then
+AC_ARG_ENABLE(json, AS_HELP_STRING([--disable-json], [disable JSON handling]), DISABLE_JSON_HANDLING="yes", DISABLE_JSON_HANDLING="no")
+if test "x${DISABLE_JSON_HANDLING}" != "xyes"; then
   AC_MSG_RESULT(yes)
 
-  dnl json_spirit is required
-  JSON_SPIRIT_VER="4.0.6.0"
-  PKG_CHECK_MODULES(JSON_SPIRIT, json_spirit-4.0 >= JSON_SPIRIT_VER, HAVE_JSON_SPIRIT=yes, HAVE_JSON_SPIRIT=no)
-  if test "x${HAVE_JSON_SPIRIT}" == "xyes" ; then
-    BBCAT_BASE_CFLAGS="$BBCAT_BASE_CFLAGS -DENABLE_JSON=1 $JSON_SPIRIT_CFLAGS"
-    BBCAT_BASE_LIBS="$BBCAT_BASE_LIBS $JSON_SPIRIT_LIBS"
-    ENABLE_JSON="yes"
-  else
-    BBCAT_BASE_CFLAGS="$BBCAT_BASE_CFLAGS -DENABLE_JSON=0"
-    ENABLE_JSON="no"
+  # jsoncpp is required
+  JSONCPP_VER="1.6.0"
+  PKG_CHECK_MODULES(JSONCPP, jsoncpp >= $JSONCPP_VER, HAVE_JSONCPP=yes, HAVE_JSONCPP=no)
+  if test "x${HAVE_JSONCPP}" != xyes ; then
+    JSONCPP_OLD_VER="0.6.0"
+    PKG_CHECK_MODULES(JSONCPP, jsoncpp >= $JSONCPP_OLD_VER, HAVE_JSONCPP=yes, HAVE_JSONCPP=no)
+    if test "x${HAVE_JSONCPP}" = "xyes" ; then
+      JSONCPP_CFLAGS="$JSONCPP_CFLAGS -DOLD_JSON_CPP"
+    else
+      AC_MSG_ERROR([jsoncpp >= $JSONCPP_OLD_VER is required])
+    fi
   fi
+  BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_GLOBAL_BASE_CFLAGS -DENABLE_JSON=1 $JSONCPP_CFLAGS"
+  BBCAT_GLOBAL_BASE_LIBS="$BBCAT_GLOBAL_BASE_LIBS $JSONCPP_LIBS"
+  ENABLE_JSON="yes"
 else
   AC_MSG_RESULT(no)
 
-  BBCAT_BASE_CFLAGS="$BBCAT_BASE_CFLAGS -DENABLE_JSON=0"
+  BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_GLOBAL_BASE_CFLAGS -DENABLE_JSON=0"
   ENABLE_JSON="no"
 fi
 
+AM_CONDITIONAL(ENABLE_JSON, test "x${ENABLE_JSON}" = "xyes")
+
+# check for 3rd party library support
+AC_MSG_CHECKING(whether to disable 3rd party library support)
+AC_ARG_ENABLE(t3rdparty, AS_HELP_STRING([--disable-3rdparty], [disable 3rd party library support]), DISABLE_3RDPARTY="yes", DISABLE_3RDPARTY="no")
+if test "x${DISABLE_3RDPARTY}" = "xyes"; then
+  AC_MSG_RESULT(yes)
+  ENABLE_3RDPARTY="no"
+else
+  AC_MSG_RESULT(no)
+  ENABLE_3RDPARTY="yes"
+fi
+
+AC_MSG_CHECKING(3rd party library support)
+if test "x${ENABLE_3RDPARTY}" = "xyes"; then
+  BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_GLOBAL_BASE_CFLAGS -DENABLE_3RDPARTY=1"
+  AC_MSG_RESULT(yes)
+else
+  BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_GLOBAL_BASE_CFLAGS -DENABLE_3RDPARTY=0"
+  AC_MSG_RESULT(no)
+fi
+
+AM_CONDITIONAL(ENABLE_3RDPARTY, test "x${ENABLE_3RDPARTY}" = "xyes")
+
+# Check if we should disable optimization  (./configure --disable-opt)
+AC_MSG_CHECKING(whether to disable optimization)
+AC_ARG_ENABLE(opt, AS_HELP_STRING([--disable-opt], [disable optimzation]), DISABLE_OPTIMIZATION="yes", DISABLE_OPTIMIZATION="no")
+if test "x${DISABLE_OPTIMIZATION}" = "xyes"; then
+  CFLAGS="$CFLAGS -O0"
+  CXXFLAGS="$CXXFLAGS -O0"
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
+
 AC_ARG_WITH([thread],
-    AS_HELP_STRING([--with-thread=IMPL],[use threading library {auto,pthread,gthread,win32,none} [[default=auto]]]),
+    AS_HELP_STRING([--with-thread=IMPL],[use threading library {auto,stl,pthreads} [[default=auto]]]),
     [],
     [with_thread=auto])
 
 AC_MSG_CHECKING([threading implementation to use])
 if test "x${with_thread}" = "xauto" ; then
   case $host_os in
-    mingw* | pw32*)
-      with_thread=win32
-      ;;
     *)
-      with_thread=pthread
+      with_thread=stl
       ;;
   esac
 fi
@@ -102,10 +140,10 @@ AC_MSG_RESULT([$with_thread])
 THREAD_IMPL=${with_thread}
 AC_SUBST(THREAD_IMPL)
 
-if test "x${with_thread}" = "xpthread" ; then
+if test "x${with_thread}" = "xpthreads" ; then
   case "$host_os" in
     *)
-      PTHREAD_CFLAGS=
+      PTHREAD_CFLAGS=-DUSE_PTHREADS
       PTHREAD_LIBS=-lpthread
       ;;
   esac
@@ -113,11 +151,7 @@ if test "x${with_thread}" = "xpthread" ; then
   AC_SUBST(PTHREAD_LIBS)
 fi
 
-if test "x${with_thread}" = "xgthread" ; then
-  PKG_CHECK_MODULES(GTHREAD, gthread-2.0, HAVE_GTHREAD=yes, HAVE_GTHREAD=no)
-  AC_SUBST(GTHREAD_LIBS)
-  AC_SUBST(GTHREAD_CFLAGS)
-fi
+AM_CONDITIONAL(ENABLE_PTHREADS, test "x${PTHREAD_LIBS}" != "x")
 
 if test ! x$osx = xtrue ; then
   dnl librt is required
@@ -128,11 +162,8 @@ fi
 
 AM_CONDITIONAL(ENABLE_JSON, test "x${ENABLE_JSON}" = "xyes")
 
-BBCAT_BASE_CFLAGS="$BBCAT_BASE_CFLAGS $PTHREAD_CFLAGS"
-BBCAT_BASE_LIBS="$BBCAT_BASE_LIBS $RT_LIBS $PTHREAD_LIBS"
-
-BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_BASE_CFLAGS"
-BBCAT_GLOBAL_BASE_LIBS="$BBCAT_BASE_LIBS"
+BBCAT_GLOBAL_BASE_CFLAGS="$BBCAT_GLOBAL_BASE_CFLAGS $PTHREAD_CFLAGS"
+BBCAT_GLOBAL_BASE_LIBS="$BBCAT_GLOBAL_BASE_LIBS $RT_LIBS $PTHREAD_LIBS"
 
 AC_SUBST(BBCAT_GLOBAL_BASE_CFLAGS)
 AC_SUBST(BBCAT_GLOBAL_BASE_LIBS)
@@ -150,12 +181,19 @@ fi
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 
+BBCAT_BASE_CFLAGS=""
 AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CFLAGS, [-Wall])
 AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CFLAGS, [-Werror])
 AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CFLAGS, [-Wextra])
 AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CFLAGS, [-msse2])
 
+AC_LANG_PUSH([C++])
+AC_APPEND_SUPPORTED_CFLAGS(BBCAT_BASE_CXXFLAGS, [-std=c++11])
+AC_LANG_POP([C++])
+
 AC_SUBST(BBCAT_BASE_CFLAGS)
+
+AC_SUBST([AM_CXXFLAGS],["$AM_CXXFLAGS $BBCAT_BASE_CXXFLAGS"])
 
 BBCAT_BASE_LDFLAGS=""
 AC_APPEND_SUPPORTED_LDFLAGS(BBCAT_BASE_LDFLAGS, [-Wl,--no-undefined])
@@ -177,5 +215,6 @@ Makefile
 bbcat-base-uninstalled.pc
 bbcat-base.pc
 src/Makefile
+test/Makefile
 ])
 AC_OUTPUT

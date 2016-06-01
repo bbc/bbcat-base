@@ -69,4 +69,22 @@ std::string LoadedVersions::GetVersionsList() const
   return res;
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Return number of entries in the versions list
+ */
+/*--------------------------------------------------------------------------------*/
+uint_t LoadedVersions::GetVersionListCount() const
+{
+  return (uint_t)versions.size();
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Return number of entries in the versions list
+ */
+/*--------------------------------------------------------------------------------*/
+std::string LoadedVersions::GetVersionIndex(uint_t n) const
+{
+  return (n < (uint_t)versions.size()) ? versions[n].name : "";
+}
+
 BBC_AUDIOTOOLBOX_END

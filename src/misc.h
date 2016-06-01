@@ -15,10 +15,6 @@
 #include "windows.h"
 #endif
 
-#if ENABLE_JSON
-#include <json_spirit/json_spirit.h>
-#endif
-
 #ifndef NUMBEROF
 #define NUMBEROF(x) (sizeof(x) / sizeof(x[0]))
 #endif
@@ -83,23 +79,6 @@ BBC_AUDIOTOOLBOX_START
 // defined in ByteSwap.cpp
 extern const bool MACHINE_IS_BIG_ENDIAN;
 #endif
-
-/*--------------------------------------------------------------------------------*/
-/** Static library linking causes objects not explicitly referenced to be STRIPPED from the final executable
- *
- * This causes problems for some auto-registering mechanisms
- *
- * Therefore, any objects files in this category MUST include:
- * 1.  BBC_AUDIOTOOLBOX_KEEP(<id>) in the LIBRARY .c/.cpp file
- * 2.  BBC_AUDIOTOOLBOX_REQUIRE(<id>) in an APPLICATION .c/.cpp file
- */
-/*--------------------------------------------------------------------------------*/
-#define BBC_AUDIOTOOLBOX_KEEP(x) volatile uint_t __keep_##x = 0
-#define BBC_AUDIOTOOLBOX_REQUIRE(x)                 \
-BBC_AUDIOTOOLBOX_START                              \
-extern volatile uint_t __keep_##x;                  \
-volatile uint_t __keep_##x##_in_app = __keep_##x;   \
-BBC_AUDIOTOOLBOX_END
 
 typedef void (*DEBUGHANDLER)(const char *str, void *context);
 
@@ -257,6 +236,12 @@ extern void SetDebugHandler(DEBUGHANDLER handler, void *context = NULL);
 extern void SetErrorHandler(DEBUGHANDLER handler, void *context = NULL);
 
 /*--------------------------------------------------------------------------------*/
+/** Enable use of OutputDebugString in Windows
+ */
+/*--------------------------------------------------------------------------------*/
+extern void EnableWindowsDebug();
+
+/*--------------------------------------------------------------------------------*/
 /** Create indentation string
  *
  * @param indent a string representing one level of indentation (e.g. a tab or spaces)
@@ -298,7 +283,7 @@ extern void VPrintf(std::string& str, const char *fmt, va_list ap);
  * @param maxstrings if non-zero specifies the maximum number of entries in list
  *
  * @return position in string when scanning stopped
- * 
+ *
  * @note whitespace is IGNORED!
  */
 /*--------------------------------------------------------------------------------*/
@@ -312,7 +297,7 @@ extern void Interpolate(double& current, double target, double coeff, double lim
 
 /*--------------------------------------------------------------------------------*/
 /** 'cout' like debug stream handling
- * 
+ *
  * Basically use local instance of StringStream instead of 'cout' and then wrap entire line in BBCDEBUG() macro
  *
  * For example:
@@ -416,8 +401,8 @@ extern bool Evaluate(const std::string& str, std::string& val);
  *
  * @note example value fmt values:
  *  "" default display ('d', 'u' or 'f'), no field formatting
- *  "x" hex display 
- *  "016x" hex display with field size of 16, '0' padded 
+ *  "x" hex display
+ *  "016x" hex display with field size of 16, '0' padded
  *  "0.32" default display ('f') with field size of 32
  *
  * Essentially:
@@ -434,8 +419,8 @@ extern std::string StringFrom(sllong_t val, const char *fmt = "");
 extern std::string StringFrom(ullong_t val, const char *fmt = "");
 extern std::string StringFrom(float val, const char *fmt = "0.32");
 extern std::string StringFrom(double val, const char *fmt = "0.32");
-extern std::string StringFrom(const std::string& val); 
-extern std::string StringFrom(const void *val); 
+extern std::string StringFrom(const std::string& val);
+extern std::string StringFrom(const void *val);
 
 /*--------------------------------------------------------------------------------*/
 /** Bog-standard string search and replace that *should* be in std::string!
@@ -446,7 +431,7 @@ extern std::string SearchAndReplace(const std::string& str, const std::string& s
 /*--------------------------------------------------------------------------------*/
 /** Very simple wildcard matching
  *
- * @param pat pattern containing characters and/or '*' / '?' 
+ * @param pat pattern containing characters and/or '*' / '?'
  * @param str string to match
  *
  * @return true if string matches pattern
@@ -455,25 +440,6 @@ extern std::string SearchAndReplace(const std::string& str, const std::string& s
  */
 /*--------------------------------------------------------------------------------*/
 extern bool matchstring(const char *pat, const char *str);
-
-#if ENABLE_JSON
-extern bool                FromJSON(const json_spirit::mValue& _val, bool& val);
-extern bool                FromJSON(const json_spirit::mValue& _val, sint_t& val);
-extern bool                FromJSON(const json_spirit::mValue& _val, uint_t& val);
-extern bool                FromJSON(const json_spirit::mValue& _val, sint64_t& val);
-extern bool                FromJSON(const json_spirit::mValue& _val, uint64_t& val);
-extern bool                FromJSON(const json_spirit::mValue& _val, float& val);
-extern bool                FromJSON(const json_spirit::mValue& _val, double& val);
-extern bool                FromJSON(const json_spirit::mValue& _val, std::string& val);
-extern json_spirit::mValue ToJSON(const bool& val);
-extern json_spirit::mValue ToJSON(const sint_t& val);
-extern json_spirit::mValue ToJSON(const uint_t& val);
-extern json_spirit::mValue ToJSON(const sint64_t& val);
-extern json_spirit::mValue ToJSON(const uint64_t& val);
-extern json_spirit::mValue ToJSON(const float& val);
-extern json_spirit::mValue ToJSON(const double& val);
-extern json_spirit::mValue ToJSON(const std::string& val);
-#endif
 
 /*--------------------------------------------------------------------------------*/
 /** Convert text time to ns time
@@ -572,6 +538,47 @@ void ConvertList(const std::vector<T2 *>& vec, std::vector<const T1 *>& res) {
   for (i = 0; i < vec.size(); i++) res.push_back(vec[i]);
 }
 
+/*--------------------------------------------------------------------------------*/
+/** Find a file using various sources of possible paths
+ *
+ * @param filename filename of file to search for
+ * @param paths list of paths to search
+ * @param npaths number of paths in above list
+ *
+ * @return path of found file or empty if file not found
+ *
+ * @note each entry can be a list of directories separated by ';'
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindFile(const std::string& filename, const char *paths[] = NULL, uint_t npaths = 0);
+
+/*--------------------------------------------------------------------------------*/
+/** Find a file using various sources of possible paths
+ *
+ * @param filename filename of file to search for
+ * @param paths list of paths to search 
+ * @param npaths number of paths in above list
+ *
+ * @return path of found file or empty if file not found
+ *
+ * @note each entry can be a list of directories separated by ';'
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindFile(const std::string& filename, const std::string *paths, uint_t npaths);
+
+/*--------------------------------------------------------------------------------*/
+/** Find a file using various sources of possible paths
+ *
+ * @param filename filename of file to search for
+ * @param paths list of paths to search 
+ *
+ * @return path of found file or empty if file not found
+ *
+ * @note each entry can be a list of directories separated by ';'
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindFile(const std::string& filename, const std::vector<std::string>& paths);
+                     
 BBC_AUDIOTOOLBOX_END
 
 #endif
