@@ -41,7 +41,8 @@ set(_headers
 	UniversalTime.h
 	UDPSocket.h
 	misc.h
-	json.h)
+	json.h
+	register.h)
 
 if(ENABLE_JSON)
 	set(_sources
