@@ -1061,7 +1061,7 @@ static std::string FindFileInList(const std::string& filename, const std::string
 {
   // split path list by ';'
   std::vector<std::string> paths;
-  SplitString(SystemParameters::Get().Substitute(pathlist), paths, ';');
+  SplitString(SystemParameters::Get().SubstitutePathList(pathlist), paths, ';');
 
   uint_t i;
   for (i = 0; i < (uint_t)paths.size(); i++)

@@ -91,6 +91,24 @@ public:
   std::string Substitute(const std::string& str, bool replaceunknown = true) const;
 
   /*--------------------------------------------------------------------------------*/
+  /** Replace {} entries from other values, assuming strings are lists of paths
+   *
+   * This is similar to the above *except* that substitutions as assumed to be a list
+   * of paths, so:
+   *   '{sharedir}/subdir'
+   * when {sharedir} is 'share;../share', is expanded to:
+   *   'share/subdir;../share/subdir'
+   *
+   * @param str string to replace entries in
+   *
+   * @return string with substitutions
+   *
+   * @note there is no 'replaceunknown' option here - any unknown entries are *always* replaced by blanks 
+   */
+  /*--------------------------------------------------------------------------------*/
+  std::string SubstitutePathList(const std::string& str) const;
+
+  /*--------------------------------------------------------------------------------*/
   /** Predefined Values
    */
   /*--------------------------------------------------------------------------------*/
@@ -106,7 +124,13 @@ protected:
    */
   /*--------------------------------------------------------------------------------*/
   bool ReadFromFile(const std::string& filename);
-  
+
+  /*--------------------------------------------------------------------------------*/
+  /** Iterate through a list of paths, substituting and expanding paths where necessary
+   */
+  /*--------------------------------------------------------------------------------*/
+  void SubstitutePathList(std::vector<std::string>& paths) const;
+
 protected:
   ThreadLockObject tlock;
   ParameterSet     parameters;

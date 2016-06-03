@@ -50,7 +50,7 @@ PerformanceMonitor::PerformanceMonitor(uint_t _avglen) :
   // find first valid (non-empty) path
   for (i = 0; i < NUMBEROF(paths); i++)
   {
-    if (!(logfiledir = SystemParameters::Get().Substitute(paths[i])).empty()) break;
+    if (!(logfiledir = SystemParameters::Get().SubstitutePathList(paths[i])).empty()) break;
   }
 }
 

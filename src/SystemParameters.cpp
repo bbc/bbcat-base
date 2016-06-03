@@ -51,8 +51,11 @@ SystemParameters::SystemParameters()
 #endif
 
     // read user's home directory version
-    ReadFromFile(Substitute("{homedir}/bbcat.conf"));
-    
+    ReadFromFile(SubstitutePathList("{" + homedirkey + "}/bbcat.conf"));
+
+    // finally, read version from current directory
+    ReadFromFile("bbcat.conf");
+
     // allow BBCATINSTALL env var to override defaults or that read from the conf file
     if ((p = getenv("BBCATINSTALLDIR")) != NULL) Set(installdirkey, p);
     else if (!Exists(installdirkey))
@@ -68,8 +71,16 @@ SystemParameters::SystemParameters()
   
     // set share path (relative to installdir)
     if ((p = getenv("BBCATSHAREDIR")) != NULL) Set(sharedirkey, p);
-    else if (!Exists(sharedirkey))             Set(sharedirkey, "{" + installdirkey + "}/share");
-
+    else if (!Exists(sharedirkey))
+    {
+#ifdef TARGET_OS_WINDOWS
+      // add guess of where share folder could be
+      Set(sharedirkey, "../share;{" + installdirkey + "}/share");
+#else
+      Set(sharedirkey, "{" + installdirkey + "}/share");
+#endif
+    }
+    
     BBCDEBUG2(("SystemParameters: {%s}", parameters.ToString().c_str()));
   }
 }
@@ -200,13 +211,13 @@ std::string SystemParameters::Substitute(const std::string& str, bool replaceunk
     {
       parameters.Get(var, val);
       res = res.substr(0, p1) + val + res.substr(p2 + 1);
-      // leave p1 where it is so dereferencing is attempted again at this position
+      // leave p1 where it is so substitution is attempted again at this position
     }
     else if ((var.substr(0, 4) == "env:") && ((env = getenv(var.substr(4).c_str())) != NULL))
     {
       // use env variable
       res = res.substr(0, p1) + std::string(env) + res.substr(p2 + 1);
-      // leave p1 where it is so dereferencing is attempted again at this position
+      // leave p1 where it is so substitution is attempted again at this position
     }
     else if (replaceunknown)
     {
@@ -223,6 +234,89 @@ std::string SystemParameters::Substitute(const std::string& str, bool replaceunk
   }
 
   BBCDEBUG2(("Substitute: converted '%s' to '%s'", str.c_str(), res.c_str()));
+  
+  return res;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Iterate through a list of paths, substituting and expanding paths where necessary
+ */
+/*--------------------------------------------------------------------------------*/
+void SystemParameters::SubstitutePathList(std::vector<std::string>& paths) const
+{
+  uint_t i;
+
+  // process each path separately
+  for (i = 0; i < (uint_t)paths.size();)
+  {
+    std::string path = paths[i];
+    size_t p1, p2;
+
+    if (((p1 = path.find("{"))         < std::string::npos) &&
+        ((p2 = path.find("}", p1 + 1)) < std::string::npos))
+    {
+      std::string var = path.substr(p1 + 1, p2 - p1 - 1);
+      std::string val, left = path.substr(0, p1), right = path.substr(p2 + 1);
+
+      // if var doesn't exist, it will be replaced by blank anyway
+      parameters.Get(var, val);
+
+      // split replacement
+      std::vector<std::string> subpaths;
+      SplitString(val, subpaths, ';');
+        
+      // remove path from list before expanding
+      paths.erase(paths.begin() + i);
+
+      // add combination of each subpath and remainder of string
+      uint_t j;
+      for (j = 0; j < (uint_t)subpaths.size(); j++)
+      {
+        paths.push_back(left + subpaths[j] + right);
+      }
+    }
+    // ignore normal paths
+    else i++;
+  }
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Replace {} entries from other values, assuming strings are lists of paths
+ *
+ * This is similar to the above *except* that substitutions as assumed to be a list
+ * of paths, so:
+ *   '{sharedir}/subdir'
+ * when {sharedir} is 'share;../share', is expanded to:
+ *   'share/subdir;../share/subdir'
+ *
+ * @param str string to replace entries in
+ *
+ * @return string with substitutions
+ *
+ * @note there is no 'replaceunknown' option here - any unknown entries are *always* replaced by blanks 
+ */
+/*--------------------------------------------------------------------------------*/
+std::string SystemParameters::SubstitutePathList(const std::string& str) const
+{
+  ThreadLock lock(tlock);
+  std::vector<std::string> paths;
+  std::string res;
+
+  // split input string into a list of paths
+  SplitString(str, paths, ';');
+
+  // perform repeated substitution and expansion
+  SubstitutePathList(paths);
+
+  // reconstitute pathlist
+  uint_t i;
+  for (i = 0; i < (uint_t)paths.size(); i++)
+  {
+    if (i) res += ";";
+    res += paths[i];
+  }
+
+  BBCDEBUG2(("SubstitutePath: converted '%s' to '%s'", str.c_str(), res.c_str()));
   
   return res;
 }
