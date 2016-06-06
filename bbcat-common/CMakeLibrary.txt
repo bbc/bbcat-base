@@ -23,13 +23,13 @@ if(NOT MSVC)
 endif()
 
 # link extra libraries (both global and local)
-target_link_libraries(${_static_lib_name} 
+target_link_libraries(${_static_lib_name}
 					  ${GLOBAL_EXTRA_LIBS}
 					  ${_extra_libs})
 
 if(NOT MSVC)
 	# link extra libraries (both global and local)
-	target_link_libraries(${_lib_name} 
+	target_link_libraries(${_lib_name}
 						  ${GLOBAL_EXTRA_LIBS}
 						  ${_extra_libs})
 endif()

@@ -416,7 +416,8 @@ function(bbcat_generate_register_cpp)
 			file(STRINGS ${_file} _regFnLines
 				 REGEX "^void bbcat_register_[A-Za-z0-9_]+\\(\\)"
 			)
-			foreach(_fnLine IN ITEMS "${_regFnLines}")
+
+			foreach(_fnLine IN ITEMS ${_regFnLines})
 				if(NOT "${_fnLine}" STREQUAL "")
 					# so need to do a second match to pull out just the function sig
 					string(REGEX MATCH "^void bbcat_register_[A-Za-z0-9_]+\\(\\)" _regFn "${_fnLine}")

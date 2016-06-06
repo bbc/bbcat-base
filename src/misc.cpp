@@ -10,6 +10,29 @@
 #include <mach/mach_time.h>
 #endif
 
+#include "OSCompiler.h"
+
+#ifdef TARGET_OS_WINDOWS
+#include <windows.h>
+#else
+// Linux/Cygwin
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#if defined(ANDROID) || defined(__IPHONEOS__)
+#include <dirent.h>
+#endif
+
+#if defined(__CYGWIN__) || defined(__IPHONEOS__)
+extern "C" {
+#include <sys/dirent.h>
+};
+#elif !defined(ANDROID)
+#include <sys/dir.h>
+#endif
+#endif
+
 #include <vector>
 
 #define BBCDEBUG_LEVEL 1
@@ -23,8 +46,6 @@
 
 BBC_AUDIOTOOLBOX_START
 
-static ThreadLockObject debuglock;
-
 static DEBUGHANDLER debughandler = NULL;
 static void         *debughandler_context = NULL;
 
@@ -33,6 +54,12 @@ static void         *errorhandler_context = NULL;
 
 const char *DoubleFormatHuman = "0.32";
 const char *DoubleFormatExact = "x";
+
+static ThreadLockObject& GetDebugLock()
+{
+  static ThreadLockObject _lock;
+  return _lock;
+}
 
 /*--------------------------------------------------------------------------------*/
 /** Set debug handler (replacing printf())
@@ -44,7 +71,7 @@ const char *DoubleFormatExact = "x";
 /*--------------------------------------------------------------------------------*/
 void SetDebugHandler(DEBUGHANDLER handler, void *context)
 {
-  ThreadLock lock(debuglock);
+  ThreadLock lock(GetDebugLock());
 
   debughandler = handler;
   debughandler_context = context;
@@ -60,7 +87,7 @@ void SetDebugHandler(DEBUGHANDLER handler, void *context)
 /*--------------------------------------------------------------------------------*/
 void SetErrorHandler(DEBUGHANDLER handler, void *context)
 {
-  ThreadLock lock(debuglock);
+  ThreadLock lock(GetDebugLock());
 
   errorhandler = handler;
   errorhandler_context = context;
@@ -124,7 +151,7 @@ void debug_msg(const char *fmt, ...)
   va_end(ap);
 
   {
-    ThreadLock lock(debuglock);
+    ThreadLock lock(GetDebugLock());
     if (debughandler)
     {
       (*debughandler)(str.c_str(), debughandler_context);
@@ -148,7 +175,7 @@ void debug_err(const char *fmt, ...)
   va_end(ap);
 
   {
-    ThreadLock lock(debuglock);
+    ThreadLock lock(GetDebugLock());
     static bool _within = false;        // protect against recursive calls
     bool        within  = _within;
 
@@ -607,7 +634,7 @@ void StringStream::clear()
 
 void debug_msg(StringStream& str)
 {
-  ThreadLock lock(debuglock);
+  ThreadLock lock(GetDebugLock());
   const char *p = str.get();
   if (debughandler)
   {
@@ -624,7 +651,7 @@ void debug_msg(StringStream& str)
 
 void debug_err(StringStream& str)
 {
-  ThreadLock lock(debuglock);
+  ThreadLock lock(GetDebugLock());
   const char *p = str.get();
   if (errorhandler)
   {
@@ -1049,33 +1076,44 @@ std::string GenerateTime(uint64_t t)
 }
 
 /*--------------------------------------------------------------------------------*/
-/** Attempt to find a file in supplied list of [semi-colon separated] list
+/** Find a file using various sources of possible paths
  *
  * @param filename filename of file to search for
- * @param paths semi-colon separated list of search paths
+ * @param paths list of paths to search separated by ';'
  *
  * @return path of found file or empty if file not found
  */
 /*--------------------------------------------------------------------------------*/
-static std::string FindFileInList(const std::string& filename, const std::string& pathlist)
+std::string FindFile(const std::string& filename, const std::string& pathlist)
 {
-  // split path list by ';'
+  // split filename and path list by ';'
   std::vector<std::string> paths;
-  SplitString(SystemParameters::Get().SubstitutePathList(pathlist), paths, ';');
+  std::vector<std::string> filenames;
 
-  uint_t i;
+  // always return empty for empty
+  if (filename.empty()) return filename;
+
+  // add current directory as first path to check
+  paths.push_back("");
+  
+  SplitString(SystemParameters::Get().SubstitutePathList(pathlist), paths, ';');
+  SplitString(SystemParameters::Get().SubstitutePathList(filename), filenames, ';');
+  
+  // look for all combinations of paths and filenames
+  uint_t i, j;
   for (i = 0; i < (uint_t)paths.size(); i++)
   {
-    const std::string& testpath = paths[i];
-
-    if (!testpath.empty())
+    for (j = 0; j < (uint_t)filenames.size(); j++)
     {
-      // use SystemParameter::Substitute() for system parameters and environment variables access
-      std::string testfile = EnhancedFile::catpath(testpath, filename);
+      std::string testfile = EnhancedFile::catpath(paths[i], filenames[j]);
     
       // if found, return path
-      if (EnhancedFile::exists(testfile.c_str())) return testfile;
-      else BBCDEBUG3(("No '%s' in '%s'", filename.c_str(), testpath.c_str()));
+      if (EnhancedFile::exists(testfile.c_str()))
+      {
+        BBCDEBUG1(("Found '%s' in '%s' as '%s'", filenames[j].c_str(), paths[i].c_str(), testfile.c_str()));
+        return testfile;
+      }
+      else BBCDEBUG3(("No '%s' in '%s'", filenames[j].c_str(), paths[i].c_str()));
     }
   }
 
@@ -1103,21 +1141,10 @@ std::string FindFile(const std::string& filename, const char *paths[], uint_t np
   // always return empty for empty
   if (filename.empty()) return filename;
 
-  // if file exists in current directory, return it
-  if (EnhancedFile::exists(filename.c_str()))
-  {
-    BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), filename.c_str()));
-    return filename;
-  }
-
   // check in explicit list of paths
   for (i = 0; i < npaths; i++)
   {
-    if (!(file = FindFileInList(filename, paths[i])).empty())
-    {
-      BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), file.c_str()));
-      return file;
-    }
+    if (!(file = FindFile(filename, paths[i])).empty()) return file;
   }
 
   // not found
@@ -1143,22 +1170,11 @@ std::string FindFile(const std::string& filename, const std::string *paths, uint
   // always return empty for empty
   if (filename.empty()) return filename;
 
-  // if file exists in current directory, return it
-  if (EnhancedFile::exists(filename.c_str()))
-  {
-    BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), filename.c_str()));
-    return filename;
-  }
-
   // check in explicit list of paths
   uint_t i;
   for (i = 0; i < npaths; i++)
   {
-    if (!(file = FindFileInList(filename, paths[i])).empty())
-    {
-      BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), file.c_str()));
-      return file;
-    }
+    if (!(file = FindFile(filename, paths[i])).empty()) return file;
   }
 
   // not found
@@ -1178,30 +1194,162 @@ std::string FindFile(const std::string& filename, const std::string *paths, uint
 /*--------------------------------------------------------------------------------*/
 std::string FindFile(const std::string& filename, const std::vector<std::string>& paths)
 {
-  std::string file;
+  return FindFile(filename, &paths[0], (uint_t)paths.size());
+}
 
-  // always return empty for empty
-  if (filename.empty()) return filename;
-
-  // if file exists in current directory, return it
-  if (EnhancedFile::exists(filename.c_str()))
-  {
-    BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), filename.c_str()));
-    return filename;
-  }
+/*--------------------------------------------------------------------------------*/
+/** Return whether the given path exists and is a directory
+ */
+/*--------------------------------------------------------------------------------*/
+static bool IsDirectory(const std::string& path)
+{
+  bool isdir = false;
   
-  // check in explicit list of paths
+#ifdef TARGET_OS_WINDOWS
+  WIN32_FIND_DATA finddata;
+  HANDLE handle;
+
+  // does path exist?
+  if ((handle = ::FindFirstFile(path.c_str(), &finddata)) != INVALID_HANDLE_VALUE)
+  {
+    ::FindClose(handle);
+
+    // is path a directory?
+    isdir = (finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+  }
+#else
+  // is path exist and is a directory?
+  struct stat _stat;
+  isdir = ((stat(path.c_str(), &_stat) == 0) && S_ISDIR(_stat.st_mode));
+#endif
+
+  return isdir;
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Find path that exists and is a directory
+ *
+ * @param paths list of paths to search separated by ';'
+ *
+ * @return first existing path found or empty if no path found not found
+ */
+/*--------------------------------------------------------------------------------*/
+std::string FindPath(const std::string& pathlist)
+{
+  std::vector<std::string> paths;
   uint_t i;
+  
+  SplitString(SystemParameters::Get().SubstitutePathList(pathlist), paths, ';');
+
   for (i = 0; i < (uint_t)paths.size(); i++)
   {
-    if (!(file = FindFileInList(filename, paths[i])).empty())
+    if (!paths[i].empty())
     {
-      BBCDEBUG2(("Found '%s' as '%s'", filename.c_str(), file.c_str()));
-      return file;
+      if (IsDirectory(paths[i])) return paths[i];
     }
   }
 
   // not found
+  return "";
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Find path that exists and is a directory
+ *
+ * @param paths list of paths to search
+ * @param npaths number of paths
+ *
+ * @return first existing path found or empty if no path found not found
+ */
+/*--------------------------------------------------------------------------------*/
+std::string FindPath(const char *paths[], uint_t npaths)
+{
+  uint_t i;
+
+  for (i = 0; i < npaths; i++)
+  {
+    if (paths[i] && (strlen(paths[i]) > 0))
+    {
+      if (IsDirectory(paths[i])) return paths[i];
+    }
+  }
+
+  // not found
+  return "";
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Find path that exists and is a directory
+ *
+ * @param paths list of paths to search
+ * @param npaths number of paths
+ *
+ * @return first existing path found or empty if no path found not found
+ */
+/*--------------------------------------------------------------------------------*/
+std::string FindPath(const std::string *paths, uint_t npaths)
+{
+  uint_t i;
+
+  for (i = 0; i < npaths; i++)
+  {
+    if (!paths[i].empty())
+    {
+      if (IsDirectory(paths[i])) return paths[i];
+    }
+  }
+
+  // not found
+  return "";
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Find path that exists and is a directory
+ *
+ * @param paths list of paths to search
+ *
+ * @return first existing path found or empty if no path found not found
+ */
+/*--------------------------------------------------------------------------------*/
+std::string FindPath(const std::vector<std::string>& paths)
+{
+  return FindPath(&paths[0], (uint_t)paths.size());
+}
+
+/*--------------------------------------------------------------------------------*/
+/** Find a directory to write a file and return full filename
+ *
+ * @param filename list of path/filename combinations to test
+ *
+ * @return full filename or empty if no path could be found
+ */
+/*--------------------------------------------------------------------------------*/
+std::string FindPathForFile(const std::string& filename)
+{
+  std::vector<std::string> filenames;
+  uint_t i;
+
+  // create list of possible solutions
+  SplitString(SystemParameters::Get().SubstitutePathList(filename), filenames, ';');
+
+  for (i = 0; i < (uint_t)filenames.size(); i++)
+  {
+    // split filename into directory and file
+    // first, turn all backslashes into forward slashes
+    std::string filename = SearchAndReplace(filenames[i], "\\", "/");
+    size_t p;
+
+    if ((p = filename.rfind("/")) < std::string::npos)
+    {
+      std::string path = filename.substr(0, p);
+
+      // if path part is valid directory, return full filename
+      if (!path.empty() && IsDirectory(path)) return filename;
+    }
+    // allow files in the current directory (i.e. no path part)
+    else return filename;
+  }
+
   return "";
 }
 

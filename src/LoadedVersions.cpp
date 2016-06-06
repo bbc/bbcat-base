@@ -30,9 +30,14 @@ LoadedVersions& LoadedVersions::Get()
 /*--------------------------------------------------------------------------------*/
 uint_t LoadedVersions::Register(const char *name, const char *version)
 {
-  VERSION ver   = {name, version};
-  uint_t  index = (uint_t)versions.size();
-  versions.push_back(ver);
+  uint_t index = 0;
+  if (GetVersion(name).empty())
+  {
+    VERSION ver = {name, version};
+    BBCDEBUG2(("LoadedVersions<%s>: Register(%s, %s)", StringFrom(this).c_str(), name, version));
+    index = (uint_t)versions.size();
+    versions.push_back(ver);
+  }
   return index;
 }
 

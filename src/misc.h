@@ -542,6 +542,17 @@ void ConvertList(const std::vector<T2 *>& vec, std::vector<const T1 *>& res) {
 /** Find a file using various sources of possible paths
  *
  * @param filename filename of file to search for
+ * @param paths list of paths to search separated by ';'
+ *
+ * @return path of found file or empty if file not found
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindFile(const std::string& filename, const std::string& pathlist = "");
+
+/*--------------------------------------------------------------------------------*/
+/** Find a file using various sources of possible paths
+ *
+ * @param filename filename of file to search for
  * @param paths list of paths to search
  * @param npaths number of paths in above list
  *
@@ -550,7 +561,7 @@ void ConvertList(const std::vector<T2 *>& vec, std::vector<const T1 *>& res) {
  * @note each entry can be a list of directories separated by ';'
  */
 /*--------------------------------------------------------------------------------*/
-extern std::string FindFile(const std::string& filename, const char *paths[] = NULL, uint_t npaths = 0);
+extern std::string FindFile(const std::string& filename, const char *paths[], uint_t npaths);
 
 /*--------------------------------------------------------------------------------*/
 /** Find a file using various sources of possible paths
@@ -578,7 +589,59 @@ extern std::string FindFile(const std::string& filename, const std::string *path
  */
 /*--------------------------------------------------------------------------------*/
 extern std::string FindFile(const std::string& filename, const std::vector<std::string>& paths);
-                     
+
+/*--------------------------------------------------------------------------------*/
+/** Find path that exists and is a directory
+ *
+ * @param paths list of paths to search separated by ';'
+ *
+ * @return first existing path found or empty if no path found not found
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindPath(const std::string& pathlist);
+
+/*--------------------------------------------------------------------------------*/
+/** Find path that exists and is a directory
+ *
+ * @param paths list of paths to search
+ * @param npaths number of paths
+ *
+ * @return first existing path found or empty if no path found not found
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindPath(const char *paths[], uint_t npaths);
+
+/*--------------------------------------------------------------------------------*/
+/** Find path that exists and is a directory
+ *
+ * @param paths list of paths to search
+ * @param npaths number of paths
+ *
+ * @return first existing path found or empty if no path found not found
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindPath(const std::string *paths, uint_t npaths);
+
+/*--------------------------------------------------------------------------------*/
+/** Find path that exists and is a directory
+ *
+ * @param paths list of paths to search
+ *
+ * @return first existing path found or empty if no path found not found
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindPath(const std::vector<std::string>& paths);
+
+/*--------------------------------------------------------------------------------*/
+/** Find a directory to write a file and return full filename
+ *
+ * @param filename list of path/filename combinations to test
+ *
+ * @return full filename or empty if no path could be found
+ */
+/*--------------------------------------------------------------------------------*/
+extern std::string FindPathForFile(const std::string& filename);
+
 BBC_AUDIOTOOLBOX_END
 
 #endif

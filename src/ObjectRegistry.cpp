@@ -37,6 +37,7 @@ void ObjectRegistry::Register(RegisteredObjectFactory *factory)
   if (((it = objects.find(name)) == objects.end()) ||
       (factory->GetPriority() > it->second->GetPriority()))
   {
+    BBCDEBUG2(("ObjectRegistry<%s>: Object '%s' using factory<%s> registered", StringFrom(this).c_str(), name.c_str(), StringFrom(factory).c_str()));
     objects[name] = factory;
   }
 }
