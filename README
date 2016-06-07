@@ -140,9 +140,7 @@ For this to work, any application *must* call the registration function of most
 dependant library it uses.
 
 For example, for an application using only this library:
-BBC_AUDIOTOOLBOX_START
-extern bool bbcat_register_bbcat_base();
-BBC_AUDIOTOOLBOX_END
+#include <bbcat-base/register.h>
 
 using namespace bbcat;
 
@@ -195,4 +193,19 @@ autotools:
 
 cmake:
 mkdir build ; cd build ; cmake .. && make && sudo make install
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Building without cmake or autotools
+
+Using the libraries with other build environments is possible, simply throw the
+files into the build environment BUT certain defines must be set to enable
+features.
+
+bbcat-base uses the following defines:
+ENABLE_JSON=1 		 - enables json support
+OLD_JSON_CPP  		 - define if old version of jsoncpp (version 0.6.0, for example) used
+_FILE_OFFSET_BITS=64 - enable 64-bit file operations
+INSTALL_PREFIX=...   - locations of installation (e.g. /usr/local, c:/local, etc)
+USE_PTHREADS         - define if using pthreads rather than std::thread
 --------------------------------------------------------------------------------
