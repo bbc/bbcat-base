@@ -55,7 +55,8 @@ pkginclude_HEADERS =							\
 	UniversalTime.h								\
 	UDPSocket.h									\
 	misc.h										\
-	json.h
+	json.h										\
+	register.h
 
 if ENABLE_JSON
 libbbcat_base_sources += json.cpp
