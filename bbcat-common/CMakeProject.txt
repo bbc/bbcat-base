@@ -339,7 +339,7 @@ if(MSVC)
 	# stop unsafe warnings, ensure STL is exported and prevent std::min()/std::max() causing errors
 	ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS -D_WINSOCK_DEPRECATED_NO_WARNINGS -DEXP_STL -DNOMINMAX")
 else()
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -msse2")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -msse3")
 	if(NOT DEFINED ERRORS_AS_WARNINGS OR ERRORS_AS_WARNINGS)
 	    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
 	endif()

@@ -203,7 +203,7 @@ std::string SystemParameters::Substitute(const std::string& str, bool replaceunk
          ((p2 = res.find("}", p1 + 1)) < std::string::npos))
   {
     std::string var = res.substr(p1 + 1, p2 - p1 - 1), val;
-    const char *env;
+    const char *env = NULL;
 
     BBCDEBUG3(("Found var '%s' at %s", var.c_str(), StringFrom(p1).c_str()));
     
