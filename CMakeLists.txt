@@ -53,6 +53,11 @@ if(USE_PTHREADS)
 	set(GLOBAL_EXTRA_LIBS
 		${GLOBAL_EXTRA_LIBS}
 		${CMAKE_THREAD_LIBS_INIT})
+elseif(UNIX)                                                                                                                                            
+    # Linux needs pthread lib for std::thread!                                                                                                          
+    set(GLOBAL_EXTRA_LIBS                                                                                                                               
+        ${GLOBAL_EXTRA_LIBS}                                                                                                                            
+        -lpthread)
 endif()
 
 bbcat_find_library(LIBRARY jsoncpp HEADER json/json.h DEFINE ENABLE_JSON)
