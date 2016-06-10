@@ -57,7 +57,7 @@ elseif(UNIX)
     # Linux needs pthread lib for std::thread!                                                                                                          
     set(GLOBAL_EXTRA_LIBS                                                                                                                               
         ${GLOBAL_EXTRA_LIBS}                                                                                                                            
-        -lpthread)
+		pthread)
 endif()
 
 bbcat_find_library(LIBRARY jsoncpp HEADER json/json.h DEFINE ENABLE_JSON)
@@ -69,7 +69,14 @@ if(DEFINED jsoncpp_VERSION)
 			"-DOLD_JSON_CPP")
 	endif()
 endif()
-	
+
+if(ENABLE_JSON)
+	# indicate we are using jsoncpp
+	set(GLOBAL_FLAGS
+		${GLOBAL_FLAGS}
+		"-DUSING_JSON_CPP")
+endif()
+
 option(ENABLE_GPL "Enable GPL support" ON)
 if(ENABLE_GPL)
 	message("GPL support enabled")

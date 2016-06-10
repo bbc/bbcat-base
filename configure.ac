@@ -147,11 +147,12 @@ if test "x${with_thread}" = "xpthreads" ; then
       PTHREAD_LIBS=-lpthread
       ;;
   esac
-  AC_SUBST(PTHREAD_CFLAGS)
-  AC_SUBST(PTHREAD_LIBS)
+else
+  # stl::threads can require pthread lib anyway
+  PTHREAD_LIBS=-lpthread
 fi
-
-AM_CONDITIONAL(ENABLE_PTHREADS, test "x${PTHREAD_LIBS}" != "x")
+AC_SUBST(PTHREAD_CFLAGS)
+AC_SUBST(PTHREAD_LIBS)
 
 if test ! x$osx = xtrue ; then
   dnl librt is required
